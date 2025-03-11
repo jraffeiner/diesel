@@ -8,7 +8,10 @@ use crate::query_builder::{QueryFragment, QueryId};
 use crate::result::Error::DatabaseError;
 use crate::result::*;
 use crate::sqlite::{Sqlite, SqliteType};
+#[cfg(not(all(target_family = "wasm", target_os = "unknown")))]
 use libsqlite3_sys as ffi;
+#[cfg(all(target_family = "wasm", target_os = "unknown"))]
+use sqlite_wasm_rs::export as ffi;
 use std::cell::OnceCell;
 use std::ffi::{CStr, CString};
 use std::io::{stderr, Write};
@@ -19,11 +22,18 @@ pub(super) struct Statement {
     inner_statement: NonNull<ffi::sqlite3_stmt>,
 }
 
+// This relies on the invariant that RawConnection or Statement are never
+// leaked. If a reference to one of those was held on a different thread, this
+// would not be thread safe.
+#[allow(unsafe_code)]
+unsafe impl Send for Statement {}
+
 impl Statement {
     pub(super) fn prepare(
         raw_connection: &RawConnection,
         sql: &str,
         is_cached: PrepareForCache,
+        _: &[SqliteType],
     ) -> QueryResult<Self> {
         let mut stmt = ptr::null_mut();
         let mut unused_portion = ptr::null();
@@ -365,7 +375,7 @@ impl<'stmt, 'query> BoundStatement<'stmt, 'query> {
     }
 }
 
-impl<'stmt, 'query> Drop for BoundStatement<'stmt, 'query> {
+impl Drop for BoundStatement<'_, '_> {
     fn drop(&mut self) {
         // First reset the statement, otherwise the bind calls
         // below will fails
@@ -544,7 +554,7 @@ mod tests {
 
     // this is a regression test for
     // https://github.com/diesel-rs/diesel/issues/3558
-    #[test]
+    #[diesel_test_helper::test]
     fn check_out_of_bounds_bind_does_not_panic_on_drop() {
         let mut conn = SqliteConnection::establish(":memory:").unwrap();
 

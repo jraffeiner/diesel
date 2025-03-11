@@ -1,8 +1,9 @@
 //! PostgreSQL specific functions
 
 use super::expression_methods::InetOrCidr;
-use crate::expression::functions::define_sql_function;
+use crate::expression::functions::declare_sql_function;
 use crate::pg::expression::expression_methods::ArrayOrNullableArray;
+use crate::pg::expression::expression_methods::CombinedAllNullableValue;
 use crate::pg::expression::expression_methods::CombinedNullableValue;
 use crate::pg::expression::expression_methods::JsonOrNullableJson;
 use crate::pg::expression::expression_methods::JsonbOrNullableJsonb;
@@ -10,69 +11,62 @@ use crate::pg::expression::expression_methods::MaybeNullableValue;
 use crate::pg::expression::expression_methods::MultirangeOrNullableMultirange;
 use crate::pg::expression::expression_methods::MultirangeOrRangeMaybeNullable;
 use crate::pg::expression::expression_methods::RangeOrNullableRange;
+use crate::pg::expression::expression_methods::RecordOrNullableRecord;
 use crate::pg::expression::expression_methods::TextArrayOrNullableTextArray;
 use crate::sql_types::*;
 
-define_sql_function! {
+#[declare_sql_function]
+extern "SQL" {
     /// Creates an abbreviated display format as text.
     #[cfg(feature = "postgres_backend")]
     fn abbrev<T: InetOrCidr + SingleValue>(addr: T) -> Text;
-}
-define_sql_function! {
+
     /// Computes the broadcast address for the address's network.
     #[cfg(feature = "postgres_backend")]
     fn broadcast<T: InetOrCidr + SingleValue>(addr: T) -> Inet;
-}
-define_sql_function! {
+
     /// Returns the address's family: 4 for IPv4, 6 for IPv6.
     #[cfg(feature = "postgres_backend")]
     fn family<T: InetOrCidr + SingleValue>(addr: T) -> Integer;
-}
-define_sql_function! {
+
     /// Returns the IP address as text, ignoring the netmask.
     #[cfg(feature = "postgres_backend")]
     fn host<T: InetOrCidr + SingleValue>(addr: T) -> Text;
-}
-define_sql_function! {
+
     /// Computes the host mask for the address's network.
     #[cfg(feature = "postgres_backend")]
     fn hostmask<T: InetOrCidr + SingleValue>(addr: T) -> Inet;
-}
-define_sql_function! {
+
     /// Computes the smallest network that includes both of the given networks.
     #[cfg(feature = "postgres_backend")]
     fn inet_merge<T: InetOrCidr + SingleValue, U: InetOrCidr + SingleValue>(a: T, b: U) -> Cidr;
-}
-define_sql_function! {
+
     /// Tests whether the addresses belong to the same IP family.
     #[cfg(feature = "postgres_backend")]
-    fn inet_same_family<T: InetOrCidr + SingleValue, U: InetOrCidr + SingleValue>(a: T, b: U) -> Bool;
-}
-define_sql_function! {
+    fn inet_same_family<T: InetOrCidr + SingleValue, U: InetOrCidr + SingleValue>(
+        a: T,
+        b: U,
+    ) -> Bool;
+
     /// Returns the netmask length in bits.
     #[cfg(feature = "postgres_backend")]
     fn masklen<T: InetOrCidr + SingleValue>(addr: T) -> Integer;
-}
-define_sql_function! {
+
     /// Computes the network mask for the address's network.
     #[cfg(feature = "postgres_backend")]
     fn netmask<T: InetOrCidr + SingleValue>(addr: T) -> Inet;
-}
-define_sql_function! {
+
     /// Returns the network part of the address, zeroing out whatever is to the right of the
     /// netmask. (This is equivalent to casting the value to cidr.)
     #[cfg(feature = "postgres_backend")]
     fn network<T: InetOrCidr + SingleValue>(addr: T) -> Cidr;
-}
-define_sql_function! {
+
     /// Sets the netmask length for an inet or cidr value.
     /// For inet, the address part does not changes. For cidr, address bits to the right of the new
     /// netmask are set to zero.
     #[cfg(feature = "postgres_backend")]
     fn set_masklen<T: InetOrCidr + SingleValue>(addr: T, len: Integer) -> T;
-}
 
-define_sql_function! {
     /// Returns the lower bound of the range
     ///
     /// If the range is empty or has no lower bound, it returns NULL.
@@ -108,9 +102,7 @@ define_sql_function! {
     /// ```
     #[cfg(feature = "postgres_backend")]
     fn lower<R: MultirangeOrRangeMaybeNullable + SingleValue>(range: R) -> Nullable<R::Inner>;
-}
 
-define_sql_function! {
     /// Returns the upper bound of the range
     ///
     /// If the range is empty or has no upper bound, it returns NULL.
@@ -146,9 +138,7 @@ define_sql_function! {
     /// ```
     #[cfg(feature = "postgres_backend")]
     fn upper<R: MultirangeOrRangeMaybeNullable + SingleValue>(range: R) -> Nullable<R::Inner>;
-}
 
-define_sql_function! {
     /// Returns true if the range is empty
     ///
     /// # Example
@@ -181,10 +171,10 @@ define_sql_function! {
     /// # }
     /// ```
     #[cfg(feature = "postgres_backend")]
-    fn isempty<R: MultirangeOrRangeMaybeNullable + SingleValue + MaybeNullableValue<Bool>>(range: R) -> R::Out;
-}
+    fn isempty<R: MultirangeOrRangeMaybeNullable + SingleValue + MaybeNullableValue<Bool>>(
+        range: R,
+    ) -> R::Out;
 
-define_sql_function! {
     /// Returns true if the range's lower bound is inclusive
     ///
     /// # Example
@@ -217,10 +207,10 @@ define_sql_function! {
     /// # }
     /// ```
     #[cfg(feature = "postgres_backend")]
-    fn lower_inc<R: MultirangeOrRangeMaybeNullable + SingleValue + MaybeNullableValue<Bool>>(range: R) -> R::Out;
-}
+    fn lower_inc<R: MultirangeOrRangeMaybeNullable + SingleValue + MaybeNullableValue<Bool>>(
+        range: R,
+    ) -> R::Out;
 
-define_sql_function! {
     /// Returns true if the range's upper bound is inclusive
     ///
     /// # Example
@@ -250,10 +240,10 @@ define_sql_function! {
     /// # }
     /// ```
     #[cfg(feature = "postgres_backend")]
-    fn upper_inc<R: MultirangeOrRangeMaybeNullable + SingleValue + MaybeNullableValue<Bool>>(range: R) -> R::Out;
-}
+    fn upper_inc<R: MultirangeOrRangeMaybeNullable + SingleValue + MaybeNullableValue<Bool>>(
+        range: R,
+    ) -> R::Out;
 
-define_sql_function! {
     /// Returns true if the range's lower bound is unbounded
     ///
     /// # Example
@@ -286,10 +276,10 @@ define_sql_function! {
     /// # }
     /// ```
     #[cfg(feature = "postgres_backend")]
-    fn lower_inf<R: MultirangeOrRangeMaybeNullable + SingleValue + MaybeNullableValue<Bool>>(range: R) -> R::Out;
-}
+    fn lower_inf<R: MultirangeOrRangeMaybeNullable + SingleValue + MaybeNullableValue<Bool>>(
+        range: R,
+    ) -> R::Out;
 
-define_sql_function! {
     /// Returns true if the range's upper bound is unbounded
     ///
     /// # Example
@@ -322,10 +312,10 @@ define_sql_function! {
     /// # }
     /// ```
     #[cfg(feature = "postgres_backend")]
-    fn upper_inf<R: MultirangeOrRangeMaybeNullable + SingleValue + MaybeNullableValue<Bool>>(range: R) -> R::Out;
-}
+    fn upper_inf<R: MultirangeOrRangeMaybeNullable + SingleValue + MaybeNullableValue<Bool>>(
+        range: R,
+    ) -> R::Out;
 
-define_sql_function! {
     /// Returns the smallest range which includes both of the given ranges
     ///
     /// # Example
@@ -358,10 +348,16 @@ define_sql_function! {
     /// # }
     /// ```
     #[cfg(feature = "postgres_backend")]
-    fn range_merge<R1: RangeOrNullableRange + SingleValue, R2: RangeOrNullableRange<Inner=R1::Inner> + SingleValue + CombinedNullableValue<R1, Range<R1::Inner>>>(lhs: R1, rhs: R2) -> R2::Out;
-}
+    fn range_merge<
+        R1: RangeOrNullableRange + SingleValue,
+        R2: RangeOrNullableRange<Inner = R1::Inner>
+            + SingleValue
+            + CombinedNullableValue<R1, Range<R1::Inner>>,
+    >(
+        lhs: R1,
+        rhs: R2,
+    ) -> R2::Out;
 
-define_sql_function! {
     /// Returns the smallest range which includes all ranges in the multirange
     ///
     /// # Example
@@ -389,10 +385,9 @@ define_sql_function! {
     /// ```
     #[cfg(feature = "postgres_backend")]
     #[sql_name = "range_merge"]
-    fn multirange_merge<R: MultirangeOrNullableMultirange + SingleValue>(multirange: R) -> R::Range;
-}
+    fn multirange_merge<R: MultirangeOrNullableMultirange + SingleValue>(multirange: R)
+        -> R::Range;
 
-define_sql_function! {
     /// Returns range of integer
     ///
     /// # Example
@@ -437,10 +432,12 @@ define_sql_function! {
     /// # }
     /// ```
     #[cfg(feature = "postgres_backend")]
-    fn int4range(lower: Nullable<Integer>, upper: Nullable<Integer>, bound: RangeBoundEnum) -> Int4range;
-}
+    fn int4range(
+        lower: Nullable<Integer>,
+        upper: Nullable<Integer>,
+        bound: RangeBoundEnum,
+    ) -> Int4range;
 
-define_sql_function! {
     /// Returns range of big ints
     ///
     /// # Example
@@ -485,10 +482,12 @@ define_sql_function! {
     /// # }
     /// ```
     #[cfg(feature = "postgres_backend")]
-    fn int8range(lower: Nullable<BigInt>, upper: Nullable<BigInt>, bound: RangeBoundEnum) -> Int8range;
-}
+    fn int8range(
+        lower: Nullable<BigInt>,
+        upper: Nullable<BigInt>,
+        bound: RangeBoundEnum,
+    ) -> Int8range;
 
-define_sql_function! {
     /// Returns range of numeric values
     ///
     /// # Example
@@ -536,10 +535,12 @@ define_sql_function! {
     /// # }
     /// ```
     #[cfg(feature = "postgres_backend")]
-    fn numrange(lower: Nullable<Numeric>, upper: Nullable<Numeric>, bound: RangeBoundEnum) -> Numrange;
-}
+    fn numrange(
+        lower: Nullable<Numeric>,
+        upper: Nullable<Numeric>,
+        bound: RangeBoundEnum,
+    ) -> Numrange;
 
-define_sql_function! {
     /// Returns range of timestamps without timezone
     ///
     /// # Example
@@ -587,10 +588,12 @@ define_sql_function! {
     /// # }
     /// ```
     #[cfg(feature = "postgres_backend")]
-    fn tsrange(lower: Nullable<Timestamp>, upper: Nullable<Timestamp>, bound: RangeBoundEnum) -> Tsrange;
-}
+    fn tsrange(
+        lower: Nullable<Timestamp>,
+        upper: Nullable<Timestamp>,
+        bound: RangeBoundEnum,
+    ) -> Tsrange;
 
-define_sql_function! {
     /// Returns range of timestamps with timezone
     ///
     /// # Example
@@ -638,10 +641,12 @@ define_sql_function! {
     /// # }
     /// ```
     #[cfg(feature = "postgres_backend")]
-    fn tstzrange(lower: Nullable<Timestamptz>, upper: Nullable<Timestamptz>, bound: RangeBoundEnum) -> Tstzrange;
-}
+    fn tstzrange(
+        lower: Nullable<Timestamptz>,
+        upper: Nullable<Timestamptz>,
+        bound: RangeBoundEnum,
+    ) -> Tstzrange;
 
-define_sql_function! {
     /// Returns range of dates
     ///
     /// # Example
@@ -690,10 +695,7 @@ define_sql_function! {
     /// ```
     #[cfg(feature = "postgres_backend")]
     fn daterange(lower: Nullable<Date>, upper: Nullable<Date>, bound: RangeBoundEnum) -> Daterange;
-}
 
-#[cfg(feature = "postgres_backend")]
-define_sql_function! {
     /// Append an element to the end of an array
     ///
     /// # Example
@@ -727,11 +729,13 @@ define_sql_function! {
     /// #     Ok(())
     /// # }
     /// ```
-    fn array_append<Arr: ArrayOrNullableArray<Inner=T> + SingleValue, T: SingleValue>(a: Arr, e: T) -> Array<T>;
-}
+    ///
+    #[cfg(feature = "postgres_backend")]
+    fn array_append<Arr: ArrayOrNullableArray<Inner = T> + SingleValue, T: SingleValue>(
+        a: Arr,
+        e: T,
+    ) -> Array<T>;
 
-#[cfg(feature = "postgres_backend")]
-define_sql_function! {
     /// Replace all occurrences of an element in an array with a given element
     ///
     /// # Example
@@ -764,11 +768,13 @@ define_sql_function! {
     /// #    Ok(())
     /// # }
     /// ```
-    fn array_replace<Arr: ArrayOrNullableArray<Inner=T> + SingleValue, T: SingleValue>(a: Arr, e: T, r: T) -> Arr;
-}
+    #[cfg(feature = "postgres_backend")]
+    fn array_replace<Arr: ArrayOrNullableArray<Inner = T> + SingleValue, T: SingleValue>(
+        a: Arr,
+        e: T,
+        r: T,
+    ) -> Arr;
 
-#[cfg(feature = "postgres_backend")]
-define_sql_function! {
     /// Returns a text representation of the array's dimensions
     ///
     /// # Example
@@ -798,11 +804,9 @@ define_sql_function! {
     /// # Ok(())
     /// # }
     ///
-    fn array_dims<Arr:ArrayOrNullableArray<> + SingleValue>(arr:Arr) -> Text;
-}
+    #[cfg(feature = "postgres_backend")]
+    fn array_dims<Arr: ArrayOrNullableArray + SingleValue>(arr: Arr) -> Text;
 
-#[cfg(feature = "postgres_backend")]
-define_sql_function! {
     /// Prepends an element to the beginning of an array
     ///
     /// # Example
@@ -836,11 +840,12 @@ define_sql_function! {
     /// #     Ok(())
     /// # }
     /// ```
-    fn array_prepend<T: SingleValue, Arr: ArrayOrNullableArray<Inner=T> + SingleValue>(e: T, a: Arr) -> Array<T>;
-}
+    #[cfg(feature = "postgres_backend")]
+    fn array_prepend<T: SingleValue, Arr: ArrayOrNullableArray<Inner = T> + SingleValue>(
+        e: T,
+        a: Arr,
+    ) -> Array<T>;
 
-#[cfg(feature = "postgres_backend")]
-define_sql_function! {
     /// Removes all elements equal to the given value from the array
     ///
     /// # Example
@@ -870,11 +875,12 @@ define_sql_function! {
     /// #     Ok(())
     /// # }
     /// ```
-    fn array_remove<Arr: ArrayOrNullableArray<Inner=T> + SingleValue, T: SingleValue>(a: Arr, e: T) -> Arr;
-}
+    #[cfg(feature = "postgres_backend")]
+    fn array_remove<Arr: ArrayOrNullableArray<Inner = T> + SingleValue, T: SingleValue>(
+        a: Arr,
+        e: T,
+    ) -> Arr;
 
-#[cfg(feature = "postgres_backend")]
-define_sql_function! {
     /// Converts each array element to its text representation and concatenates those elements
     /// separated by the delimiter string. If `null_string` is provided and is not `NULL`, then `NULL`
     /// array entries are represented by that string; otherwise, they are omitted.
@@ -914,17 +920,17 @@ define_sql_function! {
     /// #     Ok(())
     /// # }
     /// ```
+    #[cfg(feature = "postgres_backend")]
     #[sql_name = "array_to_string"]
     fn array_to_string_with_null_string<Arr: ArrayOrNullableArray + SingleValue>(
-        array: Arr, del: Text, null: Text
+        array: Arr,
+        del: Text,
+        null: Text,
     ) -> Text;
-}
 
-#[cfg(feature = "postgres_backend")]
-define_sql_function! {
     /// Converts each array element to its text representation and concatenates those elements
     /// separated by the delimiter string. `NULL` entries are omitted in this variant.
-    /// See [array_to_string_with_null_string] for a variant with that argument.
+    /// See [array_to_string_with_null_string](array_to_string_with_null_string()) for a variant with that argument.
     ///
     /// # Example
     ///
@@ -961,13 +967,9 @@ define_sql_function! {
     /// #     Ok(())
     /// # }
     /// ```
-    fn array_to_string<Arr: ArrayOrNullableArray + SingleValue>(
-        array: Arr, del: Text
-    ) -> Text;
-}
+    #[cfg(feature = "postgres_backend")]
+    fn array_to_string<Arr: ArrayOrNullableArray + SingleValue>(array: Arr, del: Text) -> Text;
 
-#[cfg(feature = "postgres_backend")]
-define_sql_function! {
     /// Returns the total number of elements in the array, or 0 if the array is empty.
     ///
     /// # Example
@@ -1001,11 +1003,11 @@ define_sql_function! {
     /// # Ok(())
     /// # }
     ///
-    fn cardinality<Arr:ArrayOrNullableArray + SingleValue + MaybeNullableValue<Integer>>(a: Arr) -> Arr::Out;
-}
+    #[cfg(feature = "postgres_backend")]
+    fn cardinality<Arr: ArrayOrNullableArray + SingleValue + MaybeNullableValue<Integer>>(
+        a: Arr,
+    ) -> Arr::Out;
 
-#[cfg(feature = "postgres_backend")]
-define_sql_function! {
     /// Trims an array by removing the last n elements. If the array is multidimensional, only the first dimension is trimmed.
     ///
     /// # Example
@@ -1043,11 +1045,9 @@ define_sql_function! {
     /// # Ok(())
     /// # }
     ///
-    fn trim_array<Arr:ArrayOrNullableArray + SingleValue>(a: Arr, n: Integer) -> Arr;
-}
+    #[cfg(feature = "postgres_backend")]
+    fn trim_array<Arr: ArrayOrNullableArray + SingleValue>(a: Arr, n: Integer) -> Arr;
 
-#[cfg(feature = "postgres_backend")]
-define_sql_function! {
     /// Concatenates two arrays
     ///
     /// # Example
@@ -1075,11 +1075,9 @@ define_sql_function! {
     /// #     Ok(())
     /// # }
     /// ```
+    #[cfg(feature = "postgres_backend")]
     fn array_cat<Arr: ArrayOrNullableArray + SingleValue>(a: Arr, b: Arr) -> Arr;
-}
 
-#[cfg(feature = "postgres_backend")]
-define_sql_function! {
     /// Returns the length of the requested array
     ///
     /// # Example
@@ -1109,14 +1107,15 @@ define_sql_function! {
     /// #     Ok(())
     /// # }
     /// ```
-    fn array_length<Arr: ArrayOrNullableArray + SingleValue>(array: Arr, dimension: Integer) -> Nullable<Integer>;
-}
+    #[cfg(feature = "postgres_backend")]
+    fn array_length<Arr: ArrayOrNullableArray + SingleValue>(
+        array: Arr,
+        dimension: Integer,
+    ) -> Nullable<Integer>;
 
-#[cfg(feature = "postgres_backend")]
-define_sql_function! {
     /// Returns an array initialized with supplied value and dimensions,
     /// optionally with lower bounds other than 1. This function omits the optional
-    /// lower bound argument. See [array_fill_with_lower_bound] for that.
+    /// lower bound argument. See [array_fill_with_lower_bound](array_fill_with_lower_bound()) for that.
     ///
     /// # Example
     ///
@@ -1149,11 +1148,9 @@ define_sql_function! {
     /// # Ok(())
     /// # }
     ///
-    fn array_fill<E:SingleValue>(value: E, dim: Array<Integer>) -> Array<E>;
-}
+    #[cfg(feature = "postgres_backend")]
+    fn array_fill<E: SingleValue>(value: E, dim: Array<Integer>) -> Array<E>;
 
-#[cfg(feature = "postgres_backend")]
-define_sql_function! {
     /// Returns an array initialized with supplied value and dimensions,
     /// with lower bounds other than 1
     ///
@@ -1189,11 +1186,13 @@ define_sql_function! {
     /// # }
     ///
     #[sql_name = "array_fill"]
-    fn array_fill_with_lower_bound<E:SingleValue>(value: E, dim: Array<Integer>, lower_bound: Array<Integer>) -> Array<E>;
-}
+    #[cfg(feature = "postgres_backend")]
+    fn array_fill_with_lower_bound<E: SingleValue>(
+        value: E,
+        dim: Array<Integer>,
+        lower_bound: Array<Integer>,
+    ) -> Array<E>;
 
-#[cfg(feature = "postgres_backend")]
-define_sql_function! {
     /// Returns the lower bound of the requested array
     ///
     /// This function returns null for dimensions that do not exist
@@ -1222,14 +1221,15 @@ define_sql_function! {
     /// #     Ok(())
     /// # }
     /// ```
-    fn array_lower<Arr: ArrayOrNullableArray + SingleValue>(array: Arr, dimension: Integer) -> Nullable<Integer>;
-}
+    #[cfg(feature = "postgres_backend")]
+    fn array_lower<Arr: ArrayOrNullableArray + SingleValue>(
+        array: Arr,
+        dimension: Integer,
+    ) -> Nullable<Integer>;
 
-#[cfg(feature = "postgres_backend")]
-define_sql_function! {
     /// Returns the subscript of the first occurrence of the second argument in the array, or NULL if it's not present.
     /// If the third argument is given, the search begins at that subscript. This function omits the third argument.
-    /// See [array_position_with_subscript].
+    /// See [array_position_with_subscript](array_position_with_subscript()).
     ///
     /// The array must be one-dimensional. Comparisons are done using IS NOT DISTINCT FROM semantics,
     /// so it is possible to search for NULL.
@@ -1272,14 +1272,12 @@ define_sql_function! {
     /// # Ok(())
     /// # }
     ///
+    #[cfg(feature = "postgres_backend")]
     fn array_position<Arr: ArrayOrNullableArray<Inner = E> + SingleValue, E: SingleValue>(
         a: Arr,
         elem: E,
     ) -> Nullable<Integer>;
-}
 
-#[cfg(feature = "postgres_backend")]
-define_sql_function! {
     /// Returns the subscript of the first occurrence of the second argument in the array,
     /// or NULL if it's not present, beginning at the subscript given as the third argument.
     ///
@@ -1322,6 +1320,7 @@ define_sql_function! {
     /// # }
     ///
     #[sql_name = "array_position"]
+    #[cfg(feature = "postgres_backend")]
     fn array_position_with_subscript<
         Arr: ArrayOrNullableArray<Inner = E> + SingleValue,
         E: SingleValue,
@@ -1330,10 +1329,7 @@ define_sql_function! {
         elem: E,
         subscript: Integer,
     ) -> Nullable<Integer>;
-}
 
-#[cfg(feature = "postgres_backend")]
-define_sql_function! {
     /// Returns an array of the subscripts of all occurrences of the second argument in the
     /// array given as first argument.
     ///
@@ -1374,14 +1370,15 @@ define_sql_function! {
     /// # Ok(())
     /// # }
     ///
-    fn array_positions<Arr: ArrayOrNullableArray<Inner = E> + SingleValue + MaybeNullableValue<Array<Integer>>, E: SingleValue>(
+    #[cfg(feature = "postgres_backend")]
+    fn array_positions<
+        Arr: ArrayOrNullableArray<Inner = E> + SingleValue + MaybeNullableValue<Array<Integer>>,
+        E: SingleValue,
+    >(
         a: Arr,
         elem: E,
     ) -> Arr::Out;
-}
 
-#[cfg(feature = "postgres_backend")]
-define_sql_function! {
     /// Returns the number of dimensions of the array
     ///
     /// # Example
@@ -1410,11 +1407,11 @@ define_sql_function! {
     /// #     Ok(())
     /// # }
     /// ```
-    fn array_ndims<Arr: ArrayOrNullableArray + SingleValue + MaybeNullableValue<Integer>>(arr: Arr) -> Arr::Out;
-}
+    #[cfg(feature = "postgres_backend")]
+    fn array_ndims<Arr: ArrayOrNullableArray + SingleValue + MaybeNullableValue<Integer>>(
+        arr: Arr,
+    ) -> Arr::Out;
 
-#[cfg(feature = "postgres_backend")]
-define_sql_function! {
     /// Returns the upper bound of the requested array
     ///
     /// This function returns null for dimensions that do not exist
@@ -1443,11 +1440,12 @@ define_sql_function! {
     /// #     Ok(())
     /// # }
     /// ```
-    fn array_upper<Arr: ArrayOrNullableArray + SingleValue>(array: Arr, dimension: Integer) -> Nullable<Integer>;
-}
+    #[cfg(feature = "postgres_backend")]
+    fn array_upper<Arr: ArrayOrNullableArray + SingleValue>(
+        array: Arr,
+        dimension: Integer,
+    ) -> Nullable<Integer>;
 
-#[cfg(feature = "postgres_backend")]
-define_sql_function! {
     /// Randomly shuffles the first dimension of the array.
     ///
     /// # Example
@@ -1473,11 +1471,9 @@ define_sql_function! {
     /// #     Ok(())
     /// # }
     /// ```
+    #[cfg(feature = "postgres_backend")]
     fn array_shuffle<Arr: ArrayOrNullableArray + SingleValue>(array: Arr) -> Arr;
-}
 
-#[cfg(feature = "postgres_backend")]
-define_sql_function! {
     /// Returns an array of n items randomly selected from array.
     /// n may not exceed the length of the array.
     ///
@@ -1515,11 +1511,48 @@ define_sql_function! {
     /// #     Ok(())
     /// # }
     /// ```
+    #[cfg(feature = "postgres_backend")]
     fn array_sample<Arr: ArrayOrNullableArray + SingleValue>(array: Arr, n: Integer) -> Arr;
-}
 
-#[cfg(feature = "postgres_backend")]
-define_sql_function! {
+    /// Converts any Array to json.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// # include!("../../doctest_setup.rs");
+    /// #
+    /// # fn main() {
+    /// #     #[cfg(feature = "serde_json")]
+    /// #     run_test().unwrap();
+    /// # }
+    /// #
+    /// # #[cfg(feature = "serde_json")]
+    /// # fn run_test() -> QueryResult<()> {
+    /// #     use diesel::dsl::array_to_json;
+    /// #     use diesel::sql_types::{Array, Integer, Text, Nullable};
+    /// #     use serde_json::Value;
+    /// #     let connection = &mut establish_connection();
+    /// let json = diesel::select(array_to_json::<Array<Integer>, _>(vec![1, 2, 3, 4, 5]))
+    ///                 .get_result::<Value>(connection)?;
+    /// let expected:Value = serde_json::json!([1, 2, 3, 4, 5]);
+    /// assert_eq!(expected,json);
+    /// let json = diesel::select(array_to_json::<Array<Text>,_>(vec!["hello","world","John","Doe"]))
+    ///                 .get_result::<Value>(connection)?;
+    /// let expected:Value = serde_json::json!(["hello","world","John","Doe"]);
+    /// assert_eq!(expected,json);
+    /// let empty:Vec<String> = Vec::new();
+    /// let json = diesel::select(array_to_json::<Array<Nullable<Text>>,_>(empty))
+    ///                 .get_result::<Value>(connection)?;
+    /// assert_eq!(serde_json::json!([]),json);
+    /// let json = diesel::select(array_to_json::<Nullable<Array<Integer>>, _>(None::<Vec<i32>>))
+    ///     .get_result::<Option<Value>>(connection)?;
+    /// assert_eq!(None, json);
+    /// #     Ok(())
+    /// # }
+    /// ```
+    #[cfg(feature = "postgres_backend")]
+    fn array_to_json<Arr: ArrayOrNullableArray + MaybeNullableValue<Json>>(array: Arr) -> Arr::Out;
+
     /// Converts any SQL value to json
     ///
     /// # Example
@@ -1561,11 +1594,9 @@ define_sql_function! {
     /// #     Ok(())
     /// # }
     /// ```
+    #[cfg(feature = "postgres_backend")]
     fn to_json<E: MaybeNullableValue<Json>>(e: E) -> E::Out;
-}
 
-#[cfg(feature = "postgres_backend")]
-define_sql_function! {
     /// Converts any SQL value to jsonb
     ///
     /// # Example
@@ -1607,11 +1638,9 @@ define_sql_function! {
     /// #     Ok(())
     /// # }
     /// ```
+    #[cfg(feature = "postgres_backend")]
     fn to_jsonb<E: MaybeNullableValue<Jsonb>>(e: E) -> E::Out;
-}
 
-#[cfg(feature = "postgres_backend")]
-define_sql_function! {
     /// Builds a JSON object out of a text array. The array must have an even number of members,
     /// in which case they are taken as alternating key/value pairs
     ///
@@ -1653,13 +1682,11 @@ define_sql_function! {
     /// #     Ok(())
     /// # }
     /// ```
+    #[cfg(feature = "postgres_backend")]
     fn json_object<Arr: TextArrayOrNullableTextArray + MaybeNullableValue<Json>>(
         text_array: Arr,
     ) -> Arr::Out;
-}
 
-#[cfg(feature = "postgres_backend")]
-define_sql_function! {
     /// This form of json_object takes keys and values pairwise from two separate arrays.
     /// In all other respects it is identical to the one-argument form.
     ///
@@ -1700,6 +1727,7 @@ define_sql_function! {
     /// # }
     /// ```
     #[sql_name = "json_object"]
+    #[cfg(feature = "postgres_backend")]
     fn json_object_with_keys_and_values<
         Arr1: TextArrayOrNullableTextArray + SingleValue,
         Arr2: TextArrayOrNullableTextArray + CombinedNullableValue<Arr1, Json>,
@@ -1707,10 +1735,7 @@ define_sql_function! {
         keys: Arr1,
         values: Arr2,
     ) -> Arr2::Out;
-}
 
-#[cfg(feature = "postgres_backend")]
-define_sql_function! {
     /// Returns the type of the top-level json value as a text-string
     ///
     /// # Example
@@ -1766,11 +1791,9 @@ define_sql_function! {
     /// #     Ok(())
     /// # }
     /// ```
+    #[cfg(feature = "postgres_backend")]
     fn json_typeof<E: JsonOrNullableJson + SingleValue + MaybeNullableValue<Text>>(e: E) -> E::Out;
-}
 
-#[cfg(feature = "postgres_backend")]
-define_sql_function! {
     /// Returns the type of the top-level jsonb value as a text-string
     ///
     /// # Example
@@ -1826,11 +1849,11 @@ define_sql_function! {
     /// #     Ok(())
     /// # }
     /// ```
-    fn jsonb_typeof<E: JsonbOrNullableJsonb + SingleValue + MaybeNullableValue<Text>>(e: E) -> E::Out;
-}
+    #[cfg(feature = "postgres_backend")]
+    fn jsonb_typeof<E: JsonbOrNullableJsonb + SingleValue + MaybeNullableValue<Text>>(
+        e: E,
+    ) -> E::Out;
 
-#[cfg(feature = "postgres_backend")]
-define_sql_function! {
     /// Converts the given json value to pretty-printed, indented text
     ///
     /// # Example
@@ -1903,10 +1926,11 @@ define_sql_function! {
     /// #     Ok(())
     /// # }
     /// ```
-    fn jsonb_pretty<E: JsonbOrNullableJsonb + SingleValue + MaybeNullableValue<Text>>(e: E) -> E::Out;
-}
+    #[cfg(feature = "postgres_backend")]
+    fn jsonb_pretty<E: JsonbOrNullableJsonb + SingleValue + MaybeNullableValue<Text>>(
+        e: E,
+    ) -> E::Out;
 
-define_sql_function! {
     /// Deletes all object fields that have null values from the given JSON value, recursively.
     ///
     /// # Example
@@ -1949,10 +1973,9 @@ define_sql_function! {
     /// #     Ok(())
     /// # }
     /// ```
+    #[cfg(feature = "postgres_backend")]
     fn json_strip_nulls<E: JsonOrNullableJson + SingleValue>(json: E) -> E;
-}
 
-define_sql_function! {
     /// Deletes all object fields that have null values from the given JSON value, recursively.
     ///
     /// # Example
@@ -1996,11 +2019,9 @@ define_sql_function! {
     /// #     Ok(())
     /// # }
     /// ```
+    #[cfg(feature = "postgres_backend")]
     fn jsonb_strip_nulls<E: JsonbOrNullableJsonb + SingleValue>(jsonb: E) -> E;
-}
 
-#[cfg(feature = "postgres_backend")]
-define_sql_function! {
     /// Returns the number of elements in the top-level JSON array
     ///
     ///
@@ -2038,12 +2059,9 @@ define_sql_function! {
     /// #     Ok(())
     /// # }
     /// ```
-
+    #[cfg(feature = "postgres_backend")]
     fn json_array_length<E: JsonOrNullableJson + MaybeNullableValue<Integer>>(json: E) -> E::Out;
-}
 
-#[cfg(feature = "postgres_backend")]
-define_sql_function! {
     /// Returns the number of elements in the top-level JSON array
     ///
     ///
@@ -2081,16 +2099,15 @@ define_sql_function! {
     /// #     Ok(())
     /// # }
     /// ```
+    #[cfg(feature = "postgres_backend")]
+    fn jsonb_array_length<E: JsonbOrNullableJsonb + MaybeNullableValue<Integer>>(
+        jsonb: E,
+    ) -> E::Out;
 
-    fn jsonb_array_length<E: JsonbOrNullableJsonb + MaybeNullableValue<Integer>>(jsonb: E) -> E::Out;
-}
-
-#[cfg(feature = "postgres_backend")]
-define_sql_function! {
     /// Builds a JSON object out of a text array. The array must have an even number of members,
     /// in which case they are taken as alternating key/value pairs. This function also has a form that
     /// that takes keys and values as separate text array arguments.
-    /// See [jsonb_object_with_keys_and_values]
+    /// See [jsonb_object_with_keys_and_values](jsonb_object_with_keys_and_values())
     ///
     /// # Example
     ///
@@ -2136,13 +2153,11 @@ define_sql_function! {
     /// #     Ok(())
     /// # }
     /// ```
+    #[cfg(feature = "postgres_backend")]
     fn jsonb_object<Arr: TextArrayOrNullableTextArray + MaybeNullableValue<Jsonb>>(
         text_array: Arr,
     ) -> Arr::Out;
-}
 
-#[cfg(feature = "postgres_backend")]
-define_sql_function! {
     /// This form of jsonb_object takes keys and values pairwise from two separate arrays.
     /// In all other respects it is identical to the one-argument form.
     ///
@@ -2183,11 +2198,572 @@ define_sql_function! {
     /// # }
     /// ```
     #[sql_name = "jsonb_object"]
+    #[cfg(feature = "postgres_backend")]
     fn jsonb_object_with_keys_and_values<
         Arr1: TextArrayOrNullableTextArray + SingleValue,
-        Arr2: TextArrayOrNullableTextArray + CombinedNullableValue<Arr1, Jsonb>
+        Arr2: TextArrayOrNullableTextArray + CombinedNullableValue<Arr1, Jsonb>,
     >(
         keys: Arr1,
-        values: Arr2
+        values: Arr2,
     ) -> Arr2::Out;
+
+    /// This function `row_to_json` takes a Record type as an input and converts it to JSON.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// # include!("../../doctest_setup.rs");
+    /// #
+    /// # fn main() {
+    /// #     #[cfg(feature = "serde_json")]
+    /// #     run_test().unwrap();
+    /// # }
+    /// #
+    /// # #[cfg(feature = "serde_json")]
+    /// # fn run_test() -> QueryResult<()> {
+    /// #     use diesel::dsl::row_to_json;
+    /// #     use diesel::dsl::sql;
+    /// #     use diesel::sql_types::{Record, Text, Integer};
+    /// #     use serde_json::Value;
+    /// #     let connection = &mut establish_connection();
+    ///
+    /// let json_value = diesel::select(row_to_json(sql::<Record<(Text, Integer)>>(
+    ///     "ROW('John', 30)"
+    /// )))
+    /// .get_result::<Value>(connection)?;
+    /// let expected: Value = serde_json::json!({
+    ///     "f1": "John",
+    ///     "f2": 30
+    /// });
+    /// assert_eq!(expected, json_value);
+    ///
+    /// let json_value = diesel::select(row_to_json(sql::<Record<()>>("ROW()")))
+    /// .get_result::<Value>(connection)?;
+    /// let expected: Value = serde_json::json!({});
+    /// assert_eq!(expected, json_value);
+    ///
+    /// #    Ok(())
+    /// # }
+    /// ```
+    #[sql_name = "row_to_json"]
+    #[cfg(feature = "postgres_backend")]
+    fn row_to_json<R: RecordOrNullableRecord + MaybeNullableValue<Json>>(record: R) -> R::Out;
+
+    /// This function `json_populate_record` takes a Record base and Json as an input and converts it to top-level
+    /// JSON object to a row having the composite type of the base argument.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// # include!("../../doctest_setup.rs");
+    /// #
+    /// # fn main() {
+    /// #     #[cfg(feature = "serde_json")]
+    /// #     run_test().unwrap();
+    /// # }
+    /// #
+    /// # #[cfg(feature = "serde_json")]
+    /// # fn run_test() -> QueryResult<()> {
+    /// #     use diesel::dsl::json_populate_record;
+    /// #     use diesel::dsl::sql;
+    /// #     use diesel::sql_types::{Record, Text, Integer, Json};
+    /// #     use serde_json::Value;
+    /// #     let connection = &mut establish_connection();
+    ///
+    /// let expected: Value = serde_json::json!({
+    ///     "f1": "Alice",
+    ///     "f2": 16
+    /// });
+    /// let record: (String, i32) = diesel::select(json_populate_record::<Record<(Text, Integer)>, Json, _, _>(
+    ///         sql::<Record<(Text, Integer)>>("ROW('John', 30)"),
+    ///         expected
+    /// )).get_result(connection)?;
+    /// assert_eq!(record, ("Alice".to_string(), 16));
+    ///
+    /// let expected: Value = serde_json::json!({});
+    /// let record: (String, i32) = diesel::select(json_populate_record::<Record<(Text, Integer)>, Json, _, _>(
+    ///         sql::<Record<(Text, Integer)>>("ROW('John', 30)"),
+    ///         expected
+    /// )).get_result(connection)?;
+    /// assert_eq!(record, ("John".to_string(), 30));
+    ///
+    /// let expected: Value = serde_json::json!({
+    ///     "f1": "Alice"
+    /// });
+    /// let record: (String, i32) = diesel::select(json_populate_record::<Record<(Text, Integer)>, Json, _, _>(
+    ///         sql::<Record<(Text, Integer)>>("ROW('John', 30)"),
+    ///         expected
+    /// )).get_result(connection)?;
+    /// assert_eq!(record, ("Alice".to_string(), 30));
+    ///
+    /// #    Ok(())
+    /// # }
+    /// ```
+    #[sql_name = "json_populate_record"]
+    #[cfg(feature = "postgres_backend")]
+    fn json_populate_record<
+        B: RecordOrNullableRecord + SingleValue,
+        J: JsonOrNullableJson + CombinedAllNullableValue<Json, B>,
+    >(
+        base: B,
+        from_json: J,
+    ) -> J::Out;
+
+    /// This function `jsonb_populate_record` takes a Record base and Jsonb as an input and converts it to top-level
+    /// JSON object to a row having the composite type of the base argument.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// # include!("../../doctest_setup.rs");
+    /// #
+    /// # fn main() {
+    /// #     #[cfg(feature = "serde_json")]
+    /// #     run_test().unwrap();
+    /// # }
+    /// #
+    /// # #[cfg(feature = "serde_json")]
+    /// # fn run_test() -> QueryResult<()> {
+    /// #     use diesel::dsl::jsonb_populate_record;
+    /// #     use diesel::dsl::sql;
+    /// #     use diesel::sql_types::{Record, Text, Integer, Jsonb};
+    /// #     use serde_json::Value;
+    /// #     let connection = &mut establish_connection();
+    ///
+    /// let expected: Value = serde_json::json!({
+    ///     "f1": "Alice",
+    ///     "f2": 16
+    /// });
+    /// let record: (String, i32) = diesel::select(jsonb_populate_record::<Record<(Text, Integer)>, Jsonb, _, _>(
+    ///         sql::<Record<(Text, Integer)>>("ROW('John', 30)"),
+    ///         expected
+    /// )).get_result(connection)?;
+    /// assert_eq!(record, ("Alice".to_string(), 16));
+    ///
+    /// let expected: Value = serde_json::json!({});
+    /// let record: (String, i32) = diesel::select(jsonb_populate_record::<Record<(Text, Integer)>, Jsonb, _, _>(
+    ///         sql::<Record<(Text, Integer)>>("ROW('John', 30)"),
+    ///         expected
+    /// )).get_result(connection)?;
+    /// assert_eq!(record, ("John".to_string(), 30));
+    ///
+    /// let expected: Value = serde_json::json!({
+    ///     "f2": 42,
+    /// });
+    /// let record: (String, i32) = diesel::select(jsonb_populate_record::<Record<(Text, Integer)>, Jsonb, _, _>(
+    ///         sql::<Record<(Text, Integer)>>("ROW('John', 30)"),
+    ///         expected
+    /// )).get_result(connection)?;
+    /// assert_eq!(record, ("John".to_string(), 42));
+    ///
+    /// #    Ok(())
+    /// # }
+    /// ```
+    #[sql_name = "jsonb_populate_record"]
+    #[cfg(feature = "postgres_backend")]
+    fn jsonb_populate_record<
+        B: RecordOrNullableRecord + SingleValue,
+        J: JsonbOrNullableJsonb + CombinedAllNullableValue<Jsonb, B>,
+    >(
+        base: B,
+        from_json: J,
+    ) -> J::Out;
+
+    /// Returns target with the item designated by path replaced by new_value,
+    ///     or with new_value added and the item designated by path does not exist.
+    ///
+    /// It can't set path in scalar
+    ///
+    /// All earlier steps in the path must exist, or the target is returned unchanged.
+    /// As with the path oriented operators, negative integers that appear in the path count from the end of JSON arrays.
+    /// If the last path step is an array index that is out of range,
+    ///    the new value is added at the beginning of the array if the index is negative,
+    ///     or at the end of the array if it is positive.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// # include!("../../doctest_setup.rs");
+    /// #
+    /// # fn main() {
+    /// #     #[cfg(feature = "serde_json")]
+    /// #     run_test().unwrap();
+    /// # }
+    /// #
+    /// # #[cfg(feature = "serde_json")]
+    /// # fn run_test() -> QueryResult<()> {
+    /// #     use diesel::dsl::jsonb_set;
+    /// #     use diesel::sql_types::{Jsonb,Array, Json, Nullable, Text};
+    /// #     use serde_json::{json,Value};
+    /// #     let connection = &mut establish_connection();
+    ///
+    /// let result = diesel::select(jsonb_set::<Jsonb, Array<Text>, _, _, _>(
+    ///         json!([{"f1":1,"f2":null},2,null,3]),
+    ///         vec!["0","f1"],
+    ///         json!([2,3,4])
+    ///     )).get_result::<Value>(connection)?;
+    /// let expected: Value = json!([{"f1": [2, 3, 4], "f2": null}, 2, null, 3]);
+    /// assert_eq!(result, expected);
+    ///
+    /// let result = diesel::select(jsonb_set::<Jsonb, Array<Text>, _, _, _>(
+    ///         json!([{"odd":[2,4,6,8]}]),
+    ///         // not vec!["odd"], cannot set path in scalar
+    ///         vec!["0","odd"],
+    ///         json!([1,3,5,7])
+    ///     )).get_result::<Value>(connection)?;
+    /// let expected: Value = json!([{"odd":[1,3,5,7]}]);
+    /// assert_eq!(result, expected);
+    ///
+    /// let empty:Vec<String> = Vec::new();
+    /// let result = diesel::select(jsonb_set::<Nullable<Jsonb>, Array<Nullable<Text>>, _, _, _>(
+    ///         None::<Value>,
+    ///         empty,
+    ///         None::<Value>
+    ///     )).get_result::<Option<Value>>(connection)?;
+    /// assert!(result.is_none());
+    ///
+    /// let empty:Vec<String> = Vec::new();
+    /// let result = diesel::select(jsonb_set::<Jsonb, Array<Nullable<Text>>, _, _, _>(
+    ///         // cannot be json!(null)
+    ///         json!([]),
+    ///         empty,
+    ///         json!(null)
+    ///     )).get_result::<Value>(connection)?;
+    /// let expected = json!([]);
+    /// assert_eq!(result, expected);
+    ///
+    /// let result = diesel::select(jsonb_set::<Jsonb, Nullable<Array<Nullable<Text>>>, _, _, _,>(
+    ///         json!(null),
+    ///         None::<Vec<String>>,
+    ///         json!({"foo": 42})
+    ///     )).get_result::<Option<Value>>(connection)?;
+    /// assert!(result.is_none());
+    ///
+    ///
+    /// #     Ok(())
+    /// # }
+    /// ```
+    #[cfg(feature = "postgres_backend")]
+    fn jsonb_set<
+        E: JsonbOrNullableJsonb + SingleValue,
+        Arr: TextArrayOrNullableTextArray + CombinedNullableValue<E, Jsonb>,
+    >(
+        base: E,
+        path: Arr,
+        new_value: E,
+    ) -> Arr::Out;
+
+    /// Returns target with the item designated by path replaced by new_value,
+    ///     or with new_value added if create_if_missing is true (which is the default)
+    ///     and the item designated by path does not exist.
+    ///
+    /// It can't set path in scalar
+    ///
+    /// All earlier steps in the path must exist, or the target is returned unchanged.
+    /// As with the path oriented operators, negative integers that appear in the path count from the end of JSON arrays.
+    /// If the last path step is an array index that is out of range,
+    ///     and create_if_missing is true, the new value is added at the beginning of the array if the index is negative,
+    ///     or at the end of the array if it is positive.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// # include!("../../doctest_setup.rs");
+    /// #
+    /// # fn main() {
+    /// #     #[cfg(feature = "serde_json")]
+    /// #     run_test().unwrap();
+    /// # }
+    /// #
+    /// # #[cfg(feature = "serde_json")]
+    /// # fn run_test() -> QueryResult<()> {
+    /// #     use diesel::dsl::jsonb_set_create_if_missing;
+    /// #     use diesel::sql_types::{Jsonb, Array, Json, Nullable, Text};
+    /// #     use serde_json::{json, Value};
+    /// #     let connection = &mut establish_connection();
+    ///
+    /// let result = diesel::select(jsonb_set_create_if_missing::<Jsonb, Array<Text>, _, _, _, _>(
+    ///         json!([{"f1":1,"f2":null},2,null,3]),
+    ///         vec!["0","f1"],
+    ///         json!([2,3,4]),
+    ///         true
+    ///     )).get_result::<Value>(connection)?;
+    /// let expected: Value = json!([{"f1": [2, 3, 4], "f2": null}, 2, null, 3]);
+    /// assert_eq!(result, expected);
+    ///
+    /// let result = diesel::select(jsonb_set_create_if_missing::<Jsonb, Array<Text>, _, _, _, _>(
+    ///         json!([{"f1":1,"f2":null},2,null,3]),
+    ///         vec!["0","f3"],
+    ///         json!([2,3,4]),
+    ///         false
+    ///     )).get_result::<Value>(connection)?;
+    /// let expected: Value = json!([{"f1":1, "f2": null},2, null, 3]);
+    /// assert_eq!(result, expected);
+    ///
+    /// let result = diesel::select(jsonb_set_create_if_missing::<Jsonb, Array<Text>, _, _, _, _>(
+    ///         json!([{"odd":[2,4,6,8]}]),
+    ///         // not vec!["odd"], cannot set path in scalar
+    ///         vec!["0","odd"],
+    ///         json!([1,3,5,7]),
+    ///         true
+    ///     )).get_result::<Value>(connection)?;
+    /// let expected: Value = json!([{"odd":[1,3,5,7]}]);
+    /// assert_eq!(result, expected);
+    ///
+    /// let empty:Vec<String> = Vec::new();
+    /// let result = diesel::select(jsonb_set_create_if_missing::<Nullable<Jsonb>, Array<Nullable<Text>>, _, _, _, _>(
+    ///         None::<Value>,
+    ///         empty,
+    ///         None::<Value>,
+    ///         true
+    ///     )).get_result::<Option<Value>>(connection)?;
+    /// assert!(result.is_none());
+    ///
+    /// let empty:Vec<String> = Vec::new();
+    /// let result = diesel::select(jsonb_set_create_if_missing::<Jsonb, Array<Nullable<Text>>, _, _, _, _>(
+    ///         // cannot be json!(null)
+    ///         json!([]),
+    ///         empty,
+    ///         json!(null),
+    ///         true
+    ///     )).get_result::<Value>(connection)?;
+    /// let expected = json!([]);
+    /// assert_eq!(result, expected);
+    ///
+    /// let result = diesel::select(jsonb_set_create_if_missing::<Jsonb, Nullable<Array<Nullable<Text>>>, _, _, _, _>(
+    ///         json!(null),
+    ///         None::<Vec<String>>,
+    ///         json!({"foo": 42}),
+    ///         true
+    ///     )).get_result::<Option<Value>>(connection)?;
+    /// assert!(result.is_none());
+    ///
+    ///
+    /// #     Ok(())
+    /// # }
+    /// ```
+    #[sql_name = "jsonb_set"]
+    fn jsonb_set_create_if_missing<
+        E: JsonbOrNullableJsonb + SingleValue,
+        Arr: TextArrayOrNullableTextArray + CombinedNullableValue<E, Jsonb>,
+    >(
+        base: E,
+        path: Arr,
+        new_value: E,
+        create_if_missing: Bool,
+    ) -> Arr::Out;
+
+    /// Returns target with the item designated by path replaced by new_value,
+    ///     or with new_value added and the item designated by path does not exist.
+    ///
+    /// It can't set path in scalar
+    ///
+    /// All earlier steps in the path must exist, or the target is returned unchanged.
+    /// As with the path oriented operators, negative integers that appear in the path count from the end of JSON arrays.
+    /// If the last path step is an array index that is out of range,
+    ///    the new value is added at the beginning of the array if the index is negative,
+    ///     or at the end of the array if it is positive.
+    ///
+    /// If new_value is not NULL, behaves identically to jsonb_set.
+    ///    Otherwise behaves according to the value of null_value_treatment
+    ///    which must be one of 'raise_exception', 'use_json_null', 'delete_key', or 'return_target'.
+    ///    The default is 'use_json_null'.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// # include!("../../doctest_setup.rs");
+    /// #
+    /// # fn main() {
+    /// #     #[cfg(feature = "serde_json")]
+    /// #     run_test().unwrap();
+    /// # }
+    /// #
+    /// # #[cfg(feature = "serde_json")]
+    /// # fn run_test() -> QueryResult<()> {
+    /// #     use diesel::dsl::jsonb_set_lax;
+    /// #     use diesel::sql_types::{Jsonb,Array,NullValueTreatment, Json, Nullable, Text};
+    /// #     use serde_json::{json,Value};
+    /// #     let connection = &mut establish_connection();
+    ///
+    /// let null_value_treatment = NullValueTreatment::UseJsonNull;
+    /// let result = diesel::select(jsonb_set_lax::<Jsonb, Array<Text>, _, _, _, _, _>(
+    ///         json!([{"f1":1,"f2":null},2,null,3]),
+    ///         vec!["0","f1"],
+    ///         json!([2,3,4]),
+    ///         true,
+    ///         null_value_treatment
+    ///     )).get_result::<Value>(connection)?;
+    /// let expected: Value = json!([{"f1": [2, 3, 4], "f2": null}, 2, null, 3]);
+    /// assert_eq!(result, expected);
+    ///
+    /// let null_value_treatment = NullValueTreatment::ReturnTarget;
+    /// let result = diesel::select(jsonb_set_lax::<Nullable<Jsonb>, Array<Nullable<Text>>, _, _, _, _, _>(
+    ///         json!([{"f1":99,"f2":null},2]),
+    ///         vec!["0","f3"],
+    ///         None::<Value>,
+    ///         true,
+    ///         null_value_treatment
+    ///     )).get_result::<Option<Value>>(connection)?;
+    /// assert_eq!(result, Some(json!([{"f1":99,"f2":null},2])));
+    ///
+    /// let null_value_treatment = NullValueTreatment::UseJsonNull;
+    /// let empty:Vec<String> = Vec::new();
+    /// let result = diesel::select(jsonb_set_lax::<Jsonb, Array<Nullable<Text>>, _, _, _, _, _>(
+    ///         // cannot be json!(null)
+    ///         json!([]),
+    ///         empty,
+    ///         json!(null),
+    ///         true,
+    ///         null_value_treatment
+    ///     )).get_result::<Value>(connection)?;
+    /// let expected = json!([]);
+    /// assert_eq!(result, expected);
+    ///
+    /// let null_value_treatment = NullValueTreatment::UseJsonNull;
+    /// let result = diesel::select(jsonb_set_lax::<Jsonb, Nullable<Array<Nullable<Text>>>, _, _, _, _, _,>(
+    ///         json!(null),
+    ///         None::<Vec<String>>,
+    ///         json!({"foo": 42}),
+    ///         true,
+    ///         null_value_treatment
+    ///     )).get_result::<Option<Value>>(connection)?;
+    /// assert!(result.is_none());
+    ///
+    /// #     Ok(())
+    /// # }
+    /// ```
+    fn jsonb_set_lax<
+        E: JsonbOrNullableJsonb + SingleValue,
+        Arr: TextArrayOrNullableTextArray + CombinedNullableValue<E, Jsonb>,
+    >(
+        base: E,
+        path: Arr,
+        new_value: E,
+        create_if_missing: Bool,
+        null_value_treatment: NullValueTreatmentEnum,
+    ) -> Arr::Out;
+
+    /// Returns target with `new_value` inserted into `base`.
+    ///
+    /// If the item designated by the `path` is an array element, `new_value` will be inserted before that item
+    ///
+    /// If the item designated by the `path` is an object field, `new_value` will be
+    /// inserted only if the object does not already contain that key.
+    ///
+    /// * All earlier steps in the path must exist, or the target is returned unchanged.
+    /// * As with the path oriented operators, negative integers that appear in the `path` count
+    ///   from the end of JSON arrays.
+    /// * If the last `path` step is an array index that is out of range,
+    ///   the new value is added at the beginning of the array if the index is negative,
+    ///   or at the end of the array if it is positive.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// # include!("../../doctest_setup.rs");
+    /// #
+    /// # fn main() {
+    /// #     #[cfg(feature = "serde_json")]
+    /// #     run_test().unwrap();
+    /// # }
+    /// #
+    /// # #[cfg(feature = "serde_json")]
+    /// # fn run_test() -> QueryResult<()> {
+    /// #     use diesel::dsl::jsonb_insert;
+    /// #     use diesel::sql_types::{Jsonb, Array, Json, Nullable, Text};
+    /// #     use serde_json::{json,Value};
+    /// #     let connection = &mut establish_connection();
+    ///
+    /// let result = diesel::select(jsonb_insert::<Jsonb, Array<Text>, _, _, _>(
+    ///         json!({"a":[0,1,2]}),
+    ///         vec!["a","1"],
+    ///         json!("new_value"),
+    ///     )).get_result::<Value>(connection)?;
+    /// let expected: Value = json!({"a":[0,"new_value",1,2]});
+    /// assert_eq!(result, expected);
+    ///
+    /// let result = diesel::select(jsonb_insert::<Nullable<Jsonb>, Array<Text>, _, _, _>(
+    ///         None::<serde_json::Value>,
+    ///         vec!["a","1"],
+    ///         Some(json!("new_value")),
+    ///     )).get_result::<Option<Value>>(connection)?;
+    /// assert_eq!(result, None);
+    ///
+    /// #     Ok(())
+    /// # }
+    /// ```
+    fn jsonb_insert<
+        E: JsonbOrNullableJsonb + SingleValue,
+        Arr: TextArrayOrNullableTextArray + CombinedNullableValue<E, Jsonb>,
+    >(
+        base: E,
+        path: Arr,
+        new_value: E,
+    ) -> Arr::Out;
+
+    /// Returns target with `new_value` inserted into `base`.
+    ///
+    /// If the item designated by the `path` is an array element, `new_value` will be inserted before that
+    /// item if `insert_after` is false (which is the default),
+    /// or after it if `insert_after` is true.
+    ///
+    /// If the item designated by the `path` is an object field, `new_value` will be inserted only
+    /// if the object does not already contain that key.
+    ///
+    /// * All earlier steps in the `path` must exist, or the target is returned unchanged.
+    /// * As with the path oriented operators, negative integers that appear in the `path` count
+    ///   from the end of JSON arrays.
+    /// * If the last `path` step is an array index that is out of range,
+    ///   the new value is added at the beginning of the array if the index is negative,
+    ///   or at the end of the array if it is positive.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// # include!("../../doctest_setup.rs");
+    /// #
+    /// # fn main() {
+    /// #     #[cfg(feature = "serde_json")]
+    /// #     run_test().unwrap();
+    /// # }
+    /// #
+    /// # #[cfg(feature = "serde_json")]
+    /// # fn run_test() -> QueryResult<()> {
+    /// #     use diesel::dsl::jsonb_insert_with_insert_after;
+    /// #     use diesel::sql_types::{Jsonb, Array, Json, Nullable, Text};
+    /// #     use serde_json::{json,Value};
+    /// #     let connection = &mut establish_connection();
+    ///
+    /// let result = diesel::select(jsonb_insert_with_insert_after::<Jsonb, Array<Text>, _, _, _, _>(
+    ///         json!({"a":[0,1,2]}),
+    ///         vec!["a","1"],
+    ///         json!("new_value"),
+    ///         false
+    ///     )).get_result::<Value>(connection)?;
+    /// let expected: Value = json!({"a":[0,"new_value",1,2]});
+    /// assert_eq!(result, expected);
+    ///
+    /// let result = diesel::select(jsonb_insert_with_insert_after::<Jsonb, Array<Text>, _, _, _, _>(
+    ///         json!({"a":[0,1,2]}),
+    ///         vec!["a","1"],
+    ///         json!("new_value"),
+    ///         true
+    ///     )).get_result::<Value>(connection)?;
+    /// let expected: Value = json!({"a":[0,1,"new_value",2,]});
+    /// assert_eq!(result, expected);
+    ///
+    /// #     Ok(())
+    /// # }
+    /// ```
+    #[sql_name = "jsonb_insert"]
+    fn jsonb_insert_with_insert_after<
+        E: JsonbOrNullableJsonb + SingleValue,
+        Arr: TextArrayOrNullableTextArray + CombinedNullableValue<E, Jsonb>,
+    >(
+        base: E,
+        path: Arr,
+        new_value: E,
+        insert_after: Bool,
+    ) -> Arr::Out;
 }

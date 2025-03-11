@@ -9,7 +9,7 @@ use self::time::{
 };
 
 use super::{PgDate, PgTime, PgTimestamp};
-use crate::deserialize::{self, FromSql};
+use crate::deserialize::{self, Defaultable, FromSql};
 use crate::pg::{Pg, PgValue};
 use crate::serialize::{self, Output, ToSql};
 use crate::sql_types::{Date, Time, Timestamp, Timestamptz};
@@ -58,6 +58,13 @@ impl ToSql<Timestamptz, Pg> for PrimitiveDateTime {
 }
 
 #[cfg(all(feature = "time", feature = "postgres_backend"))]
+impl Defaultable for PrimitiveDateTime {
+    fn default_value() -> Self {
+        PG_EPOCH
+    }
+}
+
+#[cfg(all(feature = "time", feature = "postgres_backend"))]
 impl FromSql<Timestamptz, Pg> for OffsetDateTime {
     fn from_sql(bytes: PgValue<'_>) -> deserialize::Result<Self> {
         let primitive_date_time = <PrimitiveDateTime as FromSql<Timestamptz, Pg>>::from_sql(bytes)?;
@@ -71,6 +78,13 @@ impl ToSql<Timestamptz, Pg> for OffsetDateTime {
         let as_utc = self.to_offset(UtcOffset::UTC);
         let primitive_date_time = PrimitiveDateTime::new(as_utc.date(), as_utc.time());
         ToSql::<Timestamptz, Pg>::to_sql(&primitive_date_time, &mut out.reborrow())
+    }
+}
+
+#[cfg(all(feature = "time", feature = "postgres_backend"))]
+impl Defaultable for OffsetDateTime {
+    fn default_value() -> Self {
+        datetime!(2000-01-01 0:00:00 UTC)
     }
 }
 
@@ -119,6 +133,13 @@ impl FromSql<Date, Pg> for NaiveDate {
     }
 }
 
+#[cfg(all(feature = "time", feature = "postgres_backend"))]
+impl Defaultable for NaiveDate {
+    fn default_value() -> Self {
+        PG_EPOCH_DATE
+    }
+}
+
 #[cfg(test)]
 mod tests {
     extern crate dotenvy;
@@ -139,7 +160,7 @@ mod tests {
         PrimitiveDateTime::new(offset_now.date(), offset_now.time())
     }
 
-    #[test]
+    #[diesel_test_helper::test]
     fn unix_epoch_encodes_correctly() {
         let connection = &mut connection();
         let time = datetime!(1970-1-1 0:00:00);
@@ -147,7 +168,7 @@ mod tests {
         assert!(query.get_result::<bool>(connection).unwrap());
     }
 
-    #[test]
+    #[diesel_test_helper::test]
     fn unix_epoch_encodes_correctly_with_utc_timezone() {
         let connection = &mut connection();
         let time = datetime!(1970-1-1 0:00:00 utc);
@@ -155,7 +176,7 @@ mod tests {
         assert!(query.get_result::<bool>(connection).unwrap());
     }
 
-    #[test]
+    #[diesel_test_helper::test]
     fn unix_epoch_encodes_correctly_with_timezone() {
         let connection = &mut connection();
         let time = datetime!(1970-1-1 0:00:00 -1:00);
@@ -163,7 +184,7 @@ mod tests {
         assert!(query.get_result::<bool>(connection).unwrap());
     }
 
-    #[test]
+    #[diesel_test_helper::test]
     fn unix_epoch_decodes_correctly() {
         let connection = &mut connection();
         let time = datetime!(1970-1-1 0:0:0);
@@ -172,7 +193,7 @@ mod tests {
         assert_eq!(Ok(time), epoch_from_sql);
     }
 
-    #[test]
+    #[diesel_test_helper::test]
     fn unix_epoch_decodes_correctly_with_timezone() {
         let connection = &mut connection();
         let time = datetime!(1970-1-1 0:00:00 utc);
@@ -181,7 +202,7 @@ mod tests {
         assert_eq!(Ok(time), epoch_from_sql);
     }
 
-    #[test]
+    #[diesel_test_helper::test]
     fn times_relative_to_now_encode_correctly() {
         let connection = &mut connection();
         let time = naive_now() + Duration::seconds(60);
@@ -193,7 +214,7 @@ mod tests {
         assert!(query.get_result::<bool>(connection).unwrap());
     }
 
-    #[test]
+    #[diesel_test_helper::test]
     fn times_with_timezones_round_trip_after_conversion() {
         let connection = &mut connection();
         let time = datetime!(2016-1-2 1:00:00 +1);
@@ -202,7 +223,7 @@ mod tests {
         assert_eq!(Ok(expected), query.get_result(connection));
     }
 
-    #[test]
+    #[diesel_test_helper::test]
     fn times_of_day_encode_correctly() {
         let connection = &mut connection();
 
@@ -219,7 +240,7 @@ mod tests {
         assert!(query.get_result::<bool>(connection).unwrap());
     }
 
-    #[test]
+    #[diesel_test_helper::test]
     fn times_of_day_decode_correctly() {
         let connection = &mut connection();
         let query = select(sql::<Time>("'00:00:00'::time"));
@@ -238,7 +259,7 @@ mod tests {
         assert_eq!(Ok(roughly_half_past_eleven), result);
     }
 
-    #[test]
+    #[diesel_test_helper::test]
     fn dates_encode_correctly() {
         let connection = &mut connection();
         let january_first_2000 = date!(2000 - 1 - 1);
@@ -266,7 +287,7 @@ mod tests {
         assert!(query.get_result::<bool>(connection).unwrap());
     }
 
-    #[test]
+    #[diesel_test_helper::test]
     fn dates_decode_correctly() {
         let connection = &mut connection();
         let january_first_2000 = date!(2000 - 1 - 1);

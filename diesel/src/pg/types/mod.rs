@@ -10,13 +10,16 @@ mod integers;
 mod ipnet_address;
 #[cfg(feature = "serde_json")]
 mod json;
+mod json_function_enum;
 mod mac_addr;
+mod mac_addr_8;
 #[doc(hidden)]
 pub(in crate::pg) mod money;
 mod multirange;
 #[cfg(feature = "network-address")]
 mod network_address;
 mod numeric;
+pub(in crate::pg) mod pg_lsn;
 mod primitives;
 mod ranges;
 mod record;
@@ -206,6 +209,31 @@ pub mod sql_types {
     pub type Tsmultirange = Multirange<crate::sql_types::Timestamp>;
     #[doc(hidden)]
     pub type Tstzmultirange = Multirange<crate::sql_types::Timestamptz>;
+
+    /// This is a wrapper for [`NullValueTreatment`] to represent null_value_treatment for jsonb_seet_lax:
+    ///     'raise_exception' 'use_json_null' 'delete_key' 'return_target'
+    /// used in functions jsonb_set_lax
+    #[derive(Debug, Clone, Copy, QueryId, SqlType)]
+    #[cfg(feature = "postgres_backend")]
+    #[diesel(postgres_type(name = "text"))]
+    pub struct NullValueTreatmentEnum;
+
+    /// Represent null_value_treatment for jsonb_seet_lax:
+    ///     'raise_exception' 'use_json_null' 'delete_key' 'return_target'
+    /// used in functions jsonb_seet_lax.
+    #[derive(Debug, Clone, Copy, diesel_derives::AsExpression)]
+    #[diesel(sql_type = NullValueTreatmentEnum)]
+    #[allow(clippy::enum_variant_names)]
+    pub enum NullValueTreatment {
+        /// postgres 'raise_exception'
+        RaiseException,
+        /// postgres 'use_json_null'
+        UseJsonNull,
+        /// postgres 'delete_key'
+        DeleteKey,
+        /// postgres 'return_target'
+        ReturnTarget,
+    }
 
     /// This is a wrapper for [`RangeBound`] to represent range bounds: '[]', '(]', '[)', '()',
     /// used in functions int4range, int8range, numrange, tsrange, tstzrange, daterange.
@@ -407,6 +435,54 @@ pub mod sql_types {
     /// Alias for `MacAddr` to be able to use it with `diesel print-schema`.
     pub type Macaddr = MacAddr;
 
+    /// The [`MACADDR8`](https://www.postgresql.org/docs/current/static/datatype-net-types.html) SQL type.
+    ///
+    /// ### [`ToSql`] impls
+    ///
+    /// - `[u8; 8]`
+    ///
+    /// ### [`FromSql`] impls
+    ///
+    /// - `[u8; 8]`
+    ///
+    /// [`ToSql`]: crate::serialize::ToSql
+    /// [`FromSql`]: crate::deserialize::FromSql
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # include!("../../doctest_setup.rs");
+    /// table! {
+    ///     devices {
+    ///         id -> Integer,
+    ///         macaddr -> MacAddr8,
+    ///     }
+    /// }
+    ///
+    /// # fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// #     use diesel::insert_into;
+    /// #     use self::devices::dsl::*;
+    /// #     let connection = &mut connection_no_data();
+    /// #     diesel::sql_query("CREATE TABLE devices (
+    /// #         id SERIAL PRIMARY KEY,
+    /// #         macaddr MACADDR8 NOT NULL
+    /// #     )").execute(connection)?;
+    /// let inserted_macaddr = insert_into(devices)
+    ///     .values(macaddr.eq([0x08, 0x00, 0x2b, 0x01, 0x02, 0x03, 0x04, 0x05]))
+    ///     .returning(macaddr)
+    ///     .get_result::<[u8; 8]>(connection)?;
+    /// assert_eq!([0x08, 0x00, 0x2b, 0x01, 0x02, 0x03, 0x04, 0x05], inserted_macaddr);
+    /// #     Ok(())
+    /// # }
+    /// ```
+    #[cfg(feature = "postgres_backend")]
+    #[derive(Debug, Clone, Copy, Default, QueryId, SqlType)]
+    #[diesel(postgres_type(oid = 774, array_oid = 775))]
+    pub struct MacAddr8;
+
+    /// Alias for `MacAddr` to be able to use it with `diesel print-schema`.
+    pub type Macaddr8 = MacAddr8;
+
     /// The [`INET`](https://www.postgresql.org/docs/current/static/datatype-net-types.html) SQL type. This type can only be used with `feature = "network-address"` or `feature = "ipnet-address"`.
     ///
     /// ### [`ToSql`] impls
@@ -595,6 +671,25 @@ pub mod sql_types {
     #[derive(Debug, Clone, Copy, Default, QueryId, SqlType)]
     #[diesel(postgres_type(name = "citext"))]
     pub struct Citext;
+
+    /// The [`pg_lsn`] SQL type. This is a PostgreSQL specific type. Encodes a position in the PostgreSQL *Write Ahead Log* (WAL).
+    ///
+    /// ### [`ToSql`] impls
+    ///
+    /// - [`u64`]
+    ///
+    /// ### [`FromSql`] impls
+    ///
+    /// - [`u64`]
+    ///
+    /// [`ToSql`]: crate::serialize::ToSql
+    /// [`FromSql`]: crate::deserialize::FromSql
+    /// [`u64`]: https://doc.rust-lang.org/nightly/std/primitive.u64.html
+    /// [`pg_lsn`]: https://www.postgresql.org/docs/current/datatype-pg-lsn.html
+    #[cfg(feature = "postgres_backend")]
+    #[derive(Debug, Clone, Copy, Default, QueryId, SqlType)]
+    #[diesel(postgres_type(oid = 3220, array_oid = 3221))]
+    pub struct PgLsn;
 }
 
 mod ops {

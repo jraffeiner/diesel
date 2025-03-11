@@ -1,4 +1,4 @@
-use crate::deserialize::{self, FromSql};
+use crate::deserialize::{self, Defaultable, FromSql};
 use crate::pg::{Pg, PgValue};
 use crate::serialize::{self, IsNull, Output, ToSql};
 use crate::sql_types;
@@ -126,12 +126,26 @@ impl ToSql<sql_types::BigInt, Pg> for i64 {
     }
 }
 
+#[cfg(feature = "postgres_backend")]
+impl Defaultable for i32 {
+    fn default_value() -> Self {
+        Self::default()
+    }
+}
+
+#[cfg(feature = "postgres_backend")]
+impl Defaultable for i64 {
+    fn default_value() -> Self {
+        Self::default()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::query_builder::bind_collector::ByteWrapper;
 
-    #[test]
+    #[diesel_test_helper::test]
     fn i16_to_sql() {
         let mut buffer = Vec::new();
         let mut bytes = Output::test(ByteWrapper(&mut buffer));
@@ -141,7 +155,7 @@ mod tests {
         assert_eq!(buffer, vec![0, 1, 0, 0, 255, 255]);
     }
 
-    #[test]
+    #[diesel_test_helper::test]
     fn i32_to_sql() {
         let mut buffer = Vec::new();
         let mut bytes = Output::test(ByteWrapper(&mut buffer));
@@ -151,7 +165,7 @@ mod tests {
         assert_eq!(buffer, vec![0, 0, 0, 1, 0, 0, 0, 0, 255, 255, 255, 255]);
     }
 
-    #[test]
+    #[diesel_test_helper::test]
     fn i64_to_sql() {
         let mut buffer = Vec::new();
         let mut bytes = Output::test(ByteWrapper(&mut buffer));

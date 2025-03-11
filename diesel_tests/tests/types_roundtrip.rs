@@ -68,7 +68,7 @@ macro_rules! test_round_trip {
         test_round_trip!($test_name, $sql_type, $tpe, $map_fn, ne);
     };
     ($test_name:ident, $sql_type:ty, $tpe:ty, $map_fn:ident, $cmp: expr) => {
-        #[test]
+        #[diesel_test_helper::test]
         #[allow(clippy::type_complexity)]
         fn $test_name() {
             use diesel::sql_types::*;
@@ -186,6 +186,12 @@ mod pg_types {
         (u8, u8, u8, u8, u8, u8),
         mk_macaddr
     );
+    test_round_trip!(
+        macaddr8_roundtrips,
+        MacAddr8,
+        (u8, u8, u8, u8, u8, u8, u8, u8),
+        mk_macaddr8
+    );
     test_round_trip!(cidr_v4_roundtrips, Cidr, (u8, u8, u8, u8), mk_ipv4);
     test_round_trip!(
         cidr_v4_roundtrips_ipnet,
@@ -293,6 +299,8 @@ mod pg_types {
 
     test_round_trip!(char_roundtrips, CChar, u8);
 
+    test_round_trip!(pg_lsn_roundtrips, PgLsn, u64, mk_pg_lsn);
+
     #[allow(clippy::type_complexity)]
     fn mk_uuid(data: (u32, u16, u16, (u8, u8, u8, u8, u8, u8, u8, u8))) -> self::uuid::Uuid {
         let a = data.3;
@@ -302,6 +310,12 @@ mod pg_types {
 
     fn mk_macaddr(data: (u8, u8, u8, u8, u8, u8)) -> [u8; 6] {
         [data.0, data.1, data.2, data.3, data.4, data.5]
+    }
+
+    fn mk_macaddr8(data: (u8, u8, u8, u8, u8, u8, u8, u8)) -> [u8; 8] {
+        [
+            data.0, data.1, data.2, data.3, data.4, data.5, data.6, data.7,
+        ]
     }
 
     fn mk_ipv4(data: (u8, u8, u8, u8)) -> ipnetwork::IpNetwork {
@@ -459,6 +473,10 @@ mod pg_types {
 
     pub fn mk_datetime(data: (i64, u32)) -> DateTime<Utc> {
         Utc.from_utc_datetime(&mk_pg_naive_datetime(data))
+    }
+
+    pub fn mk_pg_lsn(data: u64) -> PgLsn {
+        PgLsn(data)
     }
 }
 

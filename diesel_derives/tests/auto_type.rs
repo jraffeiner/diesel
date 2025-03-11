@@ -52,7 +52,20 @@ table! {
         multirange -> Multirange<Integer>,
         timestamptz -> Timestamptz,
         name -> Text,
-        text_array -> Array<Text>
+        text_array -> Array<Text>,
+        record -> Record<(Integer, Text, Date)>,
+        boolean -> Bool,
+    }
+}
+
+#[cfg(feature = "sqlite")]
+table! {
+    sqlite_extras {
+        id -> Integer,
+        text -> Text,
+        blob -> Binary,
+        json -> Json,
+        jsonb -> Jsonb,
     }
 }
 
@@ -346,6 +359,14 @@ fn test_pg_any_json_expression_methods() -> _ {
                 .retrieve_by_path_as_text(s2)
                 .eq(s),
         )
+        .and(pg_extras::name.is_json())
+        .and(pg_extras::name.is_not_json())
+        .and(pg_extras::name.is_json_object())
+        .and(pg_extras::name.is_not_json_object())
+        .and(pg_extras::name.is_json_array())
+        .and(pg_extras::name.is_not_json_array())
+        .and(pg_extras::name.is_json_scalar())
+        .and(pg_extras::name.is_not_json_scalar())
 }
 
 #[cfg(feature = "postgres")]
@@ -394,6 +415,8 @@ fn test_normal_functions() -> _ {
 fn postgres_functions() -> _ {
     let bound: sql_types::RangeBound =
         sql_types::RangeBound::LowerBoundExclusiveUpperBoundExclusive;
+    let null_value_treatment: sql_types::NullValueTreatment =
+        sql_types::NullValueTreatment::UseJsonNull;
     (
         lower(pg_extras::range),
         upper(pg_extras::range),
@@ -435,6 +458,7 @@ fn postgres_functions() -> _ {
         array_ndims(pg_extras::array),
         array_shuffle(pg_extras::array),
         array_sample(pg_extras::array, pg_extras::id),
+        array_to_json(pg_extras::array),
         to_json(pg_extras::id),
         to_jsonb(pg_extras::id),
         json_object(pg_extras::text_array),
@@ -448,6 +472,50 @@ fn postgres_functions() -> _ {
         jsonb_array_length(pg_extras::jsonb),
         jsonb_object(pg_extras::text_array),
         jsonb_object_with_keys_and_values(pg_extras::text_array, pg_extras::text_array),
+        row_to_json(pg_extras::record),
+        json_populate_record(pg_extras::record, pg_extras::json),
+        jsonb_populate_record(pg_extras::record, pg_extras::jsonb),
+        jsonb_set(pg_extras::jsonb, pg_extras::text_array, pg_extras::jsonb),
+        jsonb_set_create_if_missing(
+            pg_extras::jsonb,
+            pg_extras::text_array,
+            pg_extras::jsonb,
+            pg_extras::boolean,
+        ),
+        jsonb_set_lax(
+            pg_extras::jsonb,
+            pg_extras::text_array,
+            pg_extras::jsonb,
+            pg_extras::boolean,
+            null_value_treatment,
+        ),
+        jsonb_insert(pg_extras::jsonb, pg_extras::text_array, pg_extras::jsonb),
+        jsonb_insert_with_insert_after(
+            pg_extras::jsonb,
+            pg_extras::text_array,
+            pg_extras::jsonb,
+            pg_extras::boolean,
+        ),
+    )
+}
+
+#[cfg(feature = "sqlite")]
+#[auto_type]
+fn sqlite_functions() -> _ {
+    (
+        json(sqlite_extras::text),
+        jsonb(sqlite_extras::blob),
+        json_array_length(sqlite_extras::json),
+        json_array_length_with_path(sqlite_extras::json, sqlite_extras::text),
+        json_error_position(sqlite_extras::text),
+        json_error_position(sqlite_extras::blob),
+        json_pretty(sqlite_extras::json),
+        json_pretty(sqlite_extras::jsonb),
+        json_pretty_with_indentation(sqlite_extras::json, "  "),
+        json_pretty_with_indentation(sqlite_extras::jsonb, "  "),
+        json_valid(sqlite_extras::json),
+        json_type(sqlite_extras::json),
+        json_type_with_path(sqlite_extras::json, sqlite_extras::text),
     )
 }
 
@@ -488,6 +556,11 @@ fn update_and_binary_operator_and_block() -> _ {
         let v: diesel::data_types::PgInterval = 1.year();
         v
     }))
+}
+
+#[auto_type]
+fn count_query() -> _ {
+    users::table.count()
 }
 
 // #[auto_type]

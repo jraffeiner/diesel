@@ -753,7 +753,7 @@ fn known_buffer_size_for_ffi_type(tpe: ffi::enum_field_types) -> Option<usize> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::connection::statement_cache::MaybeCached;
+    use crate::connection::statement_cache::{MaybeCached, PrepareForCache};
     use crate::deserialize::FromSql;
     use crate::mysql::connection::stmt::Statement;
     use crate::prelude::*;
@@ -777,7 +777,7 @@ mod tests {
     }
 
     #[cfg(feature = "extras")]
-    #[test]
+    #[diesel_test_helper::test]
     fn check_all_the_types() {
         let conn = &mut crate::test_helpers::connection();
 
@@ -1247,7 +1247,10 @@ mod tests {
         conn: &MysqlConnection,
         bind_tpe: impl Into<(ffi::enum_field_types, Flags)>,
     ) -> BindData {
-        let stmt: Statement = conn.raw_connection.prepare(query).unwrap();
+        let stmt: Statement = conn
+            .raw_connection
+            .prepare(query, PrepareForCache::No, &[])
+            .unwrap();
         let stmt = MaybeCached::CannotCache(stmt);
 
         let bind = BindData::from_tpe_and_flags(bind_tpe.into());
@@ -1266,7 +1269,10 @@ mod tests {
         id: i32,
         (mut field, tpe): (Vec<u8>, impl Into<(ffi::enum_field_types, Flags)>),
     ) {
-        let mut stmt = conn.raw_connection.prepare(query).unwrap();
+        let mut stmt = conn
+            .raw_connection
+            .prepare(query, PrepareForCache::No, &[])
+            .unwrap();
         let length = field.len() as _;
         let (tpe, flags) = tpe.into();
         let capacity = field.capacity();
@@ -1310,7 +1316,7 @@ mod tests {
         }
     }
 
-    #[test]
+    #[diesel_test_helper::test]
     fn check_json_bind() {
         table! {
             json_test {
@@ -1474,7 +1480,7 @@ mod tests {
         );
     }
 
-    #[test]
+    #[diesel_test_helper::test]
     fn check_enum_bind() {
         let conn = &mut crate::test_helpers::connection();
 
@@ -1664,7 +1670,7 @@ mod tests {
         );
     }
 
-    #[test]
+    #[diesel_test_helper::test]
     fn check_set_bind() {
         let conn = &mut crate::test_helpers::connection();
 

@@ -70,16 +70,16 @@ impl DebugQuery for StrQueryHelper<'_> {}
 /// implementation of the enum itself and any of its fields
 /// is not guarantee to be stable.
 //
-// This types is carefully designed
+// This type is carefully designed
 // to avoid any potential overhead by
 // taking references for all things
 // and by not performing any additional
 // work until required.
 // In addition it's carefully designed
 // not to be dependent on the actual backend
-// type, as that makes it easier to to reuse
+// type, as that makes it easier to reuse
 // `Instrumentation` implementations in
-// different a different context
+// a different context
 #[derive(Debug)]
 #[non_exhaustive]
 pub enum InstrumentationEvent<'a> {
@@ -174,6 +174,7 @@ pub enum InstrumentationEvent<'a> {
 // these constructors exist to
 // keep `#[non_exhaustive]` on all the variants
 // and to gate the constructors on the unstable feature
+#[cfg(feature = "i-implement-a-third-party-backend-and-opt-into-breaking-changes")]
 impl<'a> InstrumentationEvent<'a> {
     /// Create a new `InstrumentationEvent::StartEstablishConnection` event
     #[cfg(feature = "i-implement-a-third-party-backend-and-opt-into-breaking-changes")]
@@ -244,7 +245,7 @@ impl<'a> InstrumentationEvent<'a> {
 /// `tracing` and `log` are supposed to be part of their own
 /// crates.
 pub trait Instrumentation: Downcast + Send + 'static {
-    /// The function that is invoced for each event
+    /// The function that is invoked for each event
     fn on_connection_event(&mut self, event: InstrumentationEvent<'_>);
 }
 downcast_rs::impl_downcast!(Instrumentation);
@@ -352,6 +353,7 @@ impl DerefMut for DynInstrumentation {
 }
 
 impl DynInstrumentation {
+    /// Create a instance of the default instrumentation provider
     #[diesel_derives::__diesel_public_if(
         feature = "i-implement-a-third-party-backend-and-opt-into-breaking-changes"
     )]
@@ -363,6 +365,7 @@ impl DynInstrumentation {
         }
     }
 
+    /// Create a noop instrumentation provider instance
     #[diesel_derives::__diesel_public_if(
         feature = "i-implement-a-third-party-backend-and-opt-into-breaking-changes"
     )]
@@ -374,6 +377,7 @@ impl DynInstrumentation {
         }
     }
 
+    /// register an event with the given instrumentation implementation
     #[diesel_derives::__diesel_public_if(
         feature = "i-implement-a-third-party-backend-and-opt-into-breaking-changes"
     )]

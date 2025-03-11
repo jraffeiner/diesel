@@ -1,4 +1,8 @@
+#[cfg(not(all(target_family = "wasm", target_os = "unknown")))]
 extern crate libsqlite3_sys as ffi;
+
+#[cfg(all(target_family = "wasm", target_os = "unknown"))]
+use sqlite_wasm_rs::export as ffi;
 
 mod bind_collector;
 mod functions;
@@ -164,6 +168,15 @@ impl Connection for SqliteConnection {
     ///
     /// If the database does not exist, this method will try to
     /// create a new database and then establish a connection to it.
+    ///
+    /// ## WASM support
+    ///
+    /// If you plan to use this connection type on the `wasm32-unknown-unknown` target please
+    /// make sure to read the following notes:
+    ///
+    /// * The database is stored in memory by default.
+    /// * Persistent VFS (Virtual File Systems) is optional,
+    ///     see <https://github.com/Spxg/sqlite-wasm-rs/blob/master/VFS.md> for details
     fn establish(database_url: &str) -> ConnectionResult<Self> {
         let mut instrumentation = DynInstrumentation::default_instrumentation();
         instrumentation.on_connection_event(InstrumentationEvent::StartEstablishConnection {
@@ -357,7 +370,8 @@ impl SqliteConnection {
             &source,
             &Sqlite,
             &[],
-            |sql, is_cached| Statement::prepare(raw_connection, sql, is_cached),
+            raw_connection,
+            Statement::prepare,
             &mut *self.instrumentation,
         ) {
             Ok(statement) => statement,
@@ -563,13 +577,26 @@ mod tests {
     use super::*;
     use crate::dsl::sql;
     use crate::prelude::*;
-    use crate::sql_types::Integer;
+    use crate::sql_types::{Integer, Text};
 
     fn connection() -> SqliteConnection {
         SqliteConnection::establish(":memory:").unwrap()
     }
 
-    #[test]
+    #[declare_sql_function]
+    extern "SQL" {
+        fn fun_case(x: Text) -> Text;
+        fn my_add(x: Integer, y: Integer) -> Integer;
+        fn answer() -> Integer;
+        fn add_counter(x: Integer) -> Integer;
+
+        #[aggregate]
+        fn my_sum(expr: Integer) -> Integer;
+        #[aggregate]
+        fn range_max(expr1: Integer, expr2: Integer, expr3: Integer) -> Nullable<Integer>;
+    }
+
+    #[diesel_test_helper::test]
     fn database_serializes_and_deserializes_successfully() {
         let expected_users = vec![
             (
@@ -604,10 +631,7 @@ mod tests {
         assert_eq!(expected_users, actual_users);
     }
 
-    use crate::sql_types::Text;
-    define_sql_function!(fn fun_case(x: Text) -> Text);
-
-    #[test]
+    #[diesel_test_helper::test]
     fn register_custom_function() {
         let connection = &mut connection();
         fun_case_utils::register_impl(connection, |x: String| {
@@ -630,9 +654,7 @@ mod tests {
         assert_eq!("fOoBaR", mapped_string);
     }
 
-    define_sql_function!(fn my_add(x: Integer, y: Integer) -> Integer);
-
-    #[test]
+    #[diesel_test_helper::test]
     fn register_multiarg_function() {
         let connection = &mut connection();
         my_add_utils::register_impl(connection, |x: i32, y: i32| x + y).unwrap();
@@ -641,9 +663,7 @@ mod tests {
         assert_eq!(Ok(3), added);
     }
 
-    define_sql_function!(fn answer() -> Integer);
-
-    #[test]
+    #[diesel_test_helper::test]
     fn register_noarg_function() {
         let connection = &mut connection();
         answer_utils::register_impl(connection, || 42).unwrap();
@@ -652,7 +672,7 @@ mod tests {
         assert_eq!(Ok(42), answer);
     }
 
-    #[test]
+    #[diesel_test_helper::test]
     fn register_nondeterministic_noarg_function() {
         let connection = &mut connection();
         answer_utils::register_nondeterministic_impl(connection, || 42).unwrap();
@@ -661,9 +681,7 @@ mod tests {
         assert_eq!(Ok(42), answer);
     }
 
-    define_sql_function!(fn add_counter(x: Integer) -> Integer);
-
-    #[test]
+    #[diesel_test_helper::test]
     fn register_nondeterministic_function() {
         let connection = &mut connection();
         let mut y = 0;
@@ -676,11 +694,6 @@ mod tests {
         let added = crate::select((add_counter(1), add_counter(1), add_counter(1)))
             .get_result::<(i32, i32, i32)>(connection);
         assert_eq!(Ok((2, 3, 4)), added);
-    }
-
-    define_sql_function! {
-        #[aggregate]
-        fn my_sum(expr: Integer) -> Integer;
     }
 
     #[derive(Default)]
@@ -707,7 +720,7 @@ mod tests {
         }
     }
 
-    #[test]
+    #[diesel_test_helper::test]
     fn register_aggregate_function() {
         use self::my_sum_example::dsl::*;
 
@@ -729,7 +742,7 @@ mod tests {
         assert_eq!(Ok(6), result);
     }
 
-    #[test]
+    #[diesel_test_helper::test]
     fn register_aggregate_function_returns_finalize_default_on_empty_set() {
         use self::my_sum_example::dsl::*;
 
@@ -746,11 +759,6 @@ mod tests {
             .select(my_sum(value))
             .get_result::<i32>(connection);
         assert_eq!(Ok(0), result);
-    }
-
-    define_sql_function! {
-        #[aggregate]
-        fn range_max(expr1: Integer, expr2: Integer, expr3: Integer) -> Nullable<Integer>;
     }
 
     #[derive(Default)]
@@ -791,7 +799,7 @@ mod tests {
         }
     }
 
-    #[test]
+    #[diesel_test_helper::test]
     fn register_aggregate_multiarg_function() {
         use self::range_max_example::dsl::*;
 
@@ -827,7 +835,7 @@ mod tests {
         }
     }
 
-    #[test]
+    #[diesel_test_helper::test]
     fn register_collation_function() {
         use self::my_collation_example::dsl::*;
 
@@ -893,7 +901,7 @@ mod tests {
     }
 
     // regression test for https://github.com/diesel-rs/diesel/issues/3425
-    #[test]
+    #[diesel_test_helper::test]
     fn test_correct_seralization_of_owned_strings() {
         use crate::prelude::*;
 
@@ -923,7 +931,7 @@ mod tests {
         assert_eq!(res, Some(String::new()));
     }
 
-    #[test]
+    #[diesel_test_helper::test]
     fn test_correct_seralization_of_owned_bytes() {
         use crate::prelude::*;
 
@@ -953,7 +961,7 @@ mod tests {
         assert_eq!(res, Some(Vec::new()));
     }
 
-    #[test]
+    #[diesel_test_helper::test]
     fn correctly_handle_empty_query() {
         let check_empty_query_error = |r: crate::QueryResult<usize>| {
             assert!(r.is_err());
@@ -968,5 +976,22 @@ mod tests {
         check_empty_query_error(crate::sql_query("   ").execute(connection));
         check_empty_query_error(crate::sql_query("\n\t").execute(connection));
         check_empty_query_error(crate::sql_query("-- SELECT 1;").execute(connection));
+    }
+
+    #[cfg(all(target_family = "wasm", target_os = "unknown"))]
+    #[wasm_bindgen_test::wasm_bindgen_test]
+    fn test_sqlite_wasm_vfs_default() {
+        SqliteConnection::establish("test_sqlite_wasm_vfs_default.db").unwrap();
+    }
+
+    #[cfg(all(target_family = "wasm", target_os = "unknown"))]
+    #[wasm_bindgen_test::wasm_bindgen_test]
+    async fn test_sqlite_wasm_vfs_opfs_sahpool() {
+        let util = sqlite_wasm_rs::export::install_opfs_sahpool(None, false)
+            .await
+            .unwrap();
+        SqliteConnection::establish("file:test_sqlite_wasm_vfs_opfs_sahpool.db?vfs=opfs-sahpool")
+            .unwrap();
+        assert!(util.get_file_count() > 0);
     }
 }

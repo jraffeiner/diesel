@@ -137,9 +137,8 @@
 //! ## Getting help
 //!
 //! If you run into problems, Diesel has an active community.
-//! Either open a new [discussion] thread at diesel github repository or
-//! use the active Gitter room at
-//! [gitter.im/diesel-rs/diesel](https://gitter.im/diesel-rs/diesel)
+//! Open a new [discussion] thread at diesel github repository
+//! and we will try to help you
 //!
 //! [discussion]: https://github.com/diesel-rs/diesel/discussions/categories/q-a
 //!
@@ -157,10 +156,22 @@
 //!   [dependencies]
 //!   libsqlite3-sys = { version = "0.29", features = ["bundled"] }
 //!   ```
-//! - `postgres`: This feature enables the diesel postgres backend. Enabling this feature requires a compatible
-//!   copy of `libpq` for your target architecture. This features implies `postgres_backend`
-//! - `mysql`: This feature enables the idesel mysql backend. Enabling this feature requires a compatible copy
-//!   of `libmysqlclient` for your target architecture. This feature implies `mysql_backend`
+//! - `postgres`: This feature enables the diesel postgres backend. This features implies `postgres_backend`
+//!   Enabling this feature requires a compatible copy of `libpq` for your target architecture.
+//!   Alternatively, you can add `pq-sys` with the `bundled` feature as a dependency to your
+//!   crate so libpq will be bundled:
+//!   ```toml
+//!   [dependencies]
+//!   pq-sys = { version = "0.6", features = ["bundled"] }
+//!   openssl-sys = { version = "0.9.100", features = ["vendored"] }
+//!   ```
+//! - `mysql`: This feature enables the diesel mysql backend. This feature implies `mysql_backend`.
+//!   Enabling this feature requires a compatible copy of `libmysqlclient` for your target architecture.
+//!   Alternatively, you can add `mysqlclient-sys` with the `bundled` feature as a dependency to your
+//!   crate so libmysqlclient will be bundled:
+//!   ```toml
+//!   [dependencies]
+//!   mysqlclient-sys = { version = "0.4", features = ["bundled"] }
 //! - `postgres_backend`: This feature enables those parts of diesels postgres backend, that are not dependent
 //!   on `libpq`. Diesel does not provide any connection implementation with only this feature enabled.
 //!   This feature can be used to implement a custom implementation of diesels `Connection` trait for the
@@ -216,6 +227,11 @@
 //! - `32-column-tables`
 
 #![cfg_attr(feature = "unstable", feature(trait_alias))]
+#![cfg_attr(feature = "unstable", feature(strict_provenance_lints))]
+#![cfg_attr(
+    feature = "unstable",
+    warn(fuzzy_provenance_casts, lossy_provenance_casts)
+)]
 #![cfg_attr(docsrs, feature(doc_cfg, doc_auto_cfg))]
 #![cfg_attr(feature = "128-column-tables", recursion_limit = "256")]
 // Built-in Lints
@@ -251,6 +267,11 @@
 )]
 //#![deny(unsafe_code)]
 #![cfg_attr(test, allow(clippy::map_unwrap_or, clippy::unwrap_used))]
+
+// Running wasm tests on dedicated_worker
+#[cfg(test)]
+#[cfg(all(target_family = "wasm", target_os = "unknown"))]
+wasm_bindgen_test::wasm_bindgen_test_configure!(run_in_dedicated_worker);
 
 extern crate diesel_derives;
 
@@ -367,6 +388,7 @@ pub mod helper_types {
     use super::query_dsl::methods::*;
     use super::query_dsl::*;
     use super::query_source::{aliasing, joins};
+    use crate::dsl::CountStar;
     use crate::query_builder::select_clause::SelectClause;
 
     #[doc(inline)]
@@ -697,6 +719,9 @@ pub mod helper_types {
     /// [`DeleteStatement::returning`](crate::query_builder::DeleteStatement::returning)
     pub type Returning<Q, S> =
         <Q as crate::query_builder::returning_clause::ReturningClauseHelper<S>>::WithReturning;
+
+    #[doc(hidden)] // used for `QueryDsl::count`
+    pub type Count<Q> = Select<Q, CountStar>;
 }
 
 pub mod prelude {
@@ -718,6 +743,8 @@ pub mod prelude {
     // That issue can be avoided by also importing it anonymously:
     pub use crate::expression::IntoSql as _;
 
+    #[doc(inline)]
+    pub use crate::expression::functions::declare_sql_function;
     #[doc(inline)]
     pub use crate::expression::functions::define_sql_function;
     #[cfg(all(feature = "with-deprecated", not(feature = "without-deprecated")))]

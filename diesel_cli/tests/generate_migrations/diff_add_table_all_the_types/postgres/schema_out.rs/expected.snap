@@ -35,11 +35,13 @@ diesel::table! {
         inet_col -> Inet,
         jsonb_col -> Jsonb,
         macaddr_col -> Macaddr,
+        macaddr8_col -> Macaddr8,
         money_col -> Money,
         oid_col -> Oid,
         timestamptz_col -> Timestamptz,
         uuid_col -> Uuid,
         json_col -> Json,
+        pg_lsn_col -> PgLsn,
         int4range_col -> Int4range,
         int8range_col -> Int8range,
         daterange_col -> Daterange,
@@ -57,4 +59,3 @@ diesel::table! {
         macaddr2_col -> Macaddr,
     }
 }
-

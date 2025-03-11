@@ -141,7 +141,7 @@ where
     T: QueryFragment<Pg>,
 {
     fn walk_ast<'b>(&'b self, mut out: AstPass<'_, 'b, Pg>) -> QueryResult<()> {
-        out.push_sql("(");
+        out.push_sql("ROW(");
         self.0.walk_ast(out.reborrow())?;
         out.push_sql(")");
         Ok(())
@@ -178,7 +178,7 @@ mod tests {
     use crate::sql_types::*;
     use crate::test_helpers::*;
 
-    #[test]
+    #[diesel_test_helper::test]
     fn record_deserializes_correctly() {
         let conn = &mut pg_connection();
 
@@ -198,9 +198,12 @@ mod tests {
         >("SELECT ((4, NULL), NULL)")
         .get_result::<((Option<i32>, Option<String>), Option<i32>)>(conn);
         assert_eq!(Ok(((Some(4), None), None)), tup);
+
+        let tup = sql::<Record<(Integer,)>>("SELECT ROW(1)").get_result::<(i32,)>(conn);
+        assert_eq!(Ok((1,)), tup);
     }
 
-    #[test]
+    #[diesel_test_helper::test]
     fn record_kinda_sorta_not_really_serializes_correctly() {
         let conn = &mut pg_connection();
 
@@ -210,6 +213,10 @@ mod tests {
 
         let tup = sql::<Record<(Record<(Integer, Text)>, Integer)>>("((2, 'bye'::text), 3)");
         let res = crate::select(tup.eq(((2, "bye"), 3))).get_result(conn);
+        assert_eq!(Ok(true), res);
+
+        let tup = sql::<Record<(Integer,)>>("ROW(3)");
+        let res = crate::select(tup.eq((3,))).get_result(conn);
         assert_eq!(Ok(true), res);
 
         let tup = sql::<
@@ -223,7 +230,7 @@ mod tests {
         assert_eq!(Ok(true), res);
     }
 
-    #[test]
+    #[diesel_test_helper::test]
     fn serializing_named_composite_types() {
         #[derive(SqlType, QueryId, Debug, Clone, Copy)]
         #[diesel(postgres_type(name = "my_type"))]
@@ -233,7 +240,7 @@ mod tests {
         #[diesel(sql_type = MyType)]
         struct MyStruct<'a>(i32, &'a str);
 
-        impl<'a> ToSql<MyType, Pg> for MyStruct<'a> {
+        impl ToSql<MyType, Pg> for MyStruct<'_> {
             fn to_sql<'b>(&'b self, out: &mut Output<'b, '_, Pg>) -> serialize::Result {
                 WriteTuple::<(Integer, Text)>::write_tuple(&(self.0, self.1), out)
             }
