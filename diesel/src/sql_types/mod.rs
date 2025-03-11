@@ -41,6 +41,7 @@ use crate::query_builder::QueryId;
 #[diesel(postgres_type(oid = 16, array_oid = 1000))]
 #[diesel(sqlite_type(name = "Integer"))]
 #[diesel(mysql_type(name = "Tiny"))]
+#[diesel(mssql_type(name = "Bit"))]
 pub struct Bool;
 
 /// The tiny integer SQL type.
@@ -60,6 +61,7 @@ pub struct Bool;
 /// [i8]: https://doc.rust-lang.org/nightly/std/primitive.i8.html
 #[derive(Debug, Clone, Copy, Default, QueryId, SqlType)]
 #[diesel(mysql_type(name = "Tiny"))]
+#[diesel(mssql_type(name = "Int1"))]
 pub struct TinyInt;
 #[doc(hidden)]
 pub type Tinyint = TinyInt;
@@ -79,6 +81,7 @@ pub type Tinyint = TinyInt;
 #[diesel(postgres_type(oid = 21, array_oid = 1005))]
 #[diesel(sqlite_type(name = "SmallInt"))]
 #[diesel(mysql_type(name = "Short"))]
+#[diesel(mssql_type(name = "Int2"))]
 pub struct SmallInt;
 #[doc(hidden)]
 pub type Int2 = SmallInt;
@@ -100,6 +103,7 @@ pub type Smallint = SmallInt;
 #[diesel(postgres_type(oid = 23, array_oid = 1007))]
 #[diesel(sqlite_type(name = "Integer"))]
 #[diesel(mysql_type(name = "Long"))]
+#[diesel(mssql_type(name = "Int4"))]
 pub struct Integer;
 #[doc(hidden)]
 pub type Int4 = Integer;
@@ -119,6 +123,7 @@ pub type Int4 = Integer;
 #[diesel(postgres_type(oid = 20, array_oid = 1016))]
 #[diesel(sqlite_type(name = "Long"))]
 #[diesel(mysql_type(name = "LongLong"))]
+#[diesel(mssql_type(name = "Int8"))]
 pub struct BigInt;
 #[doc(hidden)]
 pub type Int8 = BigInt;
@@ -140,6 +145,7 @@ pub type Bigint = BigInt;
 #[diesel(postgres_type(oid = 700, array_oid = 1021))]
 #[diesel(sqlite_type(name = "Float"))]
 #[diesel(mysql_type(name = "Float"))]
+#[diesel(mssql_type(name = "Float4"))]
 pub struct Float;
 #[doc(hidden)]
 pub type Float4 = Float;
@@ -159,6 +165,7 @@ pub type Float4 = Float;
 #[diesel(postgres_type(oid = 701, array_oid = 1022))]
 #[diesel(sqlite_type(name = "Double"))]
 #[diesel(mysql_type(name = "Double"))]
+#[diesel(mssql_type(name = "Float8"))]
 pub struct Double;
 #[doc(hidden)]
 pub type Float8 = Double;
@@ -181,6 +188,7 @@ pub type Float8 = Double;
 #[diesel(postgres_type(oid = 1700, array_oid = 1231))]
 #[diesel(mysql_type(name = "Numeric"))]
 #[diesel(sqlite_type(name = "Double"))]
+#[diesel(mssql_type(name = "Numericn"))]
 pub struct Numeric;
 
 /// Alias for `Numeric`
@@ -208,6 +216,7 @@ pub type Decimal = Numeric;
 #[diesel(postgres_type(oid = 25, array_oid = 1009))]
 #[diesel(sqlite_type(name = "Text"))]
 #[diesel(mysql_type(name = "String"))]
+#[diesel(mssql_type(name = "NVarchar"))]
 pub struct Text;
 
 /// The SQL `VARCHAR` type
@@ -251,6 +260,7 @@ pub type Longtext = Text;
 #[diesel(postgres_type(oid = 17, array_oid = 1001))]
 #[diesel(sqlite_type(name = "Binary"))]
 #[diesel(mysql_type(name = "Blob"))]
+#[diesel(mssql_type(name = "BigVarBin"))]
 pub struct Binary;
 
 #[doc(hidden)]
@@ -284,6 +294,7 @@ pub type Bit = Binary;
 #[diesel(postgres_type(oid = 1082, array_oid = 1182))]
 #[diesel(sqlite_type(name = "Text"))]
 #[diesel(mysql_type(name = "Date"))]
+#[diesel(mssql_type(name = "Daten"))]
 pub struct Date;
 
 /// The interval SQL type.
@@ -328,6 +339,7 @@ pub struct Interval;
 #[diesel(postgres_type(oid = 1083, array_oid = 1183))]
 #[diesel(sqlite_type(name = "Text"))]
 #[diesel(mysql_type(name = "Time"))]
+#[diesel(mssql_type(name = "Timen"))]
 pub struct Time;
 
 /// The timestamp SQL type.
@@ -376,6 +388,7 @@ pub struct Time;
 #[diesel(postgres_type(oid = 1114, array_oid = 1115))]
 #[diesel(sqlite_type(name = "Text"))]
 #[diesel(mysql_type(name = "Timestamp"))]
+#[diesel(mssql_type(name = "Datetime"))]
 pub struct Timestamp;
 
 /// The JSON SQL type.  This type can only be used with `feature =
@@ -399,6 +412,7 @@ pub struct Timestamp;
 #[diesel(postgres_type(oid = 114, array_oid = 199))]
 #[diesel(mysql_type(name = "String"))]
 #[diesel(sqlite_type(name = "Text"))]
+#[diesel(mssql_type(name = "NVarchar"))]
 pub struct Json;
 
 /// The [`jsonb`] SQL type.  This type can only be used with `feature =
@@ -558,6 +572,10 @@ pub use crate::mysql::sql_types::{Datetime, Unsigned};
 #[doc(inline)]
 #[cfg(feature = "sqlite")]
 pub use crate::sqlite::sql_types::Timestamptz as TimestamptzSqlite;
+
+#[doc(inline)]
+#[cfg(feature = "mssql")]
+pub use crate::mssql::sql_types::DateTimeOffset;
 
 /// Indicates that a SQL type exists for a backend.
 ///

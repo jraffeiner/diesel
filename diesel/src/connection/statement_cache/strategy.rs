@@ -14,6 +14,7 @@ where
     StatementCacheKey<DB>: Hash + Eq,
 {
     /// Returns which prepared statement cache size is implemented by this trait
+    #[allow(dead_code)]
     fn cache_size(&self) -> CacheSize;
 
     /// Every query (which is safe to cache) will go through this function
@@ -21,6 +22,7 @@ where
     /// * `prepare_fn` - will be invoked if prepared statement wasn't cached already
     ///   * first argument is sql query string
     ///   * second argument specify whether statement will be cached (true) or not (false).
+    #[allow(dead_code)]
     fn get(
         &mut self,
         key: StatementCacheKey<DB>,

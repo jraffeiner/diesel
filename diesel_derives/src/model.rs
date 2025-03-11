@@ -10,7 +10,7 @@ use syn::{
 
 use crate::attrs::{parse_attributes, StructAttr};
 use crate::field::Field;
-use crate::parsers::{BelongsTo, MysqlType, PostgresType, SqliteType};
+use crate::parsers::{BelongsTo, MssqlType, MysqlType, PostgresType, SqliteType};
 use crate::util::camel_to_snake;
 
 pub struct Model {
@@ -25,6 +25,7 @@ pub struct Model {
     pub not_sized: bool,
     pub foreign_derive: bool,
     pub mysql_type: Option<MysqlType>,
+    pub mssql_type: Option<MssqlType>,
     pub sqlite_type: Option<SqliteType>,
     pub postgres_type: Option<PostgresType>,
     pub check_for_backend: Option<syn::punctuated::Punctuated<syn::TypePath, syn::Token![,]>>,
@@ -69,6 +70,7 @@ impl Model {
         let mut not_sized = false;
         let mut foreign_derive = false;
         let mut mysql_type = None;
+        let mut mssql_type = None;
         let mut sqlite_type = None;
         let mut postgres_type = None;
         let mut check_for_backend = None;
@@ -98,6 +100,7 @@ impl Model {
                 StructAttr::NotSized(_) => not_sized = true,
                 StructAttr::ForeignDerive(_) => foreign_derive = true,
                 StructAttr::MysqlType(_, val) => mysql_type = Some(val),
+                StructAttr::MssqlType(_, val) => mssql_type = Some(val),
                 StructAttr::SqliteType(_, val) => sqlite_type = Some(val),
                 StructAttr::PostgresType(_, val) => postgres_type = Some(val),
                 StructAttr::CheckForBackend(_, b) => {
@@ -120,6 +123,7 @@ impl Model {
             not_sized,
             foreign_derive,
             mysql_type,
+            mssql_type,
             sqlite_type,
             postgres_type,
             fields: fields_from_item_data(fields)?,

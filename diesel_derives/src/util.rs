@@ -15,6 +15,7 @@ pub const TREAT_NONE_AS_DEFAULT_VALUE_NOTE: &str = "treat_none_as_default_value 
 pub const TREAT_NONE_AS_NULL_NOTE: &str = "treat_none_as_null = true";
 pub const BELONGS_TO_NOTE: &str = "belongs_to(Foo, foreign_key = foo_id)";
 pub const MYSQL_TYPE_NOTE: &str = "mysql_type(name = \"foo\")";
+pub const MSSQL_TYPE_NOTE: &str = "mssql_type(name = \"foo\")";
 pub const SQLITE_TYPE_NOTE: &str = "sqlite_type(name = \"foo\")";
 pub const POSTGRES_TYPE_NOTE: &str = "postgres_type(name = \"foo\", schema = \"public\")";
 pub const POSTGRES_TYPE_NOTE_ID: &str = "postgres_type(oid = 37, array_oid = 54)";

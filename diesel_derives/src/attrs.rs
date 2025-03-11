@@ -10,12 +10,12 @@ use syn::token::Comma;
 use syn::{Attribute, Expr, Ident, LitBool, LitStr, Path, Type, TypePath};
 
 use crate::deprecated::ParseDeprecated;
-use crate::parsers::{BelongsTo, MysqlType, PostgresType, SqliteType};
+use crate::parsers::{BelongsTo, MssqlType, MysqlType, PostgresType, SqliteType};
 use crate::util::{
     parse_eq, parse_paren, unknown_attribute, BELONGS_TO_NOTE, COLUMN_NAME_NOTE,
-    DESERIALIZE_AS_NOTE, MYSQL_TYPE_NOTE, POSTGRES_TYPE_NOTE, SELECT_EXPRESSION_NOTE,
-    SELECT_EXPRESSION_TYPE_NOTE, SERIALIZE_AS_NOTE, SQLITE_TYPE_NOTE, SQL_TYPE_NOTE,
-    TABLE_NAME_NOTE, TREAT_NONE_AS_DEFAULT_VALUE_NOTE, TREAT_NONE_AS_NULL_NOTE,
+    DESERIALIZE_AS_NOTE, MSSQL_TYPE_NOTE, MYSQL_TYPE_NOTE, POSTGRES_TYPE_NOTE,
+    SELECT_EXPRESSION_NOTE, SELECT_EXPRESSION_TYPE_NOTE, SERIALIZE_AS_NOTE, SQLITE_TYPE_NOTE,
+    SQL_TYPE_NOTE, TABLE_NAME_NOTE, TREAT_NONE_AS_DEFAULT_VALUE_NOTE, TREAT_NONE_AS_NULL_NOTE,
 };
 
 use crate::util::{parse_paren_list, CHECK_FOR_BACKEND_NOTE};
@@ -224,6 +224,7 @@ pub enum StructAttr {
 
     BelongsTo(Ident, BelongsTo),
     MysqlType(Ident, MysqlType),
+    MssqlType(Ident, MssqlType),
     SqliteType(Ident, SqliteType),
     PostgresType(Ident, PostgresType),
     PrimaryKey(Ident, Punctuated<Ident, Comma>),
@@ -261,6 +262,10 @@ impl Parse for StructAttr {
             "mysql_type" => Ok(StructAttr::MysqlType(
                 name,
                 parse_paren(input, MYSQL_TYPE_NOTE)?,
+            )),
+            "mssql_type" => Ok(StructAttr::MssqlType(
+                name,
+                parse_paren(input, MSSQL_TYPE_NOTE)?,
             )),
             "sqlite_type" => Ok(StructAttr::SqliteType(
                 name,
@@ -313,6 +318,7 @@ impl MySpanned for StructAttr {
             | StructAttr::TreatNoneAsNull(ident, _)
             | StructAttr::BelongsTo(ident, _)
             | StructAttr::MysqlType(ident, _)
+            | StructAttr::MssqlType(ident, _)
             | StructAttr::SqliteType(ident, _)
             | StructAttr::PostgresType(ident, _)
             | StructAttr::CheckForBackend(ident, _)

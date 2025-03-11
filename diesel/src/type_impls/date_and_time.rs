@@ -40,7 +40,7 @@ mod chrono {
     #[derive(FromSqlRow)]
     #[diesel(foreign_derive)]
     #[cfg_attr(
-        any(feature = "postgres_backend", feature = "sqlite"),
+        any(feature = "postgres_backend", feature = "sqlite", feature = "mssql"),
         derive(AsExpression)
     )]
     #[cfg_attr(
@@ -48,6 +48,7 @@ mod chrono {
         diesel(sql_type = crate::sql_types::Timestamptz)
     )]
     #[cfg_attr(feature = "sqlite", diesel(sql_type = crate::sql_types::TimestamptzSqlite))]
+    #[cfg_attr(feature = "mssql_backend", diesel(sql_type = crate::mssql::sql_types::DateTimeOffset))]
     struct DateTimeProxy<Tz: TimeZone>(DateTime<Tz>);
 
     #[derive(AsExpression, FromSqlRow)]
@@ -90,7 +91,8 @@ mod time {
         any(
             feature = "postgres_backend",
             feature = "sqlite",
-            feature = "mysql_backend"
+            feature = "mysql_backend",
+            feature = "mssql_backend",
         ),
         derive(AsExpression)
     )]
@@ -100,5 +102,6 @@ mod time {
     )]
     #[cfg_attr(feature = "sqlite", diesel(sql_type = crate::sql_types::TimestamptzSqlite))]
     #[cfg_attr(feature = "mysql_backend", diesel(sql_type = crate::sql_types::Datetime))]
+    #[cfg_attr(feature = "mssql_backend", diesel(sql_type = crate::mssql::sql_types::DateTimeOffset))]
     struct DateTimeProxy(OffsetDateTime);
 }

@@ -117,6 +117,7 @@ pub mod strategy;
     docsrs,
     doc(cfg(feature = "i-implement-a-third-party-backend-and-opt-into-breaking-changes"))
 )]
+#[allow(dead_code)]
 pub struct StatementCache<DB: Backend, Statement> {
     cache: Box<dyn StatementCacheStrategy<DB, Statement>>,
     // increment every time a query is cached
@@ -136,6 +137,7 @@ pub struct StatementCache<DB: Backend, Statement> {
     doc(cfg(feature = "i-implement-a-third-party-backend-and-opt-into-breaking-changes"))
 )]
 #[allow(unreachable_pub)]
+#[allow(dead_code)]
 pub enum PrepareForCache {
     /// The statement will be cached    
     Yes {
@@ -157,6 +159,7 @@ where
     StatementCacheKey<DB>: Hash + Eq,
 {
     /// Create a new prepared statement cache using [`CacheSize::Unbounded`] as caching strategy.
+    #[allow(dead_code)]
     #[allow(unreachable_pub)]
     pub fn new() -> Self {
         StatementCache {
@@ -166,6 +169,7 @@ where
     }
 
     /// Set caching strategy from predefined implementations
+    #[allow(dead_code)]
     pub fn set_cache_size(&mut self, size: CacheSize) {
         if self.cache.cache_size() != size {
             self.cache = match size {
@@ -196,6 +200,7 @@ where
     /// See the [module](self) documentation for details
     /// about which statements are cached and which are not cached.
     #[allow(unreachable_pub)]
+    #[allow(dead_code)]
     pub fn cached_statement<T, F>(
         &mut self,
         source: &T,

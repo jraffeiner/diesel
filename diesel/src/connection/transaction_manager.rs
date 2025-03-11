@@ -139,6 +139,7 @@ impl TransactionManagerStatus {
         feature = "i-implement-a-third-party-backend-and-opt-into-breaking-changes",
         feature = "postgres",
         feature = "mysql",
+        feature = "mssql",
         test
     ))]
     #[diesel_derives::__diesel_public_if(
@@ -149,6 +150,7 @@ impl TransactionManagerStatus {
     ///
     /// If that is registered, savepoints rollbacks will still be attempted, but failure to do so
     /// will not result in an error. (Some may succeed, some may not.)
+    #[allow(dead_code)]
     pub(crate) fn set_requires_rollback_maybe_up_to_top_level(&mut self, to: bool) {
         if let TransactionManagerStatus::Valid(ValidTransactionManagerStatus {
             in_transaction:
@@ -174,9 +176,10 @@ impl TransactionManagerStatus {
     ///
     /// This function returns an error if the Transaction manager is in a broken
     /// state
-    #[diesel_derives::__diesel_public_if(
-        feature = "i-implement-a-third-party-backend-and-opt-into-breaking-changes"
-    )]
+    #[diesel_derives::__diesel_public_if(any(
+        feature = "i-implement-a-third-party-backend-and-opt-into-breaking-changes",
+        feature = "mssql",
+    ))]
     pub(self) fn transaction_state(&mut self) -> QueryResult<&mut ValidTransactionManagerStatus> {
         match self {
             TransactionManagerStatus::Valid(valid_status) => Ok(valid_status),
@@ -207,7 +210,10 @@ impl TransactionManagerStatus {
 #[allow(missing_copy_implementations)]
 #[derive(Debug, Default)]
 #[diesel_derives::__diesel_public_if(
-    feature = "i-implement-a-third-party-backend-and-opt-into-breaking-changes",
+    any(
+        feature = "i-implement-a-third-party-backend-and-opt-into-breaking-changes",
+        feature = "mssql",
+    ),
     public_fields(in_transaction)
 )]
 pub struct ValidTransactionManagerStatus {
@@ -220,7 +226,10 @@ pub struct ValidTransactionManagerStatus {
 #[allow(missing_copy_implementations)]
 #[derive(Debug)]
 #[diesel_derives::__diesel_public_if(
-    feature = "i-implement-a-third-party-backend-and-opt-into-breaking-changes",
+    any(
+        feature = "i-implement-a-third-party-backend-and-opt-into-breaking-changes",
+        feature = "mssql",
+    ),
     public_fields(
         test_transaction,
         transaction_depth,

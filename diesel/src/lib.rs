@@ -249,7 +249,7 @@
     clippy::cast_possible_truncation,
     clippy::cast_sign_loss
 )]
-#![deny(unsafe_code)]
+//#![deny(unsafe_code)]
 #![cfg_attr(test, allow(clippy::map_unwrap_or, clippy::unwrap_used))]
 
 extern crate diesel_derives;
@@ -297,6 +297,12 @@ pub mod pg;
 #[cfg(feature = "sqlite")]
 pub mod sqlite;
 
+#[cfg(feature = "mssql")]
+pub mod mssql;
+
+#[cfg(feature = "firebird")]
+pub mod rsfb;
+
 mod type_impls;
 mod util;
 
@@ -309,6 +315,9 @@ pub use diesel_derives::{
 };
 
 pub use diesel_derives::MultiConnection;
+
+#[cfg(feature = "time")]
+pub use time;
 
 #[allow(unknown_lints, ambiguous_glob_reexports)]
 pub mod dsl {

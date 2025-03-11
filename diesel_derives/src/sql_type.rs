@@ -15,6 +15,7 @@ pub fn derive(item: DeriveInput) -> Result<TokenStream> {
 
     let sqlite_tokens = sqlite_tokens(&item, &model);
     let mysql_tokens = mysql_tokens(&item, &model);
+    let mssql_tokens = mssql_tokens(&item, &model);
     let pg_tokens = pg_tokens(&item, &model);
 
     Ok(wrap_in_dummy_mod(quote! {
@@ -33,6 +34,7 @@ pub fn derive(item: DeriveInput) -> Result<TokenStream> {
 
         #sqlite_tokens
         #mysql_tokens
+        #mssql_tokens
         #pg_tokens
     }))
 }
@@ -51,6 +53,7 @@ fn sqlite_tokens(item: &DeriveInput, model: &Model) -> Option<TokenStream> {
             let (impl_generics, ty_generics, where_clause) = item.generics.split_for_impl();
 
             Some(quote! {
+                #[cfg(feature = "sqlite")]
                 impl #impl_generics diesel::sql_types::HasSqlType<#struct_name #ty_generics>
                     for diesel::sqlite::Sqlite
                 #where_clause
@@ -77,12 +80,40 @@ fn mysql_tokens(item: &DeriveInput, model: &Model) -> Option<TokenStream> {
             let (impl_generics, ty_generics, where_clause) = item.generics.split_for_impl();
 
             Some(quote! {
+                #[cfg(feature = "mysql")]
                 impl #impl_generics diesel::sql_types::HasSqlType<#struct_name #ty_generics>
                     for diesel::mysql::Mysql
                 #where_clause
                 {
                     fn metadata(_: &mut ()) -> diesel::mysql::MysqlType {
                         diesel::mysql::MysqlType::#ty
+                    }
+                }
+            })
+        })
+}
+
+fn mssql_tokens(item: &DeriveInput, model: &Model) -> Option<TokenStream> {
+    model
+        .mssql_type
+        .as_ref()
+        .map(|mssql_type| Ident::new(&mssql_type.name.value(), Span::call_site()))
+        .and_then(|ty| {
+            if cfg!(not(feature = "mssql")) {
+                return None;
+            }
+
+            let struct_name = &item.ident;
+            let (impl_generics, ty_generics, where_clause) = item.generics.split_for_impl();
+
+            Some(quote! {
+                #[cfg(feature = "mssql")]
+                impl #impl_generics diesel::sql_types::HasSqlType<#struct_name #ty_generics>
+                    for diesel::mssql::Mssql
+                #where_clause
+                {
+                    fn metadata(_: &mut ()) -> diesel::mssql::MssqlType {
+                        diesel::mssql::MssqlType::#ty
                     }
                 }
             })
@@ -117,8 +148,10 @@ fn pg_tokens(item: &DeriveInput, model: &Model) -> Option<TokenStream> {
         };
 
         Some(quote! {
+            #[cfg(feature = "postgres")]
             use diesel::pg::{PgMetadataLookup, PgTypeMetadata};
 
+            #[cfg(feature = "postgres")]
             impl #impl_generics diesel::sql_types::HasSqlType<#struct_name #ty_generics>
                 for diesel::pg::Pg
             #where_clause

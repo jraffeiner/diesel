@@ -83,6 +83,7 @@ pub(crate) mod dsl {
     /// The return type of [`count_distinct()`](crate::dsl::count_distinct())
     pub type count_distinct<Expr> = super::count::CountDistinct<SqlTypeOf<Expr>, Expr>;
 
+    #[cfg(feature = "sqlite")]
     /// The return type of [`date(expr)`](crate::dsl::date())
     pub type date<Expr> = super::functions::date_and_time::date<Expr>;
 

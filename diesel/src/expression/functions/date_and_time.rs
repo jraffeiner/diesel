@@ -1,6 +1,5 @@
 use crate::backend::Backend;
 use crate::expression::coerce::Coerce;
-use crate::expression::functions::define_sql_function;
 use crate::expression::{AsExpression, Expression, ValidGrouping};
 use crate::query_builder::*;
 use crate::result::QueryResult;
@@ -27,6 +26,7 @@ impl_selectable_expression!(now);
 
 operator_allowed!(now, Add, add);
 operator_allowed!(now, Sub, sub);
+#[cfg(feature = "sqlite")]
 define_sql_function! {
     /// Represents the SQL `DATE` function. The argument should be a Timestamp
     /// expression, and the return value will be an expression of type Date.

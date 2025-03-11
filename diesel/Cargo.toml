@@ -44,6 +44,20 @@ bitflags = { version = "2.0.0", optional = true }
 r2d2 = { version = ">= 0.8.2, < 0.9.0", optional = true }
 itoa = { version = "1.0.0", optional = true }
 time = { version = "0.3.9", optional = true, features = ["macros"] }
+thiserror = { version = "*", optional = true }
+bytes = { version = "*", optional = true }
+enumflags2 = { version = "*", optional = true }
+tracing = { version = "*", optional = true }
+encoding_rs = { version = "*", optional = true }
+connection-string = { version = "*", optional = true }
+pretty-hex = { version = "*", optional = true }
+native-tls = { version = "*", optional = true }
+rustls = { version = "*", optional = true }
+rustls-pemfile = { version = "*", optional = true }
+rustls-native-certs =  { version = "*", optional = true }
+rust_decimal =  { version = "*", optional = true }
+winauth = { version = "*", optional = true }
+rsfbclient = { version = "*", default-features = false, features = ["pure_rust"], optional = true }
 downcast-rs = "1.2.1"
 
 [dependencies.diesel_derives]
@@ -58,7 +72,8 @@ quickcheck = "1.0.3"
 tempfile = "3.10.1"
 
 [features]
-default = ["with-deprecated", "32-column-tables"]
+default = ["with-deprecated", "32-column-tables", "mssql", "time", "r2d2", "firebird"]
+uuid = ["dep:uuid"]
 extras = ["chrono", "time", "serde_json", "uuid", "network-address", "numeric", "r2d2"]
 unstable = ["diesel_derives/nightly"]
 large-tables = ["32-column-tables"]
@@ -69,6 +84,12 @@ huge-tables = ["64-column-tables"]
 postgres = ["dep:pq-sys", "postgres_backend"]
 sqlite = ["dep:libsqlite3-sys", "diesel_derives/sqlite", "time?/formatting", "time?/parsing"]
 mysql = ["dep:mysqlclient-sys", "dep:url", "dep:percent-encoding", "dep:bitflags", "mysql_backend"]
+mssql = ["dep:url", "mssql_backend", "dep:thiserror", "dep:uuid", "dep:bytes", "dep:enumflags2", "dep:byteorder", "dep:tracing", "dep:encoding_rs", "dep:connection-string", "dep:pretty-hex","native-tls","winauth","dep:percent-encoding"]
+firebird = ["dep:rsfbclient","chrono"]
+native-tls = ["dep:native-tls"]
+rustls = ["dep:rustls","dep:rustls-pemfile", "dep:rustls-native-certs"]
+bigdecimal = ["dep:bigdecimal"]
+mssql_backend = ["diesel_derives/mssql"]
 without-deprecated = ["diesel_derives/without-deprecated"]
 with-deprecated = ["diesel_derives/with-deprecated"]
 network-address = ["dep:ipnetwork", "dep:libc"]
@@ -91,7 +112,7 @@ __with_asan_tests = [
 ]
 
 [package.metadata.docs.rs]
-features = ["postgres", "mysql", "sqlite", "extras"]
+features = ["postgres", "mysql", "sqlite", "mssql", "extras"]
 no-default-features = true
 rustc-args = ["--cfg", "docsrs"]
 rustdoc-args = ["--cfg", "docsrs"]

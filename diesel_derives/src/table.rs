@@ -148,6 +148,7 @@ pub(crate) fn expand(input: TableDecl) -> TokenStream {
 
     let backend_specific_table_impls = if cfg!(feature = "postgres") {
         Some(quote::quote! {
+            #[cfg(feature = "postgres")]
             impl<S> diesel::JoinTo<diesel::query_builder::Only<S>> for table
             where
                 diesel::query_builder::Only<S>: diesel::JoinTo<table>,
@@ -161,18 +162,21 @@ pub(crate) fn expand(input: TableDecl) -> TokenStream {
                 }
             }
 
+            #[cfg(feature = "postgres")]
             impl diesel::query_source::AppearsInFromClause<diesel::query_builder::Only<table>>
                 for table
             {
                 type Count = diesel::query_source::Once;
             }
 
+            #[cfg(feature = "postgres")]
             impl diesel::query_source::AppearsInFromClause<table>
                 for diesel::query_builder::Only<table>
             {
                 type Count = diesel::query_source::Once;
             }
 
+            #[cfg(feature = "postgres")]
             impl<S, TSM> diesel::JoinTo<diesel::query_builder::Tablesample<S, TSM>> for table
             where
                 diesel::query_builder::Tablesample<S, TSM>: diesel::JoinTo<table>,
@@ -187,6 +191,7 @@ pub(crate) fn expand(input: TableDecl) -> TokenStream {
                 }
             }
 
+            #[cfg(feature = "postgres")]
             impl<TSM> diesel::query_source::AppearsInFromClause<diesel::query_builder::Tablesample<table, TSM>>
                 for table
                     where
@@ -195,6 +200,7 @@ pub(crate) fn expand(input: TableDecl) -> TokenStream {
                 type Count = diesel::query_source::Once;
             }
 
+            #[cfg(feature = "postgres")]
             impl<TSM> diesel::query_source::AppearsInFromClause<table>
                 for diesel::query_builder::Tablesample<table, TSM>
                     where
@@ -616,7 +622,7 @@ fn is_numeric(ty: &syn::TypePath) -> bool {
 }
 
 fn is_date_time(ty: &syn::TypePath) -> bool {
-    const DATE_TYPES: &[&str] = &["Time", "Date", "Timestamp", "Timestamptz"];
+    const DATE_TYPES: &[&str] = &["Time", "Date", "Timestamp", "Timestamptz", "DatetimeOffset"];
     if let Some(last) = ty.path.segments.last() {
         match &last.arguments {
             syn::PathArguments::AngleBracketed(t)
@@ -692,13 +698,18 @@ fn expand_column_def(column_def: &ColumnDef) -> TokenStream {
 
     let backend_specific_column_impl = if cfg!(feature = "postgres") {
         Some(quote::quote! {
+
+            #[cfg(feature = "postgres")]
             impl diesel::query_source::AppearsInFromClause<diesel::query_builder::Only<super::table>>
                 for #column_name
             {
                 type Count = diesel::query_source::Once;
             }
+
+            #[cfg(feature = "postgres")]
             impl diesel::SelectableExpression<diesel::query_builder::Only<super::table>> for #column_name {}
 
+            #[cfg(feature = "postgres")]
             impl<TSM> diesel::query_source::AppearsInFromClause<diesel::query_builder::Tablesample<super::table, TSM>>
                 for #column_name
                     where
@@ -706,6 +717,8 @@ fn expand_column_def(column_def: &ColumnDef) -> TokenStream {
             {
                 type Count = diesel::query_source::Once;
             }
+
+            #[cfg(feature = "postgres")]
             impl<TSM> diesel::SelectableExpression<diesel::query_builder::Tablesample<super::table, TSM>>
                 for #column_name where TSM: diesel::internal::table_macro::TablesampleMethod {}
         })

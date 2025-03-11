@@ -3,7 +3,12 @@
 pub(crate) mod instrumentation;
 #[cfg(all(
     not(feature = "i-implement-a-third-party-backend-and-opt-into-breaking-changes"),
-    any(feature = "sqlite", feature = "postgres", feature = "mysql")
+    any(
+        feature = "sqlite",
+        feature = "postgres",
+        feature = "mysql",
+        feature = "mssql"
+    )
 ))]
 pub(crate) mod statement_cache;
 #[cfg(feature = "i-implement-a-third-party-backend-and-opt-into-breaking-changes")]
@@ -41,7 +46,12 @@ pub use self::instrumentation::{DynInstrumentation, StrQueryHelper};
 
 #[cfg(all(
     not(feature = "i-implement-a-third-party-backend-and-opt-into-breaking-changes"),
-    any(feature = "sqlite", feature = "postgres", feature = "mysql")
+    any(
+        feature = "sqlite",
+        feature = "postgres",
+        feature = "mysql",
+        feature = "mssql"
+    )
 ))]
 pub(crate) use self::private::MultiConnectionHelper;
 
