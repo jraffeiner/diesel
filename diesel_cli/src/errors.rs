@@ -32,7 +32,7 @@ pub enum Error {
     #[error("No table with the name `{0}` exists")]
     NoTableFound(TableName),
     #[error("Unsupported type: `{0}`")]
-    #[cfg(any(feature = "sqlite", feature = "mysql"))]
+    #[cfg(any(feature = "sqlite", feature = "mysql", feature = "mssql"))]
     UnsupportedType(String),
     #[error(
         "Diesel only supports tables with primary keys. \

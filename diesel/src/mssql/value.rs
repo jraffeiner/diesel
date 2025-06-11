@@ -1,6 +1,16 @@
 use crate::sql_types::{BigInt, Binary, Bool, Double, Float, Integer, SmallInt, Text, TinyInt};
 
 macro_rules! from_diesel_sql {
+    ($sql_type:ty, $target:ident<$tn:ident : $trait:ident>) => {
+        impl<$tn:$trait> diesel::deserialize::FromSql<$sql_type, crate::mssql::Mssql> for $target<$tn> {
+            fn from_sql(
+                bytes: <crate::mssql::Mssql as diesel::backend::Backend>::RawValue<'_>,
+            ) -> diesel::deserialize::Result<Self> {
+                let res = crate::mssql::connection::FromSql::from_sql(&bytes)?;
+                res.ok_or(unexpected_null())
+            }
+        }
+    };
     ($sql_type:ty, $target:ty) => {
         impl diesel::deserialize::FromSql<$sql_type, crate::mssql::Mssql> for $target {
             fn from_sql(
@@ -14,6 +24,16 @@ macro_rules! from_diesel_sql {
 }
 
 macro_rules! owned_from_diesel_sql {
+    ($sql_type:ty, $target:ident<$tn:ident : $trait:ident>) => {
+        impl<$tn:$trait> diesel::deserialize::FromSql<$sql_type, crate::mssql::Mssql> for $target<$tn> {
+            fn from_sql(
+                bytes: <crate::mssql::Mssql as diesel::backend::Backend>::RawValue<'_>,
+            ) -> diesel::deserialize::Result<Self> {
+                let res = crate::mssql::connection::FromSqlOwned::from_sql_owned(bytes)?;
+                res.ok_or(unexpected_null())
+            }
+        }
+    };
     ($sql_type:ty, $target:ty) => {
         impl diesel::deserialize::FromSql<$sql_type, crate::mssql::Mssql> for $target {
             fn from_sql(
@@ -67,7 +87,7 @@ mod bigdecimal_impl {
 
 #[cfg(feature = "chrono")]
 mod chrono_impl {
-    use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
+    use chrono::{NaiveDate, NaiveDateTime, NaiveTime, DateTime};
     use diesel::sql_types;
 
     use super::unexpected_null;
@@ -75,6 +95,7 @@ mod chrono_impl {
     from_diesel_sql!(sql_types::Date, NaiveDate);
     from_diesel_sql!(sql_types::Time, NaiveTime);
     from_diesel_sql!(sql_types::Timestamp, NaiveDateTime);
+    from_diesel_sql!(crate::mssql::sql_types::DateTimeOffset, DateTime<chrono_tz::Tz>);
 }
 
 #[cfg(feature = "time")]

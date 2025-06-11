@@ -280,6 +280,10 @@ pub(crate) fn get_driver_version() -> u64 {
 
 use std::net::TcpStream;
 
+use crate::connection::{TransactionManagerStatus, ValidTransactionManagerStatus};
+#[cfg(feature = "r2d2")]
+use crate::r2d2::R2D2Connection;
+
 use crate::{
     connection::{
         self, instrumentation::StrQueryHelper, ConnectionSealed, DefaultLoadingMode,
@@ -293,7 +297,6 @@ use crate::{
         connection::tds::stream::TokenStream, query_builder::TdsBindCollector, MssqlQueryBuilder,
     },
     query_builder::{Query, QueryBuilder, QueryFragment, QueryId},
-    r2d2::R2D2Connection,
     Connection, ConnectionError, ConnectionResult, QueryResult, RunQueryDsl,
 };
 use url::Url;
@@ -331,6 +334,12 @@ impl SimpleConnection for MssqlConnection {
         let r = self.client.execute(query, &[]);
         let r = match r {
             Ok(_) => Ok(()),
+            Err(diesel::mssql::connection::error::Error::Server(TokenError { code: 3903, state: 1, class: 16, .. })) => {
+                self.transaction_manager.status = TransactionManagerStatus::Valid(ValidTransactionManagerStatus {
+                    in_transaction: None,
+                });
+                Err(diesel::result::Error::NotInTransaction)
+            }
             Err(e) => Err(diesel::result::Error::DeserializationError(Box::new(e))),
         };
         self.instrumentation
@@ -501,11 +510,13 @@ fn get_results(
 }
 
 impl LoadConnection<DefaultLoadingMode> for MssqlConnection {
-    type Cursor<'conn, 'query> = MssqlCursor
+    type Cursor<'conn, 'query>
+        = MssqlCursor
     where
         Self: 'conn;
 
-    type Row<'conn, 'query> = MssqlRow
+    type Row<'conn, 'query>
+        = MssqlRow
     where
         Self: 'conn;
 

@@ -3,7 +3,7 @@ use dotenvy::dotenv;
 
 cfg_if::cfg_if! {
     if #[cfg(feature = "postgres")] {
-        #[allow(dead_code)]
+        #[expect(dead_code)]
         type DB = diesel::pg::Pg;
         type DbConnection = PgConnection;
 
@@ -88,14 +88,14 @@ cfg_if::cfg_if! {
             )").execute(connection).unwrap();
         }
 
-        #[allow(dead_code)]
+        #[expect(dead_code)]
         fn establish_connection() -> PgConnection {
             let mut connection = connection_no_data();
             create_tables_with_data(&mut connection);
             connection
         }
     } else if #[cfg(feature = "sqlite")] {
-        #[allow(dead_code)]
+        #[expect(dead_code)]
         type DB = diesel::sqlite::Sqlite;
         type DbConnection = SqliteConnection;
 
@@ -151,14 +151,14 @@ cfg_if::cfg_if! {
                 (3, 'I enjoyed your post')").execute(connection).unwrap();
         }
 
-        #[allow(dead_code)]
+        #[expect(dead_code)]
         fn establish_connection() -> SqliteConnection {
             let mut connection = connection_no_data();
             create_tables_with_data(&mut connection);
             connection
         }
     } else if #[cfg(feature = "mysql")] {
-        #[allow(dead_code)]
+        #[expect(dead_code)]
         type DB = diesel::mysql::Mysql;
         type DbConnection = MysqlConnection;
 
@@ -225,7 +225,7 @@ cfg_if::cfg_if! {
             )").execute(connection).unwrap();
         }
 
-        #[allow(dead_code)]
+        #[expect(dead_code)]
         fn establish_connection() -> MysqlConnection {
             let mut connection = connection_no_data();
             create_tables_with_data(&mut connection);

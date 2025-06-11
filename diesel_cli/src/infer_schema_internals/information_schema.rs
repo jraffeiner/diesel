@@ -5,6 +5,8 @@ use diesel::connection::LoadConnection;
 use diesel::deserialize::FromSql;
 use diesel::dsl::*;
 use diesel::expression::QueryMetadata;
+#[cfg(feature = "mssql")]
+use diesel::mssql::Mssql;
 #[cfg(feature = "mysql")]
 use diesel::mysql::Mysql;
 #[cfg(feature = "postgres")]
@@ -44,6 +46,24 @@ impl DefaultSchema for Mysql {
         String: FromSql<sql_types::Text, C::Backend>,
     {
         select(database()).get_result(conn)
+    }
+}
+
+#[cfg(feature = "mssql")]
+#[diesel::declare_sql_function]
+extern "SQL" {
+    #[sql_name = "SCHEMA_NAME"]
+    fn schema_name() -> VarChar;
+}
+
+#[cfg(feature = "mssql")]
+impl DefaultSchema for Mssql {
+    fn default_schema<C>(conn: &mut C) -> QueryResult<String>
+    where
+        C: LoadConnection<Backend = Self>,
+        String: FromSql<sql_types::Text, C::Backend>,
+    {
+        select(schema_name()).get_result(conn)
     }
 }
 

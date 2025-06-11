@@ -23,6 +23,7 @@ include = [
 [dependencies]
 byteorder = { version = "1.0", optional = true }
 chrono = { version = "0.4.20", optional = true, default-features = false, features = ["clock", "std"] }
+chrono-tz = { version = "*", optional = true }
 libc = { version = "0.2.0", optional = true }
 mysqlclient-sys = { version = ">=0.2.5, <0.5.0",  optional = true }
 mysqlclient-src = { version = "0.1.0", optional = true }
@@ -84,7 +85,7 @@ tempfile = "3.10.1"
 diesel_test_helper = { path = "../diesel_test_helper" }
 
 [features]
-default = ["with-deprecated", "32-column-tables", "mssql", "time", "r2d2", "firebird"]
+default = ["with-deprecated", "32-column-tables", "mssql", "chrono", "r2d2", "firebird"]
 uuid = ["dep:uuid"]
 extras = ["chrono", "time", "serde_json", "uuid", "network-address", "numeric", "r2d2"]
 unstable = ["diesel_derives/nightly"]
@@ -112,7 +113,7 @@ mysql_backend = ["diesel_derives/mysql", "dep:byteorder"]
 returning_clauses_for_sqlite_3_35 = []
 i-implement-a-third-party-backend-and-opt-into-breaking-changes = []
 r2d2 = ["diesel_derives/r2d2", "dep:r2d2"]
-chrono = ["diesel_derives/chrono", "dep:chrono"]
+chrono = ["diesel_derives/chrono", "dep:chrono", "dep:chrono-tz"]
 time = ["diesel_derives/time", "dep:time"]
 __with_asan_tests = [
     "libsqlite3-sys?/bundled",

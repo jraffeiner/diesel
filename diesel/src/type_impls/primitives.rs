@@ -11,7 +11,7 @@ use crate::sql_types::{
 use std::borrow::Cow;
 use std::fmt;
 
-#[allow(dead_code)]
+#[expect(dead_code)]
 mod foreign_impls {
     use super::*;
     use crate::deserialize::FromSqlRow;
@@ -44,13 +44,21 @@ mod foreign_impls {
 
     #[derive(FromSqlRow)]
     #[cfg_attr(
-        any(feature = "mysql_backend", feature = "postgres_backend"),
+        any(
+            feature = "mysql_backend",
+            feature = "postgres_backend",
+            feature = "mssql_backend"
+        ),
         derive(AsExpression)
     )]
     #[diesel(foreign_derive)]
     #[cfg_attr(
         feature = "mysql_backend",
         diesel(sql_type = crate::sql_types::Unsigned<crate::sql_types::TinyInt>)
+    )]
+    #[cfg_attr(
+        feature = "mssql_backend",
+        diesel(sql_type = crate::sql_types::TinyInt)
     )]
     #[cfg_attr(feature = "postgres_backend", diesel(foreign_derive, sql_type = crate::sql_types::CChar))]
     struct U8Proxy(u8);

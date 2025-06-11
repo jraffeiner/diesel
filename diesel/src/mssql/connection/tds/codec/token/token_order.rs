@@ -1,6 +1,6 @@
 use crate::mssql::connection::SqlReadBytes;
 
-#[allow(dead_code)] // we might want to debug the values
+#[expect(dead_code)] // we might want to debug the values
 #[derive(Debug)]
 pub(crate) struct TokenOrder {
     pub(crate) column_indexes: Vec<u16>,

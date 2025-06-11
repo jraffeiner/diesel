@@ -7,7 +7,7 @@
 
 use super::{Date, DateTime2, DateTimeOffset, Time};
 use crate::mssql::connection::tds::codec::ColumnData;
-use crate::mssql::connection::ToSql;
+use crate::mssql::connection::{FromSql, ToSql};
 use chrono::offset::{FixedOffset, Utc};
 use chrono::{DateTime, NaiveDate, NaiveDateTime, NaiveTime, TimeZone};
 
@@ -73,7 +73,8 @@ from_sql!(
             let time = NaiveTime::from_hms_opt(0,0,0).unwrap() + chrono::Duration::nanoseconds(ns);
 
             let offset = chrono::Duration::minutes(dto.offset as i64);
-            let naive = NaiveDateTime::new(date, time).sub(offset);
+            let naive = NaiveDateTime::new(date, time);
+                //.sub(offset);
 
             chrono::DateTime::from_naive_utc_and_offset(naive, Utc)
         }),
@@ -96,6 +97,29 @@ from_sql!(
         chrono::DateTime::from_naive_utc_and_offset(naive, offset)
     })
 );
+
+impl<'a> FromSql<'a> for chrono::DateTime<chrono_tz::Tz> {
+    fn from_sql(value: &'a ColumnData<'a>) -> crate::mssql::connection::Result<Option<Self>> {
+        if value.is_null() {
+            return Ok(None);
+        }
+        match value {
+            ColumnData::DateTimeOffset(ref dto) => Ok(dto.map(|dto|{
+                let date = from_days(dto.datetime2.date.days() as i64, 1);
+                let ns = dto.datetime2.time.increments as i64 * 10i64.pow(9 - dto.datetime2.time.scale as u32);
+                let time = NaiveTime::from_hms_opt(0, 0, 0).unwrap() + chrono::Duration::nanoseconds(ns);
+                let offset = chrono::Duration::minutes(dto.offset as i64);
+                let naive = NaiveDateTime::new(date, time);//.sub(offset);
+                let offset = chrono::FixedOffset::east_opt((dto.offset as i32)*60).unwrap();
+                let fx = chrono::DateTime::<FixedOffset>::from_naive_utc_and_offset(naive, offset);
+                fx.with_timezone(&chrono_tz::Tz::default())
+            })),
+            _ => Err(crate::mssql::connection::Error::Conversion(
+                format!("cannot interpret {:?} as an {} value",value,stringify!(chrono::DateTime<Tz: TimeZone)).into()
+            )),
+        }
+    }
+}
 
 to_sql!(self_,
         NaiveDate: (ColumnData::Date, Date::new(to_days(*self_, 1) as u32));

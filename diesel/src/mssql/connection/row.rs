@@ -458,7 +458,11 @@ impl RowIndex<usize> for MssqlRow {
 }
 
 impl<'conn> crate::row::Row<'conn, Mssql> for MssqlRow {
-    type Field<'f> = ColumnData<'f> where 'conn: 'f, Self: 'f;
+    type Field<'f>
+        = ColumnData<'f>
+    where
+        'conn: 'f,
+        Self: 'f;
 
     type InnerPartialRow = Self;
 

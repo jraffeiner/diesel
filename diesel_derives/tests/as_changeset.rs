@@ -559,7 +559,7 @@ fn primary_key_is_not_updated() {
     #[derive(AsChangeset)]
     #[diesel(table_name = users)]
     struct UserForm<'a> {
-        #[allow(dead_code)]
+        #[expect(dead_code)]
         id: i32,
         name: &'a str,
         hair_color: &'a str,
@@ -644,7 +644,7 @@ fn primary_key_is_not_updated_with_custom_pk() {
     #[diesel(table_name = users)]
     #[diesel(primary_key(name))]
     struct UserForm<'a> {
-        #[allow(dead_code)]
+        #[expect(dead_code)]
         name: &'a str,
         hair_color: &'a str,
         r#type: &'a str,
@@ -684,7 +684,7 @@ fn primary_key_is_not_updated_with_custom_composite_pk() {
     #[derive(AsChangeset)]
     #[diesel(table_name = users)]
     #[diesel(primary_key(id, name))]
-    #[allow(dead_code)]
+    #[expect(dead_code)]
     struct UserForm<'a> {
         id: i32,
         name: &'a str,
@@ -899,7 +899,7 @@ fn skip_update() {
     #[derive(AsChangeset)]
     #[diesel(table_name = users)]
     #[diesel(primary_key(name))]
-    #[allow(dead_code)]
+    #[expect(dead_code)]
     struct UserForm<'a> {
         #[diesel(skip_update)]
         name: &'a str,

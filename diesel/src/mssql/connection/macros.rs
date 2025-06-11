@@ -109,6 +109,7 @@ macro_rules! from_sql {
                     }
                     match data {
                         $( $pat => Ok($borrowed_val), )*
+                        crate::mssql::connection::tds::codec::ColumnData::SQLVariant(Some(variant)) => Self::from_sql(variant),
                         _ => Err(crate::mssql::connection::Error::Conversion(format!("cannot interpret {:?} as an {} value", data, stringify!($ty)).into()))
                     }
                 }
@@ -121,6 +122,7 @@ macro_rules! from_sql {
                     }
                     match data {
                         $( $pat => Ok($owned_val), )*
+                        crate::mssql::connection::tds::codec::ColumnData::SQLVariant(Some(variant)) => Self::from_sql(variant),
                         _ => Err(crate::mssql::connection::Error::Conversion(format!("cannot interpret {:?} as an {} value", data, stringify!($ty)).into()))
                     }
                 }
@@ -136,6 +138,7 @@ macro_rules! from_sql {
                     }
                     match data {
                         $( $pat => Ok($borrowed_val), )*
+                        crate::mssql::connection::tds::codec::ColumnData::SQLVariant(Some(variant)) => Self::from_sql(variant),
                         _ => Err(crate::mssql::connection::Error::Conversion(format!("cannot interpret {:?} as an {} value", data, stringify!($ty)).into()))
                     }
                 }
@@ -148,6 +151,7 @@ macro_rules! from_sql {
                     }
                     match data {
                         $( $pat => Ok($borrowed_val), )*
+                        crate::mssql::connection::tds::codec::ColumnData::SQLVariant(Some(variant)) => Self::from_sql_owned(variant.to_owned()),
                         _ => Err(crate::mssql::connection::Error::Conversion(format!("cannot interpret {:?} as an {} value", data, stringify!($ty)).into()))
                     }
                 }

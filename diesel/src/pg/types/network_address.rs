@@ -25,7 +25,7 @@ const AF_INET: u8 = libc::AF_INET as u8;
 const PGSQL_AF_INET: u8 = AF_INET;
 const PGSQL_AF_INET6: u8 = AF_INET + 1;
 
-#[allow(dead_code)]
+#[expect(dead_code)]
 mod foreign_derives {
     use super::*;
     use crate::expression::AsExpression;

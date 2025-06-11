@@ -75,6 +75,7 @@ impl<'a> FromSqlOwned<'a> for XmlData {
         }
         match value {
             ColumnData::Xml(data) => Ok(data.map(|data| data.into_owned())),
+            ColumnData::SQLVariant(Some(variant)) => Self::from_sql_owned(variant.to_owned()),
             v => Err(crate::mssql::connection::Error::Conversion(
                 format!("cannot interpret {:?} as a String value", v).into(),
             )),
@@ -89,6 +90,7 @@ impl<'a> FromSql<'a> for &'a XmlData {
         }
         match value {
             ColumnData::Xml(data) => Ok(data.as_ref().map(|s| s.as_ref())),
+            ColumnData::SQLVariant(Some(variant)) => Self::from_sql(variant),
             v => Err(crate::mssql::connection::Error::Conversion(
                 format!("cannot interpret {:?} as a String value", v).into(),
             )),
@@ -103,6 +105,7 @@ impl<'a> FromSqlOwned<'a> for String {
         }
         match value {
             ColumnData::String(s) => Ok(s.map(|s| s.into_owned())),
+            ColumnData::SQLVariant(Some(variant)) => Self::from_sql_owned(variant.to_owned()),
             v => Err(crate::mssql::connection::Error::Conversion(
                 format!("cannot interpret {:?} as a String value", v).into(),
             )),
@@ -117,6 +120,7 @@ impl<'a> FromSql<'a> for &'a str {
         }
         match value {
             ColumnData::String(s) => Ok(s.as_ref().map(|s| s.as_ref())),
+            ColumnData::SQLVariant(Some(variant)) => Self::from_sql(variant),
             v => Err(crate::mssql::connection::Error::Conversion(
                 format!("cannot interpret {:?} as a String value", v).into(),
             )),
@@ -131,6 +135,7 @@ impl<'a> FromSqlOwned<'a> for Vec<u8> {
         }
         match value {
             ColumnData::Binary(b) => Ok(b.map(|s| s.into_owned())),
+            ColumnData::SQLVariant(Some(variant)) => Self::from_sql_owned(variant.to_owned()),
             v => Err(crate::mssql::connection::Error::Conversion(
                 format!("cannot interpret {:?} as a String value", v).into(),
             )),
@@ -145,6 +150,7 @@ impl<'a> FromSql<'a> for &'a [u8] {
         }
         match value {
             ColumnData::Binary(b) => Ok(b.as_ref().map(|s| s.as_ref())),
+            ColumnData::SQLVariant(Some(variant)) => Self::from_sql(variant),
             v => Err(crate::mssql::connection::Error::Conversion(
                 format!("cannot interpret {:?} as a &[u8] value", v).into(),
             )),

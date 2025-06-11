@@ -122,7 +122,7 @@ pub mod strategy;
     docsrs,
     doc(cfg(feature = "i-implement-a-third-party-backend-and-opt-into-breaking-changes"))
 )]
-#[allow(dead_code)]
+#[expect(dead_code)]
 pub struct StatementCache<DB: Backend, Statement> {
     cache: Box<dyn StatementCacheStrategy<DB, Statement>>,
     // increment every time a query is cached
@@ -164,7 +164,7 @@ where
     StatementCacheKey<DB>: Hash + Eq,
 {
     /// Create a new prepared statement cache using [`CacheSize::Unbounded`] as caching strategy.
-    #[allow(dead_code)]
+    #[expect(dead_code)]
     #[allow(unreachable_pub)]
     pub fn new() -> Self {
         StatementCache {
@@ -174,7 +174,7 @@ where
     }
 
     /// Set caching strategy from predefined implementations
-    #[allow(dead_code)]
+    #[expect(dead_code)]
     pub fn set_cache_size(&mut self, size: CacheSize) {
         if self.cache.cache_size() != size {
             self.cache = match size {
@@ -185,7 +185,7 @@ where
     }
 
     /// Setting custom caching strategy. It is used in tests, to verify caching logic
-    #[allow(dead_code)]
+    #[expect(dead_code)]
     pub(crate) fn set_strategy<Strategy>(&mut self, s: Strategy)
     where
         Strategy: StatementCacheStrategy<DB, Statement> + 'static,

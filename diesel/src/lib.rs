@@ -340,6 +340,9 @@ pub use diesel_derives::MultiConnection;
 #[cfg(feature = "time")]
 pub use time;
 
+#[cfg(feature = "chrono")]
+pub use chrono;
+
 #[allow(unknown_lints, ambiguous_glob_reexports)]
 pub mod dsl {
     //! Includes various helper types and bare functions which are named too

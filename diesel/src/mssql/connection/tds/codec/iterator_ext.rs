@@ -1,6 +1,6 @@
 use std::fmt::{Display, Write};
 
-#[allow(dead_code)]
+//#[expect(dead_code)]
 pub(crate) trait IteratorJoin {
     fn join(self, sep: &str) -> String;
 }

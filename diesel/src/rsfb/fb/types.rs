@@ -15,13 +15,12 @@ use rsfbclient::{ColumnToVal, IntoParam, SqlType};
 use std::boxed::Box;
 use std::error::Error;
 use std::io::Write;
-use time::Date;
 #[cfg(feature = "time")]
 use time::*;
 
 /// Supported types by the diesel
 /// Firebird implementation
-#[derive(Debug,Clone,Copy)]
+#[derive(Debug, Clone, Copy)]
 pub enum SupportedType {
     Text,
     SmallInt,
@@ -63,7 +62,9 @@ impl SupportedType {
                     let tms = Bytes::copy_from_slice(&val).get_i64();
 
                     #[cfg(feature = "chrono")]
-                    DateTime::from_timestamp(tms, 0).map(|s|s.naive_utc()).into_param()
+                    DateTime::from_timestamp(tms, 0)
+                        .map(|s| s.naive_utc())
+                        .into_param()
                 }
                 SupportedType::Bool => {
                     let bo = Bytes::copy_from_slice(&val).get_i8() == 1;

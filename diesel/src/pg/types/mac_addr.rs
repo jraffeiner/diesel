@@ -5,7 +5,7 @@ use crate::pg::{Pg, PgValue};
 use crate::serialize::{self, IsNull, Output, ToSql};
 use crate::sql_types::MacAddr;
 
-#[allow(dead_code)]
+#[expect(dead_code)]
 mod foreign_derives {
     use super::*;
     use crate::deserialize::FromSqlRow;

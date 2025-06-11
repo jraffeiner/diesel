@@ -150,7 +150,7 @@ impl TransactionManagerStatus {
     ///
     /// If that is registered, savepoints rollbacks will still be attempted, but failure to do so
     /// will not result in an error. (Some may succeed, some may not.)
-    #[allow(dead_code)]
+    #[expect(dead_code)]
     pub(crate) fn set_requires_rollback_maybe_up_to_top_level(&mut self, to: bool) {
         if let TransactionManagerStatus::Valid(ValidTransactionManagerStatus {
             in_transaction:

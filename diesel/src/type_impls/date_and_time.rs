@@ -1,4 +1,4 @@
-#![allow(dead_code)]
+#![expect(dead_code)]
 
 use crate::deserialize::FromSqlRow;
 use crate::expression::AsExpression;

@@ -207,7 +207,7 @@ fn manually_specified_expression() {
     assert!(data.is_err());
 }
 
-#[allow(dead_code)] // that's essentially a compile test
+#[expect(dead_code)] // that's essentially a compile test
 #[test]
 fn check_for_backend_with_deserialize_as() {
     table! {
@@ -237,7 +237,7 @@ fn check_for_backend_with_deserialize_as() {
     }
 }
 
-#[allow(dead_code)] // that's essentially a compile test
+#[expect(dead_code)] // that's essentially a compile test
 #[test]
 fn check_with_lifetime_and_type_param() {
     use std::borrow::Cow;

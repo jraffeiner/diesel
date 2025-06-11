@@ -172,7 +172,7 @@ impl<S: Read + Write + Send> Client<S> {
     /// [`Query`]: struct.Query.html
     /// [`ToSql`]: trait.ToSql.html
     /// [`FromSql`]: trait.FromSql.html
-    #[allow(dead_code)]
+    #[expect(dead_code)]
     pub(crate) fn query<'a, 'b>(
         &'a mut self,
         query: impl Into<Cow<'b, str>>,
@@ -223,7 +223,7 @@ impl<S: Read + Write + Send> Client<S> {
     /// statements using the [`query`] method.
     ///
     /// [`query`]: #method.query
-    #[allow(dead_code)]
+    #[expect(dead_code)]
     pub(crate) fn simple_query<'a, 'b>(
         &'a mut self,
         query: impl Into<Cow<'b, str>>,
@@ -290,7 +290,7 @@ impl<S: Read + Write + Send> Client<S> {
     /// # Ok(())
     /// # }
     /// ```
-    #[allow(dead_code)]
+    #[expect(dead_code)]
     pub(crate) fn bulk_insert<'a>(
         &'a mut self,
         table: &'a str,
@@ -347,12 +347,14 @@ impl<S: Read + Write + Send> Client<S> {
     }
 
     /// Closes this database connection explicitly.
-    #[allow(dead_code)]
+    #[expect(dead_code)]
     pub(crate) fn close(self) -> crate::mssql::connection::Result<()> {
         Ok(())
     }
 
     pub(crate) fn rpc_params<'a>(query: impl Into<Cow<'a, str>>) -> Vec<RpcParam<'a>> {
+        let query = query.into();
+        let query = query.replace("\n", "\n\r").replace("\r\r", "\r");
         vec![
             RpcParam {
                 name: Cow::Borrowed("stmt"),

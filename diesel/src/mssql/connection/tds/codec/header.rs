@@ -92,7 +92,7 @@ impl PacketHeader {
         }
     }
 
-    #[allow(dead_code)]
+    //#[expect(dead_code)]
     pub(crate) fn batch(id: u8) -> Self {
         Self {
             ty: PacketType::SQLBatch,

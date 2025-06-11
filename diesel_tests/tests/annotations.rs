@@ -102,7 +102,7 @@ fn association_where_parent_and_child_have_underscores() {
 
 // This module has no test functions, as it's only to test compilation.
 mod associations_can_have_nullable_foreign_keys {
-    #![allow(dead_code)]
+    #![expect(dead_code)]
 
     table! {
         foos{
@@ -132,7 +132,7 @@ mod associations_can_have_nullable_foreign_keys {
 
 // This module has no test functions, as it's only to test compilation.
 mod multiple_lifetimes_in_insertable_struct_definition {
-    #![allow(dead_code)]
+    #![expect(dead_code)]
     use crate::schema::posts;
 
     #[derive(Insertable)]
@@ -144,7 +144,7 @@ mod multiple_lifetimes_in_insertable_struct_definition {
 }
 
 mod lifetimes_with_names_other_than_a {
-    #![allow(dead_code)]
+    #![expect(dead_code)]
     use crate::schema::posts;
 
     #[derive(Insertable)]
@@ -157,7 +157,7 @@ mod lifetimes_with_names_other_than_a {
 }
 
 mod insertable_with_cow {
-    #![allow(dead_code)]
+    #![expect(dead_code)]
     use crate::schema::posts;
     use std::borrow::Cow;
 
@@ -171,7 +171,7 @@ mod insertable_with_cow {
 }
 
 mod custom_foreign_keys_are_respected_on_belongs_to {
-    #![allow(dead_code)]
+    #![expect(dead_code)]
 
     use crate::schema::User;
 
@@ -186,7 +186,7 @@ mod custom_foreign_keys_are_respected_on_belongs_to {
 }
 
 mod derive_identifiable_with_lifetime {
-    #![allow(dead_code)]
+    #![expect(dead_code)]
     use crate::schema::posts;
 
     #[derive(Identifiable)]
@@ -202,7 +202,7 @@ fn derive_identifiable_with_non_standard_pk() {
     #[derive(Identifiable)]
     #[diesel(table_name = posts)]
     #[diesel(primary_key(foo_id))]
-    #[allow(dead_code)]
+    #[expect(dead_code)]
     struct Foo<'a> {
         id: i32,
         foo_id: &'a str,
@@ -232,7 +232,7 @@ fn derive_identifiable_with_composite_pk() {
     #[derive(Identifiable)]
     #[diesel(primary_key(foo_id, bar_id))]
     #[diesel(table_name = posts)]
-    #[allow(dead_code)]
+    #[expect(dead_code)]
     struct Foo {
         id: i32,
         foo_id: i32,

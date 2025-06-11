@@ -123,6 +123,10 @@ pub fn load_table_names(
         InferConnection::Mysql(ref mut c) => {
             super::information_schema::load_table_names(c, schema_name)
         }
+        #[cfg(feature = "mssql")]
+        InferConnection::Mssql(ref mut c) => {
+            super::information_schema::load_table_names(c, schema_name)
+        }
     }?;
 
     tracing::info!(?tables, "Loaded tables");
@@ -148,6 +152,8 @@ fn get_table_comment(
         InferConnection::Pg(ref mut c) => super::pg::get_table_comment(c, table),
         #[cfg(feature = "mysql")]
         InferConnection::Mysql(ref mut c) => super::mysql::get_table_comment(c, table),
+        #[cfg(feature = "mssql")]
+        InferConnection::Mssql(ref mut c) => super::mssql::get_table_comment(c, table),
     };
     if let Err(NotFound) = table_comment {
         Err(crate::errors::Error::NoTableFound(table.clone()))
@@ -172,6 +178,8 @@ fn get_column_information(
         InferConnection::Pg(ref mut c) => super::pg::get_table_data(c, table, column_sorting),
         #[cfg(feature = "mysql")]
         InferConnection::Mysql(ref mut c) => super::mysql::get_table_data(c, table, column_sorting),
+        #[cfg(feature = "mssql")]
+        InferConnection::Mssql(ref mut c) => super::mssql::get_table_data(c, table, column_sorting),
     };
     if let Err(NotFound) = column_info {
         Err(crate::errors::Error::NoTableFound(table.clone()))
@@ -202,6 +210,8 @@ fn determine_column_type(
         }
         #[cfg(feature = "mysql")]
         InferConnection::Mysql(_) => super::mysql::determine_column_type(attr),
+        #[cfg(feature = "mssql")]
+        InferConnection::Mssql(_) => super::mssql::determine_column_type(attr),
     }
 }
 
@@ -217,6 +227,8 @@ pub(crate) fn get_primary_keys(
         InferConnection::Pg(ref mut c) => super::information_schema::get_primary_keys(c, table),
         #[cfg(feature = "mysql")]
         InferConnection::Mysql(ref mut c) => super::information_schema::get_primary_keys(c, table),
+        #[cfg(feature = "mssql")]
+        InferConnection::Mssql(ref mut c) => super::information_schema::get_primary_keys(c, table),
     }?;
     if primary_keys.is_empty() {
         Err(crate::errors::Error::NoPrimaryKeyFound(table.clone()))
@@ -243,6 +255,10 @@ pub fn load_foreign_key_constraints(
         #[cfg(feature = "mysql")]
         InferConnection::Mysql(ref mut c) => {
             super::mysql::load_foreign_key_constraints(c, schema_name).map_err(Into::into)
+        }
+        #[cfg(feature = "mssql")]
+        InferConnection::Mssql(ref mut c) => {
+            super::mssql::load_foreign_key_constraints(c, schema_name).map_err(Into::into)
         }
     };
 

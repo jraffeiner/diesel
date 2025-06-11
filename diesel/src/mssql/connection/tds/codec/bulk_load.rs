@@ -13,7 +13,7 @@ use super::{
 
 /// A handler for a bulk insert data flow.
 #[derive(Debug)]
-#[allow(dead_code)]
+//#[expect(dead_code)]
 pub(crate) struct BulkLoadRequest<'a, S>
 where
     S: Read + Write + Send,
@@ -28,7 +28,7 @@ impl<'a, S> BulkLoadRequest<'a, S>
 where
     S: Read + Write + Send,
 {
-    #[allow(dead_code)]
+    //#[expect(dead_code)]
     pub(crate) fn new(
         connection: &'a mut Connection<S>,
         columns: Vec<MetaDataColumn<'a>>,
@@ -60,7 +60,7 @@ where
     /// data and for the data to actually be available in the table.
     ///
     /// [`finalize`]: #method.finalize
-    #[allow(dead_code)]
+    #[expect(dead_code)]
     pub(crate) fn send(&mut self, row: TokenRow<'a>) -> crate::mssql::connection::Result<()> {
         let mut buf_with_columns = BytesMutWithDataColumns::new(&mut self.buf, &self.columns);
 
@@ -75,7 +75,7 @@ where
     /// This method must be called after sending all the data to flush all
     /// pending data and to get the server actually to store the rows to the
     /// table.
-    #[allow(dead_code)]
+    #[expect(dead_code)]
     pub(crate) fn finalize(mut self) -> crate::mssql::connection::Result<ExecuteResult> {
         TokenDone::default().encode(&mut self.buf)?;
         self.write_packets()?;
@@ -97,7 +97,6 @@ where
         ExecuteResult::new(self.connection)
     }
 
-    #[allow(dead_code)]
     fn write_packets(&mut self) -> crate::mssql::connection::Result<()> {
         let packet_size = (self.connection.context().packet_size() as usize) - HEADER_BYTES;
 

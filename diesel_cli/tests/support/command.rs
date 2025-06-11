@@ -82,7 +82,7 @@ impl CommandResult {
         self.output.status.code().unwrap()
     }
 
-    #[allow(dead_code)]
+    #[expect(dead_code)]
     pub fn result(self) -> Result<Self, Self> {
         if self.is_success() {
             Ok(self)

@@ -14,7 +14,7 @@ pub struct TableDecl {
     pub column_defs: syn::punctuated::Punctuated<ColumnDef, syn::Token![,]>,
 }
 
-#[allow(dead_code)] // paren_token is currently unused
+#[expect(dead_code)] // paren_token is currently unused
 pub struct PrimaryKey {
     paren_token: syn::token::Paren,
     pub keys: syn::punctuated::Punctuated<Ident, syn::Token![,]>,

@@ -39,7 +39,7 @@ where
     /// Creates a new `Framed` from [`FramedParts`].
     ///
     /// See also [`Framed::into_parts`].
-    #[allow(dead_code)]
+    #[expect(dead_code)]
     pub(crate) fn from_parts(
         FramedParts {
             io,
@@ -73,17 +73,17 @@ where
         self.into_parts().io
     }
 
-    #[allow(dead_code)]
+    #[expect(dead_code)]
     pub(crate) fn codec(&self) -> &C {
         &self.inner.c
     }
 
-    #[allow(dead_code)]
+    #[expect(dead_code)]
     pub(crate) fn codec_mut(&mut self) -> &mut C {
         &mut self.inner.c
     }
 
-    #[allow(dead_code)]
+    #[expect(dead_code)]
     pub(crate) fn read_buffer(&self) -> &BytesMut {
         self.inner.buffer()
     }
@@ -91,7 +91,7 @@ where
     /// High-water mark for writes, in bytes
     ///
     /// See [`FramedWrite::send_high_water_mark`].
-    #[allow(dead_code)]
+    #[expect(dead_code)]
     pub(crate) fn send_high_water_mark(&self) -> usize {
         self.inner.high_water_mark
     }
@@ -99,7 +99,7 @@ where
     /// Sets high-water mark for writes, in bytes
     ///
     /// See [`FramedWrite::set_send_high_water_mark`].
-    #[allow(dead_code)]
+    #[expect(dead_code)]
     pub(crate) fn set_send_high_water_mark(&mut self, hwm: usize) {
         self.inner.high_water_mark = hwm;
     }
@@ -170,7 +170,7 @@ impl<S> FramedReadBuffer<S> {
         (self.inner, self.buffer)
     }
 
-    #[allow(dead_code)]
+    //#[expect(dead_code)]
     fn buffer(&self) -> &BytesMut {
         &self.buffer
     }
@@ -400,7 +400,7 @@ impl<S: Write> Write for FramedWriteBuffer<S> {
     }
 }
 
-#[allow(dead_code)]
+//#[expect(dead_code)]
 pub(crate) struct FramedParts<S, C> {
     io: S,
     codec: C,

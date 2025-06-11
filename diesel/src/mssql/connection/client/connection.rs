@@ -190,8 +190,7 @@ impl<S: Read + Write + Send> Connection<S> {
 
         let packet = Packet::new(header, data);
         self.transport.send(packet)?;
-
-        Ok(())
+        self.transport.flush()
     }
 
     /// Sends all pending packages to the wire.

@@ -53,7 +53,7 @@ impl<'a> TokenRow<'a> {
     }
 
     /// Creates a new empty row with allocated capacity.
-    #[allow(dead_code)]
+    #[expect(dead_code)]
     pub(crate) fn with_capacity(capacity: usize) -> Self {
         Self {
             data: Vec::with_capacity(capacity),
@@ -63,7 +63,7 @@ impl<'a> TokenRow<'a> {
     /// Clears the row, removing all column values.
     ///
     /// Note that this method has no effect on the allocated capacity of the row.
-    #[allow(dead_code)]
+    #[expect(dead_code)]
     pub(crate) fn clear(&mut self) {
         self.data.clear();
     }
@@ -79,7 +79,7 @@ impl<'a> TokenRow<'a> {
     }
 
     /// True if row has no columns.
-    #[allow(dead_code)]
+    #[expect(dead_code)]
     pub(crate) fn is_empty(&self) -> bool {
         self.data.is_empty()
     }

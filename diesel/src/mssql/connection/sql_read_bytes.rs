@@ -4,10 +4,10 @@ use std::io;
 use std::io::Read;
 
 /// The `SqlReadBytes` trait is used to read bytes from the wire.
-// Many of the methods have an `allow(dead_code)` attribute because they are not currently used but they could be anytime in the future.
+// Many of the methods have an `expect(dead_code)` attribute because they are not currently used but they could be anytime in the future.
 pub(crate) trait SqlReadBytes: Read {
     // Pretty-print current wire content.
-    #[allow(dead_code)]
+    #[expect(dead_code)]
     fn debug_buffer(&self);
 
     // The client state.
@@ -17,7 +17,7 @@ pub(crate) trait SqlReadBytes: Read {
     fn context_mut(&mut self) -> &mut Context;
 
     // Read a single i8 value.
-    #[allow(dead_code)]
+    #[expect(dead_code)]
     fn read_i8(&mut self) -> io::Result<i8> {
         let mut buf = [0; 1];
         self.read_exact(&mut buf)?;
@@ -50,7 +50,7 @@ pub(crate) trait SqlReadBytes: Read {
     }
 
     // Read a single big-endian f32 value.
-    #[allow(dead_code)]
+    #[expect(dead_code)]
     fn read_f32(&mut self) -> io::Result<f32> {
         let mut buf = [0; 4];
         self.read_exact(&mut buf)?;
@@ -91,7 +91,7 @@ pub(crate) trait SqlReadBytes: Read {
     }
 
     // Read a single big-endian f64 value.
-    #[allow(dead_code)]
+    #[expect(dead_code)]
     fn read_f64(&mut self) -> io::Result<f64> {
         let mut buf = [0; 8];
         self.read_exact(&mut buf)?;
@@ -124,7 +124,7 @@ pub(crate) trait SqlReadBytes: Read {
     }
 
     // Read a single i128 value.
-    #[allow(dead_code)]
+    #[expect(dead_code)]
     fn read_i128_le(&mut self) -> io::Result<i128> {
         let mut buf = [0; 16];
         self.read_exact(&mut buf)?;
@@ -133,7 +133,7 @@ pub(crate) trait SqlReadBytes: Read {
     }
 
     // Read a single u128 value.
-    #[allow(dead_code)]
+    #[expect(dead_code)]
     fn read_u128_le(&mut self) -> io::Result<u128> {
         let mut buf = [0; 16];
         self.read_exact(&mut buf)?;

@@ -477,7 +477,7 @@ pub struct Json;
 /// ## Examples
 ///
 /// ```rust
-/// # #![allow(dead_code)]
+/// # #![expect(dead_code)]
 /// # include!("../doctest_setup.rs");
 /// #
 /// table! {

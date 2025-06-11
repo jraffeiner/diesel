@@ -1,7 +1,7 @@
 use crate::mssql::connection::{to_sql::IntoSql, TokenRow};
 
 /// create a TokenRow from list of values
-#[allow(dead_code)]
+#[expect(dead_code)]
 pub(crate) trait IntoRow<'a> {
     /// create a TokenRow from list of values which implements IntoSQL
     fn into_row(self) -> TokenRow<'a>;

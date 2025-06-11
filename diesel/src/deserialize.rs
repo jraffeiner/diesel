@@ -584,7 +584,7 @@ where
 /// This is needed for types that can be used as range to represent the empty range as
 /// (Bound::Excluded(DEFAULT), Bound::Excluded(DEFAULT)).
 /// When possible, implementations of this trait should fall back to using std::default::Default.
-#[allow(dead_code)]
+#[expect(dead_code)]
 pub(crate) trait Defaultable {
     /// Returns the "default value" for a type.
     fn default_value() -> Self;

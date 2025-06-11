@@ -201,7 +201,7 @@ pub(crate) fn expand(input: SqlFunctionDecl, legacy_helper_type_and_module: bool
                     tokens = quote! {
                         #tokens
 
-                        #[allow(dead_code)]
+                        #[expect(dead_code)]
                         /// Registers an implementation for this aggregate function on the given connection
                         ///
                         /// This function must be called for every `SqliteConnection` before
@@ -232,7 +232,7 @@ pub(crate) fn expand(input: SqlFunctionDecl, legacy_helper_type_and_module: bool
                     tokens = quote! {
                         #tokens
 
-                        #[allow(dead_code)]
+                        #[expect(dead_code)]
                         /// Registers an implementation for this aggregate function on the given connection
                         ///
                         /// This function must be called for every `SqliteConnection` before
@@ -283,7 +283,7 @@ pub(crate) fn expand(input: SqlFunctionDecl, legacy_helper_type_and_module: bool
                 use diesel::serialize::ToSql;
                 use diesel::deserialize::{FromSqlRow, StaticallySizedRow};
 
-                #[allow(dead_code)]
+                #[expect(dead_code)]
                 /// Registers an implementation for this function on the given connection
                 ///
                 /// This function must be called for every `SqliteConnection` before
@@ -308,7 +308,7 @@ pub(crate) fn expand(input: SqlFunctionDecl, legacy_helper_type_and_module: bool
                     )
                 }
 
-                #[allow(dead_code)]
+                #[expect(dead_code)]
                 /// Registers an implementation for this function on the given connection
                 ///
                 /// This function must be called for every `SqliteConnection` before
@@ -343,7 +343,7 @@ pub(crate) fn expand(input: SqlFunctionDecl, legacy_helper_type_and_module: bool
                 use diesel::sqlite::{Sqlite, SqliteConnection};
                 use diesel::serialize::ToSql;
 
-                #[allow(dead_code)]
+                #[expect(dead_code)]
                 /// Registers an implementation for this function on the given connection
                 ///
                 /// This function must be called for every `SqliteConnection` before
@@ -366,7 +366,7 @@ pub(crate) fn expand(input: SqlFunctionDecl, legacy_helper_type_and_module: bool
                     )
                 }
 
-                #[allow(dead_code)]
+                #[expect(dead_code)]
                 /// Registers an implementation for this function on the given connection
                 ///
                 /// This function must be called for every `SqliteConnection` before

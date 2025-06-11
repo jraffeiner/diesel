@@ -35,7 +35,7 @@ where
     StatementCacheKey<DB>: Hash + Eq,
 {
     /// Returns which prepared statement cache size is implemented by this trait
-    #[allow(dead_code)]
+    //#[expect(dead_code)]
     fn cache_size(&self) -> CacheSize;
 
     /// Returns whether or not the corresponding cache key is already cached
@@ -110,7 +110,7 @@ where
     }
 }
 
-#[allow(dead_code)]
+#[expect(dead_code)]
 #[cfg(test)]
 mod testing_utils {
 

@@ -94,6 +94,10 @@ pub fn generate_sql_based_on_diff_schema(
         InferConnection::Mysql(_) => {
             config.sqlite_integer_primary_key_is_bigint = None;
         }
+        #[cfg(feature = "mssql")]
+        InferConnection::Mssql(_) => {
+            config.sqlite_integer_primary_key_is_bigint = None;
+        }
     }
 
     let mut schema_diff = Vec::new();
@@ -228,6 +232,12 @@ pub fn generate_sql_based_on_diff_schema(
                 diff.generate_up_sql(&mut qb, &config)?;
                 qb.finish()
             }
+            #[cfg(feature = "mssql")]
+            InferConnection::Mssql(_) => {
+                let mut qb = diesel::mssql::MssqlQueryBuilder::default();
+                diff.generate_up_sql(&mut qb, &config)?;
+                qb.finish()
+            }
         };
 
         let down = match conn {
@@ -246,6 +256,12 @@ pub fn generate_sql_based_on_diff_schema(
             #[cfg(feature = "mysql")]
             InferConnection::Mysql(_) => {
                 let mut qb = diesel::mysql::MysqlQueryBuilder::default();
+                diff.generate_down_sql(&mut qb, &config)?;
+                qb.finish()
+            }
+            #[cfg(feature = "mssql")]
+            InferConnection::Mssql(_) => {
+                let mut qb = diesel::mssql::MssqlQueryBuilder::default();
                 diff.generate_down_sql(&mut qb, &config)?;
                 qb.finish()
             }

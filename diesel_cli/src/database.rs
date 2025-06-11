@@ -1,10 +1,10 @@
-#[cfg(any(feature = "postgres", feature = "mysql"))]
+#[cfg(any(feature = "postgres", feature = "mysql", feature = "mssql"))]
 use super::query_helper;
 use clap::ArgMatches;
-use diesel::connection::InstrumentationEvent;
 use diesel::dsl::sql;
 use diesel::sql_types::Bool;
 use diesel::*;
+use diesel::{connection::InstrumentationEvent, mssql::MssqlConnection};
 use diesel_migrations::FileBasedMigrations;
 
 use std::env;
@@ -20,6 +20,8 @@ pub enum Backend {
     Sqlite,
     #[cfg(feature = "mysql")]
     Mysql,
+    #[cfg(feature = "mssql")]
+    Mssql,
 }
 
 impl Backend {
@@ -54,6 +56,20 @@ impl Backend {
                     );
                 }
             }
+            _ if database_url.starts_with("mssql://") =>
+            {
+                #[cfg(feature = "mssql")]
+                {
+                    Backend::Mssql
+                }
+                #[cfg(not(feature = "mssql"))]
+                {
+                    panic!(
+                        "Database url `{}` requires the `mssql` feature but it's not enabled.",
+                        database_url
+                    );
+                }
+            }
             #[cfg(feature = "sqlite")]
             _ => Backend::Sqlite,
             #[cfg(not(feature = "sqlite"))]
@@ -76,6 +92,9 @@ impl Backend {
                 if cfg!(feature = "mysql") {
                     available_schemes.push("`mysql://`");
                 }
+                if cfg!(feature = "mssql") {
+                    available_schemes.push("`mssql://`");
+                }
 
                 panic!(
                     "`{}` is not a valid database URL. It should start with {}, or maybe you meant to use the `sqlite` feature which is not enabled.",
@@ -83,7 +102,7 @@ impl Backend {
                     available_schemes.join(" or ")
                 );
             }
-            #[cfg(not(any(feature = "mysql", feature = "sqlite", feature = "postgres")))]
+            #[cfg(not(any(feature = "mysql", feature = "sqlite", feature = "postgres", feature = "mssql")))]
             _ => compile_error!(
                 "At least one backend must be specified for use with this crate. \
                  You may omit the unneeded dependencies in the following command. \n\n \
@@ -100,6 +119,8 @@ impl Backend {
             InferConnection::Sqlite(_) => Self::Sqlite,
             #[cfg(feature = "mysql")]
             InferConnection::Mysql(_) => Self::Mysql,
+            #[cfg(feature = "mssql")]
+            InferConnection::Mssql(_) => Self::Mssql,
         }
     }
 }
@@ -112,6 +133,8 @@ pub enum InferConnection {
     Sqlite(SqliteConnection),
     #[cfg(feature = "mysql")]
     Mysql(MysqlConnection),
+    #[cfg(feature = "mssql")]
+    Mssql(mssql::MssqlConnection),
 }
 
 impl InferConnection {
@@ -132,6 +155,8 @@ impl InferConnection {
             Backend::Mysql => MysqlConnection::establish(&database_url).map(Self::Mysql),
             #[cfg(feature = "sqlite")]
             Backend::Sqlite => SqliteConnection::establish(&database_url).map(Self::Sqlite),
+            #[cfg(feature = "mssql")]
+            Backend::Mssql => MssqlConnection::establish(&database_url).map(Self::Mssql),
         };
 
         let mut conn = result.map_err(|err| crate::errors::Error::ConnectionError {
@@ -223,6 +248,21 @@ fn create_database_if_needed(database_url: &str) -> Result<(), crate::errors::Er
                     crate::errors::Error::ConnectionError {
                         error,
                         url: mysql_url,
+                    }
+                })?;
+                query_helper::create_database(&database).execute(&mut conn)?;
+            }
+        }
+        #[cfg(feature = "mssql")]
+        Backend::Mssql => {
+            if MssqlConnection::establish(database_url).is_err() {
+                let (database, mssql_url) =
+                    change_database_of_url(database_url, "information_schema")?;
+                println!("Creating database: {database}");
+                let mut conn = MssqlConnection::establish(&mssql_url).map_err(|error| {
+                    crate::errors::Error::ConnectionError {
+                        error,
+                        url: mssql_url,
                     }
                 })?;
                 query_helper::create_database(&database).execute(&mut conn)?;
@@ -337,6 +377,22 @@ fn drop_database(database_url: &str) -> Result<(), crate::errors::Error> {
                     .execute(&mut conn)?;
             }
         }
+        #[cfg(feature = "mssql")]
+        Backend::Mssql => {
+            let (database, mssql_url) = change_database_of_url(database_url, "information_schema")?;
+            let mut conn = MssqlConnection::establish(&mssql_url).map_err(|e| {
+                crate::errors::Error::ConnectionError {
+                    error: e,
+                    url: mssql_url,
+                }
+            })?;
+            if mssql_database_exists(&mut conn, &database)? {
+                println!("Dropping database: {database}");
+                query_helper::drop_database(&database)
+                    .if_exists()
+                    .execute(&mut conn)?;
+            }
+        }
     }
     Ok(())
 }
@@ -371,11 +427,33 @@ table! {
 
 #[cfg(feature = "mysql")]
 fn mysql_database_exists(conn: &mut MysqlConnection, database_name: &str) -> QueryResult<bool> {
+    use schemata::catalog_name;
+
     use self::schemata::dsl::*;
 
     schemata
         .select(schema_name)
-        .filter(schema_name.eq(database_name))
+        .filter(catalog_name.eq(database_name))
+        .get_result::<String>(conn)
+        .optional()
+        .map(|x| x.is_some())
+}
+
+#[cfg(feature = "mssql")]
+table! {
+    information_schema.schemata (schema_name) {
+        schema_name -> Text,
+        catalog_name -> Text,
+    }
+}
+
+#[cfg(feature = "mssql")]
+fn mssql_database_exists(conn: &mut MssqlConnection, database_name: &str) -> QueryResult<bool> {
+    use self::schemata::dsl::*;
+
+    schemata
+        .select(schema_name)
+        .filter(catalog_name.eq(database_name))
         .get_result::<String>(conn)
         .optional()
         .map(|x| x.is_some())
@@ -411,6 +489,14 @@ pub fn schema_table_exists(database_url: &str) -> Result<bool, crate::errors::Er
                      AND table_schema = DATABASE())",
         ))
         .get_result(&mut conn),
+        #[cfg(feature = "mssql")]
+        InferConnection::Mssql(mut conn) => select(sql::<Bool>(
+            "IIF(EXISTS \
+                    (SELECT 1 \
+                     FROM information_schema.tables \
+                     WHERE table_name = '__diesel_schema_migrations'),CAST(1 AS BIT),CAST(0 AS BIT))",
+        ))
+        .get_result(&mut conn),
     }
     .map_err(Into::into)
 }
@@ -423,7 +509,7 @@ pub fn database_url(matches: &ArgMatches) -> Result<String, crate::errors::Error
         .ok_or(crate::errors::Error::DatabaseUrlMissing)
 }
 
-#[cfg(any(feature = "postgres", feature = "mysql"))]
+#[cfg(any(feature = "postgres", feature = "mysql", feature = "mssql"))]
 fn change_database_of_url(
     database_url: &str,
     default_database: &str,
@@ -436,7 +522,7 @@ fn change_database_of_url(
     Ok((database, new_url.into()))
 }
 
-#[cfg(any(feature = "postgres", feature = "mysql"))]
+#[cfg(any(feature = "postgres", feature = "mysql", feature = "mssql"))]
 fn get_database_and_url(database_url: &str) -> Result<(String, url::Url), crate::errors::Error> {
     let base = url::Url::parse(database_url)?;
     let database = base

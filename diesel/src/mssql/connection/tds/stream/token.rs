@@ -14,7 +14,7 @@ use tracing::{event, Level};
 use super::BoxIter;
 
 #[derive(Debug)]
-#[allow(dead_code)]
+#[expect(dead_code)]
 pub(crate) enum ReceivedToken {
     NewResultset(Arc<TokenColMetaData<'static>>),
     Row(TokenRow<'static>),
@@ -143,8 +143,11 @@ where
         if self.last_error.is_none() {
             self.last_error = Some(Error::Server(err.clone()));
         }
-
-        event!(Level::ERROR, message = %err.message, code = err.code);
+        if err.code == 266 {
+            event!(Level::WARN, message = %err.message, code = err.code);
+        }else{
+            event!(Level::ERROR, message = %err.message, code = err.code);
+        }
         Ok(ReceivedToken::Error(err))
     }
 

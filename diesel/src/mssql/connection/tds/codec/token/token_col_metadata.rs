@@ -163,7 +163,7 @@ impl BaseMetaDataColumn {
                 VarLenType::Text => ColumnData::String(None),
                 VarLenType::Image => ColumnData::Binary(None),
                 VarLenType::NText => ColumnData::String(None),
-                VarLenType::SSVariant => ColumnData::SQLVariant,
+                VarLenType::SSVariant => ColumnData::SQLVariant(None),
             },
             TypeInfo::VarLenSizedPrecision { ty, .. } => match ty {
                 VarLenType::Guid => ColumnData::Guid(None),
@@ -189,7 +189,7 @@ impl BaseMetaDataColumn {
                 VarLenType::Text => ColumnData::String(None),
                 VarLenType::Image => ColumnData::Binary(None),
                 VarLenType::NText => ColumnData::String(None),
-                VarLenType::SSVariant => todo!(),
+                VarLenType::SSVariant => ColumnData::SQLVariant(None),
             },
             TypeInfo::Xml { .. } => ColumnData::Xml(None),
         }

@@ -6,13 +6,13 @@ pub(crate) struct TokenFeatureExtAck {
 }
 
 #[derive(Debug)]
-#[allow(dead_code)]
+#[expect(dead_code)]
 pub(crate) enum FedAuthAck {
     SecurityToken { nonce: Option<[u8; 32]> },
 }
 
 #[derive(Debug)]
-#[allow(dead_code)]
+#[expect(dead_code)]
 pub(crate) enum FeatureAck {
     FedAuth(FedAuthAck),
 }

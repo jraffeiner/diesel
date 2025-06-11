@@ -69,7 +69,7 @@ pub(crate) enum RpcProcId {
 }
 
 #[derive(Debug)]
-#[allow(dead_code)]
+//#[expect(dead_code)]
 pub(crate) enum RpcProcIdValue<'a> {
     Name(Cow<'a, str>),
     Id(RpcProcId),

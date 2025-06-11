@@ -14,7 +14,6 @@ pub struct FbValue<'a> {
     pub raw: &'a Column,
 }
 
-
 #[derive(Debug)]
 /// Represents a Field of a Row
 pub struct FbField<'a> {
@@ -50,7 +49,8 @@ impl FbRow {
 impl RowSealed for FbRow {}
 
 impl<'a> DsRow<'a, Fb> for FbRow {
-    type Field<'f> = FbField<'f>
+    type Field<'f>
+        = FbField<'f>
     where
         'a: 'f,
         Self: 'f;

@@ -514,7 +514,7 @@ pub trait NullableExpressionMethods: Expression + Sized {
     ///
     /// # Example
     /// ```no_run
-    /// # #![allow(dead_code)]
+    /// # #![expect(dead_code)]
     /// # include!("../doctest_setup.rs");
     /// # use diesel::sql_types::*;
     /// # use schema::users;
@@ -558,7 +558,7 @@ pub trait NullableExpressionMethods: Expression + Sized {
     /// # Examples
     /// ## Normal usage
     /// ```rust
-    /// # #![allow(dead_code)]
+    /// # #![expect(dead_code)]
     /// # include!("../doctest_setup.rs");
     /// # use diesel::sql_types::*;
     /// #
@@ -585,7 +585,7 @@ pub trait NullableExpressionMethods: Expression + Sized {
     ///
     /// ## Incorrect usage
     /// ```rust
-    /// # #![allow(dead_code)]
+    /// # #![expect(dead_code)]
     /// # include!("../doctest_setup.rs");
     /// # use diesel::sql_types::*;
     /// #
@@ -620,7 +620,7 @@ pub trait NullableExpressionMethods: Expression + Sized {
     /// (see [`Queryable` documentation](crate::deserialize::Queryable))
     ///
     /// ```rust
-    /// # #![allow(dead_code)]
+    /// # #![expect(dead_code)]
     /// # include!("../doctest_setup.rs");
     /// # use diesel::sql_types::*;
     /// # use schema::users;

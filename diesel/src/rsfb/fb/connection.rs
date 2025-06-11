@@ -100,11 +100,13 @@ trait Helper {
 }
 
 impl LoadConnection<DefaultLoadingMode> for FbConnection {
-    type Cursor<'conn, 'query>=FbCursor
+    type Cursor<'conn, 'query>
+        = FbCursor
     where
         Self: 'conn;
 
-    type Row<'conn, 'query>=FbRow
+    type Row<'conn, 'query>
+        = FbRow
     where
         Self: 'conn;
 

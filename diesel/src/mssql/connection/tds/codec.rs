@@ -37,7 +37,7 @@ const ALL_HEADERS_LEN_TX: usize = 22;
 
 #[derive(Debug)]
 #[repr(u16)]
-#[allow(dead_code)]
+#[expect(dead_code)]
 enum AllHeaderTy {
     QueryDescriptor = 1,
     TransactionDescriptor = 2,

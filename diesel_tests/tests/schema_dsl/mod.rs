@@ -1,4 +1,4 @@
-#![cfg_attr(not(feature = "postgres"), allow(dead_code))]
+#![cfg_attr(not(feature = "postgres"), expect(dead_code))]
 
 mod functions;
 mod structures;

@@ -2,14 +2,14 @@ use super::{AllHeaderTy, Encode, ALL_HEADERS_LEN_TX};
 use bytes::{BufMut, BytesMut};
 use std::borrow::Cow;
 
-#[allow(dead_code)]
+//#[expect(dead_code)]
 pub(crate) struct BatchRequest<'a> {
     queries: Cow<'a, str>,
     transaction_descriptor: [u8; 8],
 }
 
 impl<'a> BatchRequest<'a> {
-    #[allow(dead_code)]
+    //#[expect(dead_code)]
     pub(crate) fn new(queries: impl Into<Cow<'a, str>>, transaction_descriptor: [u8; 8]) -> Self {
         Self {
             queries: queries.into(),

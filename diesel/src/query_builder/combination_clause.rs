@@ -363,7 +363,7 @@ pub trait SupportsCombinationClause<Combinator, Rule> {}
 )]
 pub struct ParenthesisWrapper<T> {
     /// the inner parenthesis definition
-    #[allow(dead_code)]
+    #[expect(dead_code)]
     inner: T,
 }
 
@@ -387,6 +387,28 @@ mod postgres {
     impl SupportsCombinationClause<Intersect, All> for Pg {}
     impl SupportsCombinationClause<Except, Distinct> for Pg {}
     impl SupportsCombinationClause<Except, All> for Pg {}
+}
+
+#[cfg(feature = "mssql_backend")]
+mod postgres {
+    use super::*;
+    use crate::mssql::Mssql;
+
+    impl<T: QueryFragment<Mssql>> QueryFragment<Mssql> for ParenthesisWrapper<T> {
+        fn walk_ast<'b>(&'b self, mut out: AstPass<'_, 'b, Mssql>) -> QueryResult<()> {
+            out.push_sql("(");
+            self.inner.walk_ast(out.reborrow())?;
+            out.push_sql(")");
+            Ok(())
+        }
+    }
+
+    impl SupportsCombinationClause<Union, Distinct> for Mssql {}
+    impl SupportsCombinationClause<Union, All> for Mssql {}
+    impl SupportsCombinationClause<Intersect, Distinct> for Mssql {}
+    impl SupportsCombinationClause<Intersect, All> for Mssql {}
+    impl SupportsCombinationClause<Except, Distinct> for Mssql {}
+    impl SupportsCombinationClause<Except, All> for Mssql {}
 }
 
 #[cfg(feature = "mysql_backend")]

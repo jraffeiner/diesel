@@ -9,7 +9,7 @@ use crate::sql_types::Uuid;
 #[derive(AsExpression, FromSqlRow)]
 #[diesel(foreign_derive)]
 #[diesel(sql_type = Uuid)]
-#[allow(dead_code)]
+#[expect(dead_code)]
 struct UuidProxy(uuid::Uuid);
 
 #[cfg(all(feature = "postgres_backend", feature = "uuid"))]

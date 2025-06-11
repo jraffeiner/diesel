@@ -8,7 +8,7 @@ use super::Encode;
 
 /// A length of a column in bytes or characters.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[allow(dead_code)]
+#[expect(dead_code)]
 pub(crate) enum TypeLength {
     /// The number of bytes (or characters) reserved in the column.
     Limited(u16),

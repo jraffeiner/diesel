@@ -73,7 +73,7 @@ pub enum ColumnData<'a> {
     /// DateTime2 value with an offset.
     DateTimeOffset(Option<DateTimeOffset>),
     /// Special Variant acts as Placeholder for others
-    SQLVariant,
+    SQLVariant(Option<&'a ColumnData<'a>>),
 }
 
 impl<'a> ColumnData<'a> {
@@ -106,7 +106,7 @@ impl<'a> ColumnData<'a> {
             ColumnData::Date(_) => "date".into(),
             ColumnData::DateTime2(_) => "datetime2".into(),
             ColumnData::DateTimeOffset(_) => "datetimeoffset".into(),
-            ColumnData::SQLVariant => "sql_variant".into(),
+            ColumnData::SQLVariant(_) => "sql_variant".into(),
         }
     }
 
@@ -130,7 +130,7 @@ impl<'a> ColumnData<'a> {
             | ColumnData::Date(None)
             | ColumnData::DateTime2(None)
             | ColumnData::DateTimeOffset(None)
-            | ColumnData::SQLVariant => true,
+            | ColumnData::SQLVariant(None) => true,
             _ => false,
         }
     }
@@ -155,6 +155,12 @@ impl<'a> ColumnData<'a> {
         };
 
         Ok(res)
+    }
+}
+
+impl<'a> crate::mssql::connection::FromSql<'a> for ColumnData<'a> {
+    fn from_sql(value: &'a ColumnData<'a>) -> crate::mssql::connection::Result<Option<Self>> {
+        Ok(Some(Self::SQLVariant(Some(value))))
     }
 }
 

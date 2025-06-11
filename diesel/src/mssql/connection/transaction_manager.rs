@@ -56,9 +56,10 @@ where
         let transaction_state = Self::get_transaction_state(conn)?;
         let transaction_depth = transaction_state.transaction_depth();
         let start_transaction_sql = match transaction_depth {
-            None => Cow::from("BEGIN TRANSACTION"),
+            None => Cow::from("BEGIN TRANSACTION\n"),
             Some(transaction_depth) => Cow::from(format!(
-                "SAVE TRANSACTION diesel_savepoint_{transaction_depth}"
+                "SAVE TRANSACTION diesel_savepoint_{transaction_depth}\n
+                BEGIN TRANSACTION\n"
             )),
         };
         conn.instrumentation()
@@ -84,10 +85,10 @@ where
         ) = match transaction_state.in_transaction {
             Some(ref in_transaction) => (
                 match in_transaction.transaction_depth.get() {
-                    1 => (Cow::Borrowed("ROLLBACK"), true),
+                    1 => (Cow::Borrowed("ROLLBACK\n"), true),
                     depth_gt1 => (
                         Cow::Owned(format!(
-                            "ROLLBACK TRANSACTION diesel_savepoint_{}",
+                            "ROLLBACK TRANSACTION diesel_savepoint_{}\n",
                             depth_gt1 - 1
                         )),
                         false,
@@ -176,7 +177,7 @@ where
             }
             Some(transaction_depth) => (
                 Cow::Owned(format!(
-                    "RELEASE SAVEPOINT diesel_savepoint_{}",
+                    "COMMIT TRANSACTION diesel_savepoint_{}",
                     transaction_depth.get() - 1
                 )),
                 false,

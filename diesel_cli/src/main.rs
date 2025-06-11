@@ -21,7 +21,7 @@ mod errors;
 mod infer_schema_internals;
 mod migrations;
 mod print_schema;
-#[cfg(any(feature = "postgres", feature = "mysql"))]
+#[cfg(any(feature = "postgres", feature = "mysql", feature = "mssql"))]
 mod query_helper;
 
 use clap::ArgMatches;
@@ -310,6 +310,8 @@ fn supported_backends() -> String {
         "mysql",
         #[cfg(feature = "sqlite")]
         "sqlite",
+        #[cfg(feature = "mssql")]
+        "mssql",
     ];
 
     features.join(" ")
