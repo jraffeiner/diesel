@@ -71,4 +71,4 @@ note: method defined here
 help: provide the argument
    |
 56 |     posts::user_id.eq::<_>(/* other */)
-   |                           ~~~~~~~~~~~~~
+   |                            +++++++++++

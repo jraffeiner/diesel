@@ -37,6 +37,7 @@ pub(crate) mod nullable;
 #[macro_use]
 pub(crate) mod operators;
 mod case_when;
+pub(crate) mod cast;
 pub(crate) mod select_by;
 mod sql_literal;
 pub(crate) mod subselect;
@@ -96,6 +97,8 @@ pub(crate) mod dsl {
 
 #[doc(inline)]
 pub use self::case_when::CaseWhen;
+#[doc(inline)]
+pub use self::cast::{CastsTo, FallibleCastsTo, KnownCastSqlTypeName};
 #[doc(inline)]
 pub use self::sql_literal::{SqlLiteral, UncheckedBind};
 
@@ -713,6 +716,11 @@ impl<T: ValidGrouping<GB> + ?Sized, GB> ValidGrouping<GB> for &T {
 pub use diesel_derives::ValidGrouping;
 
 #[doc(hidden)]
+#[diagnostic::on_unimplemented(
+    note = "if your query contains columns from several tables in your group by or select \
+            clause make sure to call `allow_columns_to_appear_in_same_group_by_clause!` \
+            with these columns"
+)]
 pub trait IsContainedInGroupBy<T> {
     type Output;
 }

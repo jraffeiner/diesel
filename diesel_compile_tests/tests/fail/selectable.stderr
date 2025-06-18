@@ -16,14 +16,16 @@ error[E0425]: cannot find value `titel` in module `posts`
 53 |     titel: String,
    |     ^^^^^ help: a unit struct with a similar name exists: `title`
 
-error[E0433]: failed to resolve: use of undeclared crate or module `post`
+error[E0433]: failed to resolve: use of unresolved module or unlinked crate `post`
   --> tests/fail/selectable.rs:58:23
    |
 58 | #[diesel(table_name = post)]
    |                       ^^^^
    |                       |
-   |                       use of undeclared crate or module `post`
+   |                       use of unresolved module or unlinked crate `post`
    |                       help: a struct with a similar name exists: `Post`
+   |
+   = help: if you wanted to use a crate named `post`, use `cargo add post` to add it to your `Cargo.toml`
 
 error[E0271]: type mismatch resolving `<table as AppearsInFromClause<table>>::Count == Never`
    --> tests/fail/selectable.rs:162:10
@@ -203,6 +205,7 @@ error[E0277]: the trait bound `posts::columns::id: IsContainedInGroupBy<users::c
 170 |         .select(UserWithEmbeddedPost::as_select())
     |          ^^^^^^ the trait `IsContainedInGroupBy<users::columns::id>` is not implemented for `posts::columns::id`
     |
+    = note: if your query contains columns from several tables in your group by or select clause make sure to call `allow_columns_to_appear_in_same_group_by_clause!` with these columns
     = help: the following other types implement trait `IsContainedInGroupBy<T>`:
               `posts::columns::id` implements `IsContainedInGroupBy<posts::columns::id>`
               `posts::columns::id` implements `IsContainedInGroupBy<posts::columns::title>`
@@ -222,6 +225,7 @@ error[E0277]: the trait bound `posts::columns::id: IsContainedInGroupBy<users::c
 170 |         .select(UserWithEmbeddedPost::as_select())
     |          ^^^^^^ the trait `IsContainedInGroupBy<users::columns::name>` is not implemented for `posts::columns::id`
     |
+    = note: if your query contains columns from several tables in your group by or select clause make sure to call `allow_columns_to_appear_in_same_group_by_clause!` with these columns
     = help: the following other types implement trait `IsContainedInGroupBy<T>`:
               `posts::columns::id` implements `IsContainedInGroupBy<posts::columns::id>`
               `posts::columns::id` implements `IsContainedInGroupBy<posts::columns::title>`

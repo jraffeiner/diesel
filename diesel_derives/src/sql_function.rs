@@ -1,25 +1,345 @@
+use proc_macro2::Span;
 use proc_macro2::TokenStream;
+use quote::format_ident;
 use quote::quote;
 use quote::ToTokens;
+use quote::TokenStreamExt;
+use std::iter;
 use syn::parse::{Parse, ParseStream, Result};
+use syn::punctuated::Pair;
 use syn::punctuated::Punctuated;
 use syn::spanned::Spanned;
+use syn::GenericParam;
+use syn::LitInt;
+use syn::Path;
 use syn::{
     parenthesized, parse_quote, Attribute, GenericArgument, Generics, Ident, Meta, MetaNameValue,
     PathArguments, Token, Type,
 };
 
-pub(crate) fn expand(input: SqlFunctionDecl, legacy_helper_type_and_module: bool) -> TokenStream {
-    let SqlFunctionDecl {
-        mut attributes,
-        fn_token,
-        fn_name,
-        mut generics,
-        args,
-        return_type,
-    } = input;
+const VARIADIC_VARIANTS_DEFAULT: usize = 2;
+const VARIADIC_ARG_COUNT_ENV: Option<&str> = option_env!("DIESEL_VARIADIC_FUNCTION_ARGS");
 
-    let sql_name = attributes
+pub(crate) fn expand(
+    input: Vec<SqlFunctionDecl>,
+    legacy_helper_type_and_module: bool,
+    generate_return_type_helpers: bool,
+) -> TokenStream {
+    let mut result = TokenStream::new();
+    let mut return_type_helper_module_paths = vec![];
+
+    for decl in input {
+        let expanded = expand_one(
+            decl,
+            legacy_helper_type_and_module,
+            generate_return_type_helpers,
+        );
+        let expanded = match expanded {
+            Err(err) => err.into_compile_error(),
+            Ok(expanded) => {
+                if let Some(return_type_helper_module_path) =
+                    expanded.return_type_helper_module_path
+                {
+                    return_type_helper_module_paths.push(return_type_helper_module_path);
+                }
+
+                expanded.tokens
+            }
+        };
+
+        result.append_all(expanded.into_iter());
+    }
+
+    if !generate_return_type_helpers {
+        return result;
+    }
+
+    quote! {
+        #result
+
+        #[allow(unused_imports)]
+        #[doc(hidden)]
+        mod return_type_helpers {
+            #(
+                #[doc(inline)]
+                pub use super:: #return_type_helper_module_paths ::*;
+            )*
+        }
+    }
+}
+
+struct ExpandedSqlFunction {
+    tokens: TokenStream,
+    return_type_helper_module_path: Option<Path>,
+}
+
+fn expand_one(
+    mut input: SqlFunctionDecl,
+    legacy_helper_type_and_module: bool,
+    generate_return_type_helpers: bool,
+) -> syn::Result<ExpandedSqlFunction> {
+    let attributes = &mut input.attributes;
+
+    let variadic_argument_count = attributes
+        .iter()
+        .find(|attr| attr.meta.path().is_ident("variadic"))
+        .map(|attr| {
+            let argument_count_literal = attr.parse_args::<VariadicAttributeArgs>()?.argument_count;
+            let argument_count = argument_count_literal.base10_parse::<usize>()?;
+
+            if argument_count > input.args.len() {
+                return Err(syn::Error::new(
+                    argument_count_literal.span(),
+                    "invalid variadic argument count: not enough function arguments",
+                ));
+            }
+
+            Ok(argument_count)
+        });
+
+    let Some(variadic_argument_count) = variadic_argument_count else {
+        let sql_name = parse_sql_name_attr(&mut input).unwrap_or_else(|| input.fn_name.to_string());
+
+        return expand_nonvariadic(
+            input,
+            sql_name,
+            legacy_helper_type_and_module,
+            generate_return_type_helpers,
+        );
+    };
+
+    let variadic_argument_count = variadic_argument_count?;
+
+    attributes.retain(|attr| !attr.meta.path().is_ident("variadic"));
+
+    let variadic_variants = VARIADIC_ARG_COUNT_ENV
+        .and_then(|arg_count| arg_count.parse::<usize>().ok())
+        .unwrap_or(VARIADIC_VARIANTS_DEFAULT);
+
+    let mut result = TokenStream::new();
+    let mut helper_type_modules = vec![];
+    for variant_no in 0..=variadic_variants {
+        let expanded = expand_variadic(
+            input.clone(),
+            legacy_helper_type_and_module,
+            generate_return_type_helpers,
+            variadic_argument_count,
+            variant_no,
+        )?;
+
+        if let Some(return_type_helper_module_path) = expanded.return_type_helper_module_path {
+            helper_type_modules.push(return_type_helper_module_path);
+        }
+
+        result.append_all(expanded.tokens.into_iter());
+    }
+
+    if generate_return_type_helpers {
+        let return_types_module_name = Ident::new(
+            &format!("__{}_return_types", input.fn_name),
+            input.fn_name.span(),
+        );
+        let result = quote! {
+            #result
+
+            #[allow(unused_imports)]
+            #[doc(inline)]
+            mod #return_types_module_name {
+                #(
+                    #[doc(inline)]
+                    pub use super:: #helper_type_modules ::*;
+                )*
+            }
+        };
+
+        let return_type_helper_module_path = Some(parse_quote! {
+            #return_types_module_name
+        });
+
+        Ok(ExpandedSqlFunction {
+            tokens: result,
+            return_type_helper_module_path,
+        })
+    } else {
+        Ok(ExpandedSqlFunction {
+            tokens: result,
+            return_type_helper_module_path: None,
+        })
+    }
+}
+
+fn expand_variadic(
+    mut input: SqlFunctionDecl,
+    legacy_helper_type_and_module: bool,
+    generate_return_type_helpers: bool,
+    variadic_argument_count: usize,
+    variant_no: usize,
+) -> syn::Result<ExpandedSqlFunction> {
+    add_variadic_doc_comments(&mut input.attributes, &input.fn_name.to_string());
+
+    let sql_name = parse_sql_name_attr(&mut input).unwrap_or_else(|| input.fn_name.to_string());
+
+    input.fn_name = format_ident!("{}_{}", input.fn_name, variant_no);
+
+    let nonvariadic_args_count = input.args.len() - variadic_argument_count;
+
+    let mut variadic_generic_indexes = vec![];
+    let mut arguments_with_generic_types = vec![];
+    for (arg_idx, arg) in input.args.iter().skip(nonvariadic_args_count).enumerate() {
+        // If argument is of type that definitely cannot be a generic then we skip it.
+        let Type::Path(ty_path) = arg.ty.clone() else {
+            continue;
+        };
+        let Ok(ty_ident) = ty_path.path.require_ident() else {
+            continue;
+        };
+
+        let idx = input.generics.params.iter().position(|param| match param {
+            GenericParam::Type(type_param) => type_param.ident == *ty_ident,
+            _ => false,
+        });
+
+        if let Some(idx) = idx {
+            variadic_generic_indexes.push(idx);
+            arguments_with_generic_types.push(arg_idx);
+        }
+    }
+
+    let mut args: Vec<_> = input.args.into_pairs().collect();
+    let variadic_args = args.split_off(nonvariadic_args_count);
+    let nonvariadic_args = args;
+
+    let variadic_args: Vec<_> = iter::repeat_n(variadic_args, variant_no)
+        .enumerate()
+        .flat_map(|(arg_group_idx, arg_group)| {
+            let mut resulting_args = vec![];
+
+            for (arg_idx, arg) in arg_group.into_iter().enumerate() {
+                let mut arg = arg.into_value();
+
+                arg.name = format_ident!("{}_{}", arg.name, arg_group_idx + 1);
+
+                if arguments_with_generic_types.contains(&arg_idx) {
+                    let Type::Path(mut ty_path) = arg.ty.clone() else {
+                        unreachable!("This argument should have path type as checked earlier")
+                    };
+                    let Ok(ident) = ty_path.path.require_ident() else {
+                        unreachable!("This argument should have ident type as checked earlier")
+                    };
+
+                    ty_path.path.segments[0].ident =
+                        format_ident!("{}{}", ident, arg_group_idx + 1);
+                    arg.ty = Type::Path(ty_path);
+                }
+
+                let pair = Pair::new(arg, Some(Token![,]([Span::call_site()])));
+                resulting_args.push(pair);
+            }
+
+            resulting_args
+        })
+        .collect();
+
+    input.args = nonvariadic_args.into_iter().chain(variadic_args).collect();
+
+    let generics: Vec<_> = input.generics.params.into_pairs().collect();
+    input.generics.params = if variant_no == 0 {
+        generics
+            .into_iter()
+            .enumerate()
+            .filter_map(|(generic_idx, generic)| {
+                (!variadic_generic_indexes.contains(&generic_idx)).then_some(generic)
+            })
+            .collect()
+    } else {
+        iter::repeat_n(generics, variant_no)
+            .enumerate()
+            .flat_map(|(generic_group_idx, generic_group)| {
+                let mut resulting_generics = vec![];
+
+                for (generic_idx, generic) in generic_group.into_iter().enumerate() {
+                    if !variadic_generic_indexes.contains(&generic_idx) {
+                        if generic_group_idx == 0 {
+                            resulting_generics.push(generic);
+                        }
+
+                        continue;
+                    }
+
+                    let mut generic = generic.into_value();
+
+                    if let GenericParam::Type(type_param) = &mut generic {
+                        type_param.ident =
+                            format_ident!("{}{}", type_param.ident, generic_group_idx + 1);
+                    } else {
+                        unreachable!("This generic should be a type param as checked earlier")
+                    }
+
+                    let pair = Pair::new(generic, Some(Token![,]([Span::call_site()])));
+                    resulting_generics.push(pair);
+                }
+
+                resulting_generics
+            })
+            .collect()
+    };
+
+    expand_nonvariadic(
+        input,
+        sql_name,
+        legacy_helper_type_and_module,
+        generate_return_type_helpers,
+    )
+}
+
+fn add_variadic_doc_comments(attributes: &mut Vec<Attribute>, fn_name: &str) {
+    let mut doc_comments_end = attributes.len()
+        - attributes
+            .iter()
+            .rev()
+            .position(|attr| match &attr.meta {
+                Meta::NameValue(MetaNameValue { path, .. }) => path.is_ident("doc"),
+                _ => false,
+            })
+            .unwrap_or(attributes.len());
+
+    let fn_family = format!("`{0}_0`, `{0}_1`, ... `{0}_n`", fn_name);
+
+    let doc_comments: Vec<Attribute> = parse_quote! {
+        ///
+        /// # Variadic functions
+        ///
+        /// This function is variadic in SQL, so there's a family of functions
+        /// on a diesel side:
+        ///
+        #[doc = #fn_family]
+        ///
+        /// Here, the postfix number indicates repetitions of variadic arguments.
+        /// To use this function, the appropriate version with the correct
+        /// argument count must be selected.
+        ///
+        /// ## Controlling the generation of variadic function variants
+        ///
+        /// By default, only variants with 0, 1, and 2 repetitions of variadic
+        /// arguments are generated. To generate more variants, set the
+        /// `DIESEL_VARIADIC_FUNCTION_ARGS` environment variable to the desired
+        /// number of variants.
+        ///
+        /// For a greater convenience this environment variable can also be set
+        /// in a `.cargo/config.toml` file as described in the
+        /// [cargo documentation](https://doc.rust-lang.org/cargo/reference/config.html#env).
+        #[doc(alias = #fn_name)]
+    };
+
+    for new_attribute in doc_comments {
+        attributes.insert(doc_comments_end, new_attribute);
+        doc_comments_end += 1;
+    }
+}
+
+fn parse_sql_name_attr(input: &mut SqlFunctionDecl) -> Option<String> {
+    let result = input
+        .attributes
         .iter()
         .find(|attr| attr.meta.path().is_ident("sql_name"))
         .and_then(|attr| {
@@ -36,16 +356,39 @@ pub(crate) fn expand(input: SqlFunctionDecl, legacy_helper_type_and_module: bool
             } else {
                 None
             }
-        })
-        .unwrap_or_else(|| fn_name.to_string());
+        });
+
+    input
+        .attributes
+        .retain(|attr| !attr.meta.path().is_ident("sql_name"));
+
+    result
+}
+
+fn expand_nonvariadic(
+    input: SqlFunctionDecl,
+    sql_name: String,
+    legacy_helper_type_and_module: bool,
+    generate_return_type_helpers: bool,
+) -> syn::Result<ExpandedSqlFunction> {
+    let SqlFunctionDecl {
+        mut attributes,
+        fn_token,
+        fn_name,
+        mut generics,
+        args,
+        return_type,
+    } = input;
 
     let is_aggregate = attributes
         .iter()
         .any(|attr| attr.meta.path().is_ident("aggregate"));
+    attributes.retain(|attr| !attr.meta.path().is_ident("aggregate"));
 
-    attributes.retain(|attr| {
-        !attr.meta.path().is_ident("sql_name") && !attr.meta.path().is_ident("aggregate")
-    });
+    let skip_return_type_helper = attributes
+        .iter()
+        .any(|attr| attr.meta.path().is_ident("skip_return_type_helper"));
+    attributes.retain(|attr| !attr.meta.path().is_ident("skip_return_type_helper"));
 
     let args = &args;
     let (ref arg_name, ref arg_type): (Vec<_>, Vec<_>) = args
@@ -414,7 +757,63 @@ pub(crate) fn expand(input: SqlFunctionDecl, legacy_helper_type_and_module: bool
             )
         };
 
-    quote! {
+    let (return_type_helper_module, return_type_helper_module_path) =
+        if !generate_return_type_helpers || skip_return_type_helper {
+            (None, None)
+        } else {
+            let auto_derived_types = type_args
+                .iter()
+                .map(|type_arg| {
+                    for arg in args {
+                        let Type::Path(path) = &arg.ty else {
+                            continue;
+                        };
+
+                        let Some(path_ident) = path.path.get_ident() else {
+                            continue;
+                        };
+
+                        if path_ident == type_arg {
+                            return Ok(arg.name.clone());
+                        }
+                    }
+
+                    Err(syn::Error::new(
+                        type_arg.span(),
+                        "cannot find argument corresponding to the generic",
+                    ))
+                })
+                .collect::<Result<Vec<_>>>()?;
+
+            let arg_names_iter: Vec<_> = args.iter().map(|arg| arg.name.clone()).collect();
+
+            let return_type_module_name =
+                Ident::new(&format!("__{}_return_type", fn_name), fn_name.span());
+
+            let doc =
+                format!("Return type of the [`{fn_name}()`](fn@super::{fn_name}) SQL function.");
+            let return_type_helper_module = quote! {
+                #[allow(non_camel_case_types, non_snake_case, unused_imports)]
+                #[doc(inline)]
+                mod #return_type_module_name {
+                    #[doc = #doc]
+                    pub type #fn_name<
+                        #(#arg_names_iter,)*
+                    > = super::#fn_name<
+                        #( <#auto_derived_types as diesel::expression::Expression>::SqlType, )*
+                        #(#arg_names_iter,)*
+                    >;
+                }
+            };
+
+            let module_path = parse_quote!(
+                #return_type_module_name
+            );
+
+            (Some(return_type_helper_module), Some(module_path))
+        };
+
+    let tokens = quote! {
         #(#attributes)*
         #[allow(non_camel_case_types)]
         pub #fn_token #fn_name #impl_generics (#(#args_iter,)*)
@@ -430,12 +829,19 @@ pub(crate) fn expand(input: SqlFunctionDecl, legacy_helper_type_and_module: bool
 
         #outside_of_module_helper_type
 
+        #return_type_helper_module
+
         #[doc(hidden)]
         #[allow(non_camel_case_types, non_snake_case, unused_imports)]
         pub(crate) mod #internals_module_name {
             #tokens
         }
-    }
+    };
+
+    Ok(ExpandedSqlFunction {
+        tokens,
+        return_type_helper_module_path,
+    })
 }
 
 pub(crate) struct ExternSqlBlock {
@@ -464,6 +870,7 @@ impl Parse for ExternSqlBlock {
     }
 }
 
+#[derive(Clone)]
 pub(crate) struct SqlFunctionDecl {
     attributes: Vec<Attribute>,
     fn_token: Token![fn],
@@ -501,6 +908,7 @@ impl Parse for SqlFunctionDecl {
 }
 
 /// Essentially the same as ArgCaptured, but only allowing ident patterns
+#[derive(Clone)]
 struct StrictFnArg {
     name: Ident,
     colon_token: Token![:],
@@ -525,6 +933,18 @@ impl ToTokens for StrictFnArg {
         self.name.to_tokens(tokens);
         self.colon_token.to_tokens(tokens);
         self.name.to_tokens(tokens);
+    }
+}
+
+struct VariadicAttributeArgs {
+    argument_count: LitInt,
+}
+
+impl Parse for VariadicAttributeArgs {
+    fn parse(input: ParseStream) -> Result<Self> {
+        Ok(Self {
+            argument_count: LitInt::parse(input)?,
+        })
     }
 }
 

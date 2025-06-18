@@ -516,6 +516,47 @@ fn sqlite_functions() -> _ {
         json_valid(sqlite_extras::json),
         json_type(sqlite_extras::json),
         json_type_with_path(sqlite_extras::json, sqlite_extras::text),
+        json_quote(sqlite_extras::json),
+    )
+}
+
+#[cfg(feature = "sqlite")]
+#[auto_type]
+fn sqlite_aggregate_functions() -> _ {
+    (
+        json_group_array(users::name),
+        json_group_array(users::id),
+        jsonb_group_array(users::name),
+        jsonb_group_array(users::id),
+        json_group_object(users::name, users::id),
+        jsonb_group_object(users::name, users::id),
+    )
+}
+
+#[cfg(feature = "sqlite")]
+#[auto_type]
+fn sqlite_variadic_functions() -> _ {
+    (
+        json_array_0(),
+        json_array_1(sqlite_extras::text),
+        json_array_2(sqlite_extras::id, sqlite_extras::json),
+        jsonb_array_0(),
+        jsonb_array_1(sqlite_extras::text),
+        jsonb_array_2(sqlite_extras::id, sqlite_extras::json),
+        json_remove_0(sqlite_extras::json),
+        json_remove_1(sqlite_extras::jsonb, sqlite_extras::text),
+        json_remove_2(
+            sqlite_extras::json,
+            sqlite_extras::text,
+            sqlite_extras::text,
+        ),
+        jsonb_remove_0(sqlite_extras::jsonb),
+        jsonb_remove_1(sqlite_extras::json, sqlite_extras::text),
+        jsonb_remove_2(
+            sqlite_extras::jsonb,
+            sqlite_extras::text,
+            sqlite_extras::text,
+        ),
     )
 }
 
@@ -561,6 +602,11 @@ fn update_and_binary_operator_and_block() -> _ {
 #[auto_type]
 fn count_query() -> _ {
     users::table.count()
+}
+
+#[auto_type]
+fn test_cast() -> _ {
+    users::id.cast::<sql_types::Text>()
 }
 
 // #[auto_type]
