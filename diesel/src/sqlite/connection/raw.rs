@@ -1,4 +1,4 @@
-#![allow(unsafe_code)] // ffi calls
+#![expect(unsafe_code)] // ffi calls
 #[cfg(not(all(target_family = "wasm", target_os = "unknown")))]
 extern crate libsqlite3_sys as ffi;
 
@@ -34,7 +34,7 @@ macro_rules! assert_fail {
     };
 }
 
-#[allow(missing_debug_implementations, missing_copy_implementations)]
+#[expect(missing_debug_implementations, missing_copy_implementations)]
 pub(super) struct RawConnection {
     pub(super) internal_connection: NonNull<ffi::sqlite3>,
 }
@@ -223,7 +223,7 @@ impl RawConnection {
             .try_into()
             .map_err(|e| Error::DeserializationError(Box::new(e)))?;
         // the cast for `ffi::SQLITE_DESERIALIZE_READONLY` is required for old libsqlite3-sys versions
-        #[allow(clippy::unnecessary_cast)]
+        #[expect(clippy::unnecessary_cast)]
         unsafe {
             let result = ffi::sqlite3_deserialize(
                 self.internal_connection.as_ptr(),
@@ -314,7 +314,7 @@ struct CustomFunctionUserPtr<F> {
     function_name: String,
 }
 
-#[allow(warnings)]
+#[expect(warnings)]
 extern "C" fn run_custom_function<F, Ret, RetSqlType>(
     ctx: *mut ffi::sqlite3_context,
     num_args: libc::c_int,
@@ -384,7 +384,7 @@ enum OptionalAggregator<A> {
     Some(A),
 }
 
-#[allow(warnings)]
+#[expect(warnings)]
 extern "C" fn run_aggregator_step_function<ArgsSqlType, RetSqlType, Args, Ret, A>(
     ctx: *mut ffi::sqlite3_context,
     num_args: libc::c_int,
@@ -543,7 +543,7 @@ struct CollationUserPtr<F> {
     collation_name: String,
 }
 
-#[allow(warnings)]
+#[expect(warnings)]
 extern "C" fn run_collation_function<F>(
     user_ptr: *mut libc::c_void,
     lhs_len: libc::c_int,

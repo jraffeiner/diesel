@@ -207,7 +207,7 @@ pub trait AsInExpression<T: SqlType> {
 
     /// Construct the diesel query dsl representation of
     /// the `IN (values)` clause for the given type
-    #[allow(clippy::wrong_self_convention)]
+    #[expect(clippy::wrong_self_convention)]
     // That's a public api, we cannot just change it to
     // appease clippy
     fn as_in_expression(self) -> Self::InExpression;

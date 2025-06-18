@@ -6,7 +6,7 @@ use diesel::{AppearsOnTable, Expression, QueryResult, SelectableExpression};
 use std::marker::PhantomData;
 
 /// Represents a dynamically sized select clause
-#[allow(missing_debug_implementations)]
+#[expect(missing_debug_implementations)]
 pub struct DynamicSelectClause<'a, DB, QS> {
     selects: Vec<Box<dyn QueryFragment<DB> + Send + 'a>>,
     p: PhantomData<QS>,

@@ -815,7 +815,7 @@ fn option_fields_are_assigned_null_when_specified() {
 }
 
 #[test]
-#[allow(unused_parens)]
+#[expect(unused_parens)]
 fn option_fields_are_correctly_detected() {
     diesel::table! {
         test_table (id) {

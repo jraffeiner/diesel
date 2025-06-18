@@ -9,7 +9,7 @@ mod limit_offset;
 mod query_fragment_impls;
 
 /// The MySQL query builder
-#[allow(missing_debug_implementations)]
+#[expect(missing_debug_implementations)]
 #[derive(Default)]
 pub struct MysqlQueryBuilder {
     sql: String,

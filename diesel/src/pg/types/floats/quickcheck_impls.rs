@@ -1,4 +1,4 @@
-#![allow(clippy::cast_sign_loss)] // test code
+#![expect(clippy::cast_sign_loss)] // test code
 
 use quickcheck::{Arbitrary, Gen};
 

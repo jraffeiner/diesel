@@ -34,7 +34,7 @@ impl<'a> Field<'a, Fb> for FbField<'a> {
     }
 }
 
-#[allow(missing_debug_implementations)]
+#[expect(missing_debug_implementations)]
 /// Represents a Row in a table
 pub struct FbRow {
     raw: RsRow,

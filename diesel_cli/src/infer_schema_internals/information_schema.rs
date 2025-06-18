@@ -67,7 +67,7 @@ impl DefaultSchema for Mssql {
     }
 }
 
-#[allow(clippy::module_inception)]
+#[expect(clippy::module_inception)]
 pub mod information_schema {
     use diesel::prelude::{allow_tables_to_appear_in_same_query, table};
 

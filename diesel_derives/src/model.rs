@@ -33,6 +33,7 @@ pub struct Model {
 }
 
 impl Model {
+    #[expect(clippy::similar_names)]
     pub fn from_item(
         item: &DeriveInput,
         allow_unit_structs: bool,

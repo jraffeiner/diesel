@@ -52,7 +52,7 @@ pub struct MysqlTime {
 
 impl MysqlTime {
     /// Construct a new instance of [MysqlTime]
-    #[allow(clippy::too_many_arguments)]
+    #[expect(clippy::too_many_arguments)]
     pub fn new(
         year: libc::c_uint,
         month: libc::c_uint,
@@ -115,7 +115,7 @@ macro_rules! mysql_time_impls {
     ($ty:ty) => {
         #[cfg(feature = "mysql_backend")]
         impl ToSql<$ty, Mysql> for MysqlTime {
-            #[allow(unsafe_code)] // pointer cast
+            #[expect(unsafe_code)] // pointer cast
             fn to_sql<'b>(&'b self, out: &mut Output<'b, '_, Mysql>) -> serialize::Result {
                 let bytes = unsafe {
                     let bytes_ptr = self as *const MysqlTime as *const u8;

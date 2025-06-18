@@ -73,12 +73,12 @@ fn parse_julian(julian_days: f64) -> Option<NaiveDateTime> {
     const EPOCH_IN_JULIAN_DAYS: f64 = 2_440_587.5;
     const SECONDS_IN_DAY: f64 = 86400.0;
     let timestamp = (julian_days - EPOCH_IN_JULIAN_DAYS) * SECONDS_IN_DAY;
-    #[allow(clippy::cast_possible_truncation)] // we want to truncate
+    #[expect(clippy::cast_possible_truncation)] // we want to truncate
     let seconds = timestamp.trunc() as i64;
     // that's not true, `fract` is always > 0
-    #[allow(clippy::cast_sign_loss, clippy::cast_possible_truncation)]
+    #[expect(clippy::cast_sign_loss, clippy::cast_possible_truncation)]
     let nanos = (timestamp.fract() * 1E9) as u32;
-    #[allow(deprecated)] // otherwise we would need to bump our minimal chrono version
+    #[expect(deprecated)] // otherwise we would need to bump our minimal chrono version
     NaiveDateTime::from_timestamp_opt(seconds, nanos)
 }
 
@@ -237,7 +237,7 @@ impl<TZ: TimeZone> ToSql<TimestamptzSqlite, Sqlite> for DateTime<TZ> {
 }
 
 #[cfg(test)]
-#[allow(clippy::unwrap_used)]
+#[expect(clippy::unwrap_used)]
 mod tests {
     extern crate chrono;
     extern crate dotenvy;
@@ -535,7 +535,7 @@ mod tests {
     #[diesel_test_helper::test]
     fn insert_timestamptz_into_table_as_text() {
         crate::table! {
-            #[allow(unused_parens)]
+            #[expect(unused_parens)]
             test_insert_timestamptz_into_table_as_text(id) {
                 id -> Integer,
                 timestamp_with_tz -> TimestamptzSqlite,
@@ -572,7 +572,7 @@ mod tests {
     #[diesel_test_helper::test]
     fn can_query_timestamptz_column_with_between() {
         crate::table! {
-            #[allow(unused_parens)]
+            #[expect(unused_parens)]
             test_query_timestamptz_column_with_between(id) {
                 id -> Integer,
                 timestamp_with_tz -> TimestamptzSqlite,

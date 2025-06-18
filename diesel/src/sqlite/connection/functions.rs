@@ -103,7 +103,7 @@ where
 
 // clippy is wrong here, the let binding is required
 // for lifetime reasons
-#[allow(clippy::let_unit_value)]
+#[expect(clippy::let_unit_value)]
 pub(super) fn process_sql_function_result<RetSqlType, Ret>(
     result: &'_ Ret,
 ) -> QueryResult<InternalSqliteBindValue<'_>>
@@ -134,7 +134,7 @@ struct FunctionRow<'a> {
 }
 
 impl Drop for FunctionRow<'_> {
-    #[allow(unsafe_code)] // manual drop calls
+    #[expect(unsafe_code)] // manual drop calls
     fn drop(&mut self) {
         if let Some(args) = Rc::get_mut(&mut self.args) {
             if let PrivateSqliteRow::Duplicated { column_names, .. } =
@@ -151,7 +151,7 @@ impl Drop for FunctionRow<'_> {
 }
 
 impl FunctionRow<'_> {
-    #[allow(unsafe_code)] // complicated ptr cast
+    #[expect(unsafe_code)] // complicated ptr cast
     fn new(args: &mut [*mut ffi::sqlite3_value]) -> Self {
         let lengths = args.len();
         let args = unsafe {

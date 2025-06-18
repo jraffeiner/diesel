@@ -107,7 +107,7 @@ fn foreign_key_violation_correct_constraint_name() {
 #[diesel_test_helper::test]
 #[cfg(feature = "postgres")]
 // This is a false positive as there is a side effect of this collect (spawning threads)
-#[allow(clippy::needless_collect)]
+#[expect(clippy::needless_collect)]
 fn isolation_errors_are_detected() {
     use diesel::result::DatabaseErrorKind::SerializationFailure;
     use diesel::result::Error::DatabaseError;

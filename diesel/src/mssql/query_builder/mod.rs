@@ -9,7 +9,7 @@ use crate::sql_types::{self, HasSqlType};
 mod query_fragment_impls;
 
 /// The Mssql query builder
-#[allow(missing_debug_implementations)]
+#[expect(missing_debug_implementations)]
 #[derive(Default)]
 pub struct MssqlQueryBuilder {
     sql: String,

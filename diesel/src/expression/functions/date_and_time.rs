@@ -8,7 +8,7 @@ use crate::sql_types::*;
 
 /// Represents the SQL `CURRENT_TIMESTAMP` constant. This is equivalent to the
 /// `NOW()` function on backends that support it.
-#[allow(non_camel_case_types)]
+#[expect(non_camel_case_types)]
 #[derive(Debug, Copy, Clone, QueryId, ValidGrouping)]
 pub struct now;
 
@@ -97,7 +97,7 @@ impl AsExpression<Nullable<TimestamptzSqlite>> for now {
 }
 
 /// Represents the SQL `CURRENT_DATE` constant.
-#[allow(non_camel_case_types)]
+#[expect(non_camel_case_types)]
 #[derive(Debug, Copy, Clone, QueryId, ValidGrouping)]
 pub struct today;
 

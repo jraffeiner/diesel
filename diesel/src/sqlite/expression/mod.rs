@@ -10,7 +10,7 @@ pub(crate) mod helper_types;
 mod operators;
 
 mod return_type_helpers {
-    #[allow(unused_imports)]
+    #[expect(unused_imports)]
     #[doc(inline)]
     pub use super::functions::return_type_helpers_reexported::*;
 }

@@ -49,7 +49,7 @@ pub use self::operators::Concat;
 // as rustc otherwise shows false positives
 // for every item in this module. We reexport
 // everything from `crate::helper_types::`
-#[allow(non_camel_case_types, unreachable_pub)]
+#[expect(non_camel_case_types)]
 pub(crate) mod dsl {
     use crate::dsl::SqlTypeOf;
 
@@ -222,7 +222,7 @@ where
     type Expression: Expression<SqlType = T>;
 
     /// Perform the conversion
-    #[allow(clippy::wrong_self_convention)]
+    #[expect(clippy::wrong_self_convention)]
     // That's public API we cannot change it to appease clippy
     fn as_expression(self) -> Self::Expression;
 }
@@ -726,7 +726,7 @@ pub trait IsContainedInGroupBy<T> {
 }
 
 #[doc(hidden)]
-#[allow(missing_debug_implementations, missing_copy_implementations)]
+#[expect(missing_debug_implementations, missing_copy_implementations)]
 pub mod is_contained_in_group_by {
     pub struct Yes;
     pub struct No;
@@ -762,7 +762,7 @@ pub trait MixedAggregates<Other> {
     type Output;
 }
 
-#[allow(missing_debug_implementations, missing_copy_implementations)]
+#[expect(missing_debug_implementations, missing_copy_implementations)]
 /// Possible values for `ValidGrouping::IsAggregate`
 pub mod is_aggregate {
     use super::MixedAggregates;

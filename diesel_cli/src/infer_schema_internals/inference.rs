@@ -199,9 +199,9 @@ fn get_column_information(
 fn determine_column_type(
     attr: &ColumnInformation,
     conn: &mut InferConnection,
-    #[allow(unused_variables)] table: &TableName,
-    #[allow(unused_variables)] primary_keys: &[String],
-    #[allow(unused_variables)] config: &PrintSchema,
+    #[expect(unused_variables)] table: &TableName,
+    #[expect(unused_variables)] primary_keys: &[String],
+    #[expect(unused_variables)] config: &PrintSchema,
 ) -> Result<ColumnType, crate::errors::Error> {
     match *conn {
         #[cfg(feature = "sqlite")]

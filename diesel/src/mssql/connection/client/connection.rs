@@ -262,7 +262,7 @@ impl<S: Read + Write + Send> Connection<S> {
 
     /// Defines the login record rules with SQL Server. Authentication with
     /// connection options.
-    #[allow(clippy::too_many_arguments)]
+    #[expect(clippy::too_many_arguments)]
     fn login(
         mut self,
         auth: AuthMethod,

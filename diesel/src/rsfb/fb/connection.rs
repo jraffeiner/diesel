@@ -16,6 +16,7 @@ use crate::result::*;
 use rsfbclient::{Execute, SqlType};
 use rsfbclient::{Queryable, Row, SimpleConnection as FbRawConnection};
 
+#[allow(missing_docs, missing_debug_implementations)]
 pub struct FbConnection {
     pub raw: FbRawConnection,
     tr_manager: FbTransactionManager,
@@ -89,6 +90,7 @@ impl Connection for FbConnection {
     fn set_prepared_statement_cache_size(&mut self, _size: CacheSize) {}
 }
 
+#[expect(dead_code)]
 trait Helper {
     fn load<'conn, 'query, T>(
         conn: &'conn mut FbConnection,
@@ -170,6 +172,7 @@ impl FbConnection {
     }
 }
 
+#[allow(missing_docs, missing_debug_implementations)]
 pub struct FbCursor {
     results: Vec<FbRow>,
 }

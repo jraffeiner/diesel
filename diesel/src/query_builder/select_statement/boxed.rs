@@ -62,7 +62,7 @@ pub struct BoxedSelectStatement<'a, ST, QS, DB, GB = ()> {
 }
 
 impl<'a, ST, QS: QuerySource, DB, GB> BoxedSelectStatement<'a, ST, FromClause<QS>, DB, GB> {
-    #[allow(clippy::too_many_arguments)]
+    #[expect(clippy::too_many_arguments)]
     pub(crate) fn new<S, G>(
         select: S,
         from: FromClause<QS>,
@@ -97,7 +97,7 @@ impl<'a, ST, QS: QuerySource, DB, GB> BoxedSelectStatement<'a, ST, FromClause<QS
 }
 
 impl<'a, ST, DB, GB> BoxedSelectStatement<'a, ST, NoFromClause, DB, GB> {
-    #[allow(clippy::too_many_arguments)]
+    #[expect(clippy::too_many_arguments)]
     pub(crate) fn new_no_from_clause<S, G>(
         select: S,
         from: NoFromClause,

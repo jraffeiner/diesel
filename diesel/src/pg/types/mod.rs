@@ -223,7 +223,7 @@ pub mod sql_types {
     /// used in functions jsonb_seet_lax.
     #[derive(Debug, Clone, Copy, diesel_derives::AsExpression)]
     #[diesel(sql_type = NullValueTreatmentEnum)]
-    #[allow(clippy::enum_variant_names)]
+    #[expect(clippy::enum_variant_names)]
     pub enum NullValueTreatment {
         /// postgres 'raise_exception'
         RaiseException,
@@ -246,7 +246,7 @@ pub mod sql_types {
     /// used in functions int4range, int8range, numrange, tsrange, tstzrange, daterange.
     #[derive(Debug, Clone, Copy, diesel_derives::AsExpression)]
     #[diesel(sql_type = RangeBoundEnum)]
-    #[allow(clippy::enum_variant_names)]
+    #[expect(clippy::enum_variant_names)]
     pub enum RangeBound {
         /// postgres '[]'
         LowerBoundInclusiveUpperBoundInclusive,

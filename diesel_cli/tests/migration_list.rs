@@ -1,4 +1,4 @@
-#![allow(clippy::expect_fun_call)]
+#![expect(clippy::expect_fun_call)]
 use chrono::Utc;
 use std::thread::sleep;
 use std::time::Duration;

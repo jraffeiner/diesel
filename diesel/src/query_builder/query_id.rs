@@ -93,7 +93,7 @@ impl<DB> QueryId for dyn QueryFragment<DB> {
 }
 
 #[cfg(test)]
-#[allow(unused_parens)] // FIXME: Remove this attribute once false positive is resolved.
+#[expect(unused_parens)] // FIXME: Remove this attribute once false positive is resolved.
 mod tests {
     use std::any::TypeId;
 

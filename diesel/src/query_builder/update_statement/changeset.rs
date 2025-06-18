@@ -20,12 +20,11 @@ pub trait AsChangeset {
     /// Convert `self` into the actual update statement being executed
     // This method is part of our public API
     // we won't change it to just appease clippy
-    #[allow(clippy::wrong_self_convention)]
+    #[expect(clippy::wrong_self_convention)]
     fn as_changeset(self) -> Self::Changeset;
 }
 
 // This is a false positive, we reexport it later
-#[allow(unreachable_pub)]
 #[doc(inline)]
 pub use diesel_derives::AsChangeset;
 

@@ -14,7 +14,7 @@ pub use self::distinct_on::DistinctOnClause;
 pub use self::distinct_on::OrderDecorator;
 
 /// The PostgreSQL query builder
-#[allow(missing_debug_implementations)]
+#[expect(missing_debug_implementations)]
 #[derive(Default)]
 #[cfg(feature = "postgres_backend")]
 pub struct PgQueryBuilder {

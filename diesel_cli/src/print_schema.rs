@@ -392,7 +392,7 @@ pub struct CustomTypesForTablesForDisplay<'a> {
     tables: &'a [TableData],
 }
 
-#[allow(clippy::print_in_format_impl)]
+#[expect(clippy::print_in_format_impl)]
 impl Display for CustomTypesForTablesForDisplay<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self.custom_types.backend {

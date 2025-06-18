@@ -205,7 +205,7 @@ impl<T> fmt::Debug for ConnectionManager<T> {
     }
 }
 
-#[allow(unsafe_code)] // we do not actually hold a reference to `T`
+#[expect(unsafe_code)] // we do not actually hold a reference to `T`
 unsafe impl<T: Send + 'static> Sync for ConnectionManager<T> {}
 
 impl<T> ConnectionManager<T> {
@@ -380,7 +380,7 @@ where
 }
 
 #[doc(hidden)]
-#[allow(missing_debug_implementations)]
+#[expect(missing_debug_implementations)]
 pub struct PoolTransactionManager<T>(std::marker::PhantomData<T>);
 
 impl<M, T> TransactionManager<PooledConnection<M>> for PoolTransactionManager<T>
@@ -629,7 +629,7 @@ mod tests {
 
         // check that we remove a connection from the pool that was
         // open during panicking
-        #[allow(unreachable_code, unused_variables)]
+        #[expect(unreachable_code, unused_variables)]
         std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
             let conn = pool.get();
             assert_eq!(acquire_count.load(Ordering::Relaxed), 2);

@@ -122,7 +122,7 @@ pub(super) use self::result::PgResult;
 /// #   Ok(())
 /// # }
 /// ```
-#[allow(missing_debug_implementations)]
+#[expect(missing_debug_implementations)]
 #[cfg(feature = "postgres")]
 pub struct PgConnection {
     statement_cache: StatementCache<Pg, Statement>,
@@ -131,11 +131,11 @@ pub struct PgConnection {
 }
 
 // according to libpq documentation a connection can be transferred to other threads
-#[allow(unsafe_code)]
+#[expect(unsafe_code)]
 unsafe impl Send for PgConnection {}
 
 impl SimpleConnection for PgConnection {
-    #[allow(unsafe_code)] // use of unsafe function
+    #[expect(unsafe_code)] // use of unsafe function
     fn batch_execute(&mut self, query: &str) -> QueryResult<()> {
         self.connection_and_transaction_manager
             .instrumentation
@@ -593,7 +593,7 @@ extern "C" fn noop_notice_processor(_: *mut libc::c_void, _message: *const libc:
 mod private {
     use super::*;
 
-    #[allow(missing_debug_implementations)]
+    #[expect(missing_debug_implementations)]
     pub struct ConnectionAndTransactionManager {
         pub(super) raw_connection: RawConnection,
         pub(super) transaction_state: AnsiTransactionManager,
@@ -652,7 +652,7 @@ mod private {
 
 #[cfg(test)]
 // that's a false positive for `panic!`/`assert!` on rust 2018
-#[allow(clippy::uninlined_format_args)]
+#[expect(clippy::uninlined_format_args)]
 mod tests {
     extern crate dotenvy;
 
@@ -867,7 +867,7 @@ mod tests {
     #[diesel_test_helper::test]
     // This function uses collect with an side effect (spawning threads)
     // so this is a false positive from clippy
-    #[allow(clippy::needless_collect)]
+    #[expect(clippy::needless_collect)]
     fn postgres_transaction_depth_is_tracked_properly_on_serialization_failure() {
         use crate::pg::connection::raw::PgTransactionStatus;
         use crate::result::DatabaseErrorKind::SerializationFailure;
@@ -974,7 +974,7 @@ mod tests {
     #[diesel_test_helper::test]
     // This function uses collect with an side effect (spawning threads)
     // so this is a false positive from clippy
-    #[allow(clippy::needless_collect)]
+    #[expect(clippy::needless_collect)]
     fn postgres_transaction_depth_is_tracked_properly_on_nested_serialization_failure() {
         use crate::pg::connection::raw::PgTransactionStatus;
         use crate::result::DatabaseErrorKind::SerializationFailure;

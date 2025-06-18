@@ -1262,7 +1262,7 @@ extern "SQL" {
 }
 
 pub(super) mod return_type_helpers_reexported {
-    #[allow(unused_imports)]
+    #[expect(unused_imports)]
     #[doc(inline)]
     pub use super::return_type_helpers::*;
 }

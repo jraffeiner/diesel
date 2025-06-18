@@ -1,6 +1,6 @@
 // Built-in Lints
 // Clippy lints
-#![allow(
+#![expect(
     clippy::map_unwrap_or,
     clippy::match_same_arms,
     clippy::type_complexity,

@@ -11,7 +11,6 @@ use std::ops::Range;
 pub use self::private::{PartialRow, RowSealed};
 
 #[cfg(not(feature = "i-implement-a-third-party-backend-and-opt-into-breaking-changes"))]
-#[allow(unused_imports)]
 pub(crate) use self::private::{PartialRow, RowSealed};
 
 /// Representing a way to index into database rows
@@ -286,7 +285,7 @@ pub(crate) mod private {
     // These impls are only there for backward compatibility reasons
     // Remove them on the next breaking release
     #[cfg(all(feature = "with-deprecated", not(feature = "without-deprecated")))]
-    #[allow(unreachable_pub)]
+    #[expect(unreachable_pub)]
     pub trait RowLifetimeHelper<DB>: for<'a> super::Row<'a, DB>
     where
         DB: Backend,

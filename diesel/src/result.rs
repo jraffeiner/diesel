@@ -5,7 +5,7 @@ use std::ffi::NulError;
 use std::fmt::{self, Display};
 
 #[derive(Debug)]
-#[allow(clippy::enum_variant_names)]
+#[expect(clippy::enum_variant_names)]
 /// Represents all the ways that a query can fail.
 ///
 /// This type is not intended to be exhaustively matched, and new variants may
@@ -415,7 +415,7 @@ impl PartialEq for Error {
 }
 
 #[cfg(test)]
-#[allow(warnings)]
+#[expect(warnings)]
 fn error_impls_send() {
     let err: Error = unimplemented!();
     let x: &dyn Send = &err;

@@ -5,7 +5,7 @@ use crate::pg::Pg;
 use crate::query_builder::QueryFragment;
 use std::rc::Rc;
 
-#[allow(missing_debug_implementations)]
+#[expect(missing_debug_implementations)]
 pub struct Cursor {
     current_row: usize,
     db_result: Rc<PgResult>,
@@ -61,7 +61,7 @@ impl Iterator for Cursor {
 
 /// The type returned by various [`Connection`] methods.
 /// Acts as an iterator over `T`.
-#[allow(missing_debug_implementations)]
+#[expect(missing_debug_implementations)]
 pub struct RowByRowCursor<'conn, 'query> {
     first_row: bool,
     db_result: Rc<PgResult>,
@@ -154,7 +154,7 @@ mod tests {
     #[diesel_test_helper::test]
     fn fun_with_row_iters() {
         crate::table! {
-            #[allow(unused_parens)]
+            #[expect(unused_parens)]
             users(id) {
                 id -> Integer,
                 name -> Text,
@@ -269,7 +269,7 @@ mod tests {
         use crate::prelude::*;
 
         crate::table! {
-            #[allow(unused_parens)]
+            #[expect(unused_parens)]
             users(id) {
                 id -> Integer,
                 name -> Text,
@@ -311,7 +311,7 @@ mod tests {
     #[diesel_test_helper::test]
     fn fun_with_row_iters_row_by_row() {
         crate::table! {
-            #[allow(unused_parens)]
+            #[expect(unused_parens)]
             users(id) {
                 id -> Integer,
                 name -> Text,

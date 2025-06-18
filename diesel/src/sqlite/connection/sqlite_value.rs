@@ -1,4 +1,4 @@
-#![allow(unsafe_code)] // ffi calls
+#![expect(unsafe_code)] // ffi calls
 #[cfg(not(all(target_family = "wasm", target_os = "unknown")))]
 extern crate libsqlite3_sys as ffi;
 
@@ -19,7 +19,7 @@ use super::row::PrivateSqliteRow;
 /// Use the `read_*` functions to access the actual
 /// value or use existing `FromSql` implementations
 /// to convert this into rust values
-#[allow(missing_debug_implementations, missing_copy_implementations)]
+#[expect(missing_debug_implementations, missing_copy_implementations)]
 pub struct SqliteValue<'row, 'stmt, 'query> {
     // This field exists to ensure that nobody
     // can modify the underlying row while we are

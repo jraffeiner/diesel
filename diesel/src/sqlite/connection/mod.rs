@@ -157,7 +157,7 @@ use crate::sqlite::Sqlite;
 /// #   Ok(())
 /// # }
 /// ```
-#[allow(missing_debug_implementations)]
+#[expect(missing_debug_implementations)]
 #[cfg(feature = "sqlite")]
 pub struct SqliteConnection {
     // statement_cache needs to be before raw_connection
@@ -175,7 +175,7 @@ pub struct SqliteConnection {
 // This relies on the invariant that RawConnection or Statement are never
 // leaked. If a reference to one of those was held on a different thread, this
 // would not be thread safe.
-#[allow(unsafe_code)]
+#[expect(unsafe_code)]
 unsafe impl Send for SqliteConnection {}
 
 impl SimpleConnection for SqliteConnection {

@@ -8,7 +8,7 @@ use self::time::{
     PrimitiveDateTime, Time as NaiveTime, UtcOffset,
 };
 // the non-deprecated variant does not exist in our minimal supported version
-#[allow(deprecated)]
+#[expect(deprecated)]
 use self::time::format_description::FormatItem;
 
 use crate::backend::Backend;
@@ -26,21 +26,21 @@ use crate::sqlite::Sqlite;
 /// this means the subsecond part can be between 1 and 9 digits.
 ///
 // the non-deprecated variant does not exist in our minimal supported version
-#[allow(deprecated)]
+#[expect(deprecated)]
 const DATE_FORMAT: &[FormatItem<'_>] = format_description!("[year]-[month]-[day]");
 
 // the non-deprecated variant does not exist in our minimal supported version
-#[allow(deprecated)]
+#[expect(deprecated)]
 const ENCODE_TIME_FORMAT_WHOLE_SECOND: &[FormatItem<'_>] =
     format_description!("[hour]:[minute]:[second]");
 
 // the non-deprecated variant does not exist in our minimal supported version
-#[allow(deprecated)]
+#[expect(deprecated)]
 const ENCODE_TIME_FORMAT_SUBSECOND: &[FormatItem<'_>] =
     format_description!("[hour]:[minute]:[second].[subsecond]");
 
 // the non-deprecated variant does not exist in our minimal supported version
-#[allow(deprecated)]
+#[expect(deprecated)]
 const TIME_FORMATS: [&[FormatItem<'_>]; 9] = [
     // Most likely formats
     format_description!("[hour]:[minute]:[second].[subsecond]"),
@@ -58,28 +58,28 @@ const TIME_FORMATS: [&[FormatItem<'_>]; 9] = [
 ];
 
 // the non-deprecated variant does not exist in our minimal supported version
-#[allow(deprecated)]
+#[expect(deprecated)]
 const ENCODE_PRIMITIVE_DATETIME_FORMAT_WHOLE_SECOND: &[FormatItem<'_>] =
     format_description!("[year]-[month]-[day] [hour]:[minute]:[second]");
 
 // the non-deprecated variant does not exist in our minimal supported version
-#[allow(deprecated)]
+#[expect(deprecated)]
 const ENCODE_PRIMITIVE_DATETIME_FORMAT_SUBSECOND: &[FormatItem<'_>] =
     format_description!("[year]-[month]-[day] [hour]:[minute]:[second].[subsecond]");
 
 // the non-deprecated variant does not exist in our minimal supported version
-#[allow(deprecated)]
+#[expect(deprecated)]
 const ENCODE_DATETIME_FORMAT_WHOLE_SECOND: &[FormatItem<'_>] = format_description!(
     "[year]-[month]-[day] [hour]:[minute]:[second][offset_hour sign:mandatory]:[offset_minute]"
 );
 
 // the non-deprecated variant does not exist in our minimal supported version
-#[allow(deprecated)]
+#[expect(deprecated)]
 const ENCODE_DATETIME_FORMAT_SUBSECOND: &[FormatItem<'_>] =
     format_description!("[year]-[month]-[day] [hour]:[minute]:[second].[subsecond][offset_hour sign:mandatory]:[offset_minute]");
 
 // the non-deprecated variant does not exist in our minimal supported version
-#[allow(deprecated)]
+#[expect(deprecated)]
 const PRIMITIVE_DATETIME_FORMATS: [&[FormatItem<'_>]; 18] = [
     // Most likely formats
     format_description!("[year]-[month]-[day] [hour]:[minute]:[second].[subsecond]"),
@@ -104,7 +104,7 @@ const PRIMITIVE_DATETIME_FORMATS: [&[FormatItem<'_>]; 18] = [
 ];
 
 // the non-deprecated variant does not exist in our minimal supported version
-#[allow(deprecated)]
+#[expect(deprecated)]
 const DATETIME_FORMATS: [&[FormatItem<'_>]; 12] = [
     // Most likely formats
     format_description!("[year]-[month]-[day] [hour]:[minute]:[second].[subsecond][offset_hour sign:mandatory]:[offset_minute]"),
@@ -131,7 +131,7 @@ fn parse_julian(julian_days: f64) -> Result<PrimitiveDateTime, ComponentRange> {
     const EPOCH_IN_JULIAN_DAYS: f64 = 2_440_587.5;
     const SECONDS_IN_DAY: f64 = 86400.0;
     let timestamp = (julian_days - EPOCH_IN_JULIAN_DAYS) * SECONDS_IN_DAY;
-    #[allow(clippy::cast_possible_truncation)] // we multiply by 1E9 to prevent that
+    #[expect(clippy::cast_possible_truncation)] // we multiply by 1E9 to prevent that
     OffsetDateTime::from_unix_timestamp_nanos((timestamp * 1E9) as i128).map(naive_utc)
 }
 
@@ -554,7 +554,7 @@ mod tests {
     #[diesel_test_helper::test]
     fn insert_timestamptz_into_table_as_text() {
         crate::table! {
-            #[allow(unused_parens)]
+            #[expect(unused_parens)]
             test_insert_timestamptz_into_table_as_text(id) {
                 id -> Integer,
                 timestamp_with_tz -> TimestamptzSqlite,
@@ -591,7 +591,7 @@ mod tests {
     #[diesel_test_helper::test]
     fn can_query_timestamptz_column_with_between() {
         crate::table! {
-            #[allow(unused_parens)]
+            #[expect(unused_parens)]
             test_query_timestamptz_column_with_between(id) {
                 id -> Integer,
                 timestamp_with_tz -> TimestamptzSqlite,

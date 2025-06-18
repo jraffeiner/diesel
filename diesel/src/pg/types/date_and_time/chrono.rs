@@ -145,7 +145,7 @@ impl ToSql<Date, Pg> for NaiveDate {
 impl FromSql<Date, Pg> for NaiveDate {
     fn from_sql(bytes: PgValue<'_>) -> deserialize::Result<Self> {
         let PgDate(offset) = FromSql::<Date, Pg>::from_sql(bytes)?;
-        #[allow(deprecated)] // otherwise we would need to bump our minimal chrono version
+        #[expect(deprecated)] // otherwise we would need to bump our minimal chrono version
         let duration = Duration::days(i64::from(offset));
         match pg_epoch_date().checked_add_signed(duration) {
             Some(date) => Ok(date),

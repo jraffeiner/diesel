@@ -18,7 +18,7 @@ use crate::result::*;
 use crate::RunQueryDsl;
 
 #[cfg(feature = "mysql")]
-#[allow(missing_debug_implementations, missing_copy_implementations)]
+#[expect(missing_debug_implementations, missing_copy_implementations)]
 /// A connection to a MySQL database. Connection URLs should be in the form
 /// `mysql://[user[:password]@]host/database_name[?unix_socket=socket-path&ssl_mode=SSL_MODE*&ssl_ca=/etc/ssl/certs/ca-certificates.crt&ssl_cert=/etc/ssl/certs/client-cert.crt&ssl_key=/etc/ssl/certs/client-key.crt]`
 ///
@@ -114,7 +114,7 @@ pub struct MysqlConnection {
 }
 
 // mysql connection can be shared between threads according to libmysqlclients documentation
-#[allow(unsafe_code)]
+#[expect(unsafe_code)]
 unsafe impl Send for MysqlConnection {}
 
 impl SimpleConnection for MysqlConnection {
@@ -174,7 +174,7 @@ impl Connection for MysqlConnection {
     where
         T: QueryFragment<Self::Backend> + QueryId,
     {
-        #[allow(unsafe_code)] // call to unsafe function
+        #[expect(unsafe_code)] // call to unsafe function
         update_transaction_manager_status(
             prepared_query(
                 &source,

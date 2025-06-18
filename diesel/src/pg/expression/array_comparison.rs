@@ -146,7 +146,7 @@ pub trait AsArrayExpression<ST: 'static> {
 
     // This method is part of the public API
     // we won't change it to appease a clippy lint
-    #[allow(clippy::wrong_self_convention)]
+    #[expect(clippy::wrong_self_convention)]
     fn as_expression(self) -> Self::Expression;
 }
 

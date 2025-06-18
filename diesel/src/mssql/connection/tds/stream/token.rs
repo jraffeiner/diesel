@@ -145,7 +145,7 @@ where
         }
         if err.code == 266 {
             event!(Level::WARN, message = %err.message, code = err.code);
-        }else{
+        } else {
             event!(Level::ERROR, message = %err.message, code = err.code);
         }
         Ok(ReceivedToken::Error(err))

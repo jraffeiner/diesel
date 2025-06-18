@@ -59,7 +59,7 @@ where
 }
 
 /// Return type of [`array(tuple_or_subselect)`](super::dsl::array())
-#[allow(non_camel_case_types)]
+#[expect(non_camel_case_types)]
 #[cfg(feature = "postgres_backend")]
 pub type array<ST, T> = <T as IntoArrayExpression<ST>>::ArrayExpression;
 

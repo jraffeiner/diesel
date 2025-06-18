@@ -196,7 +196,7 @@ macro_rules! do_nothing_for_composite_keys {
                 {
                     let mut first = true;
                     $(
-                        #[allow(unused_assignments)]
+                        #[expect(unused_assignments)]
                         if first {
                             first = false;
                         } else {

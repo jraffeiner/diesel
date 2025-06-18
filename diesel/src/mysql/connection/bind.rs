@@ -1,4 +1,4 @@
-#![allow(unsafe_code)] // module uses ffi
+#![expect(unsafe_code)] // module uses ffi
 use mysqlclient_sys as ffi;
 use std::mem;
 use std::mem::MaybeUninit;
@@ -725,7 +725,7 @@ impl From<(ffi::enum_field_types, Flags)> for MysqlType {
             ),
             // depending on the bindings version
             // there might be no unlisted field type
-            #[allow(unreachable_patterns)]
+            #[expect(unreachable_patterns)]
             t => unreachable!(
                 "Unsupported type encountered: {t:?}. \
                  If you ever see this error, something has gone wrong. \

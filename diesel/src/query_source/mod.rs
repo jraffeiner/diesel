@@ -34,7 +34,7 @@ pub trait QuerySource {
     /// `QueryFragment` implementations.
     // from here is something different than from in rust
     // as this literally refers to SQL from.
-    #[allow(clippy::wrong_self_convention)]
+    #[expect(clippy::wrong_self_convention)]
     fn from_clause(&self) -> Self::FromClause;
     /// The default select clause of this type, which should be used if no
     /// select clause was explicitly specified. This should always be a tuple of
@@ -161,7 +161,7 @@ pub(crate) mod private {
 }
 
 #[doc(hidden)]
-#[allow(
+#[expect(
     non_camel_case_types,
     missing_debug_implementations,
     missing_copy_implementations

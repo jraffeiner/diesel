@@ -9,7 +9,7 @@ use crate::backend::Backend;
 use crate::row::{Field, IntoOwnedRow, PartialRow, Row, RowIndex, RowSealed};
 use crate::sqlite::Sqlite;
 
-#[allow(missing_debug_implementations)]
+#[expect(missing_debug_implementations)]
 pub struct SqliteRow<'stmt, 'query> {
     pub(super) inner: Rc<RefCell<PrivateSqliteRow<'stmt, 'query>>>,
     pub(super) field_count: usize,
@@ -179,7 +179,7 @@ impl<'idx> RowIndex<&'idx str> for SqliteRow<'_, '_> {
     }
 }
 
-#[allow(missing_debug_implementations)]
+#[expect(missing_debug_implementations)]
 pub struct SqliteField<'stmt, 'query> {
     pub(super) row: Ref<'stmt, PrivateSqliteRow<'stmt, 'query>>,
     pub(super) col_idx: usize,
@@ -215,7 +215,7 @@ mod tests {
     #[diesel_test_helper::test]
     fn fun_with_row_iters() {
         crate::table! {
-            #[allow(unused_parens)]
+            #[expect(unused_parens)]
             users(id) {
                 id -> Integer,
                 name -> Text,
@@ -350,7 +350,7 @@ mod tests {
 
     #[diesel_test_helper::test]
     #[cfg(feature = "returning_clauses_for_sqlite_3_35")]
-    #[allow(clippy::cast_sign_loss)]
+    #[expect(clippy::cast_sign_loss)]
     fn parallel_iter_with_error() {
         use crate::connection::Connection;
         use crate::connection::LoadConnection;

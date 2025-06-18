@@ -8,6 +8,7 @@ use crate::query_builder::bind_collector::RawBytesBindCollector;
 use crate::sql_types::TypeMetadata;
 
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+#[allow(missing_docs)]
 pub struct Fb;
 
 impl Backend for Fb {
@@ -27,9 +28,15 @@ impl TypeMetadata for Fb {
     type MetadataLookup = ();
 }
 
+#[allow(
+    missing_docs,
+    missing_copy_implementations,
+    missing_debug_implementations
+)]
 pub struct FbSelectStatementSyntax;
 
 #[derive(Debug, Copy, Clone)]
+#[allow(missing_docs)]
 pub struct FbReturningClause;
 
 impl SqlDialect for Fb {

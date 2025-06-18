@@ -57,7 +57,7 @@ pub(crate) fn expand(
     quote! {
         #result
 
-        #[allow(unused_imports)]
+        #[expect(unused_imports)]
         #[doc(hidden)]
         mod return_type_helpers {
             #(
@@ -142,7 +142,7 @@ fn expand_one(
         let result = quote! {
             #result
 
-            #[allow(unused_imports)]
+            #[expect(unused_imports)]
             #[doc(inline)]
             mod #return_types_module_name {
                 #(
@@ -493,7 +493,7 @@ fn expand_nonvariadic(
             __DieselInternal: diesel::backend::Backend,
             #(#arg_name: QueryFragment<__DieselInternal>,)*
         {
-            #[allow(unused_assignments)]
+            #[expect(unused_assignments)]
             fn walk_ast<'__b>(&'__b self, mut out: AstPass<'_, '__b, __DieselInternal>) -> QueryResult<()>{
                 out.push_sql(concat!(#sql_name, "("));
                 // we unroll the arguments manually here, to prevent borrow check issues
@@ -745,7 +745,7 @@ fn expand_nonvariadic(
             let internals_module_name = Ident::new(&format!("{fn_name}_utils"), fn_name.span());
             (
                 Some(quote! {
-                    #[allow(non_camel_case_types, non_snake_case)]
+                    #[expect(non_camel_case_types, non_snake_case)]
                     #[doc = #helper_type_doc]
                     pub type #fn_name #ty_generics = #internals_module_name::#fn_name <
                         #(#type_args,)*
@@ -793,7 +793,7 @@ fn expand_nonvariadic(
             let doc =
                 format!("Return type of the [`{fn_name}()`](fn@super::{fn_name}) SQL function.");
             let return_type_helper_module = quote! {
-                #[allow(non_camel_case_types, non_snake_case, unused_imports)]
+                #[expect(non_camel_case_types, non_snake_case, unused_imports)]
                 #[doc(inline)]
                 mod #return_type_module_name {
                     #[doc = #doc]
@@ -815,7 +815,7 @@ fn expand_nonvariadic(
 
     let tokens = quote! {
         #(#attributes)*
-        #[allow(non_camel_case_types)]
+        #[expect(non_camel_case_types)]
         pub #fn_token #fn_name #impl_generics (#(#args_iter,)*)
             -> #return_type_path #ty_generics
         #where_clause
@@ -832,7 +832,7 @@ fn expand_nonvariadic(
         #return_type_helper_module
 
         #[doc(hidden)]
-        #[allow(non_camel_case_types, non_snake_case, unused_imports)]
+        #[expect(non_camel_case_types, non_snake_case, unused_imports)]
         pub(crate) mod #internals_module_name {
             #tokens
         }

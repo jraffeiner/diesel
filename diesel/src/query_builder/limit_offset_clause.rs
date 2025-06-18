@@ -19,7 +19,7 @@ pub struct LimitOffsetClause<Limit, Offset> {
 /// A boxed variant of [`LimitOffsetClause`](LimitOffsetClause)
 ///
 /// This type is only relevant for implementing custom backends
-#[allow(missing_debug_implementations)]
+#[expect(missing_debug_implementations)]
 #[cfg_attr(
     docsrs,
     doc(cfg(feature = "i-implement-a-third-party-backend-and-opt-into-breaking-changes"))

@@ -363,7 +363,7 @@ pub trait AsQuery {
     // so we won't change the name to just appease clippy
     // (Also the trait is literally named `AsQuery` so
     // naming the method similarity is fine)
-    #[allow(clippy::wrong_self_convention)]
+    #[expect(clippy::wrong_self_convention)]
     fn as_query(self) -> Self::Query;
 }
 
@@ -429,6 +429,6 @@ pub fn debug_query<DB, T>(query: &T) -> DebugQuery<'_, T, DB> {
 }
 
 mod private {
-    #[allow(missing_debug_implementations, missing_copy_implementations)]
+    #[expect(missing_debug_implementations, missing_copy_implementations)]
     pub struct NotSpecialized;
 }

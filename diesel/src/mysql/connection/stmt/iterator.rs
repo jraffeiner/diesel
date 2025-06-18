@@ -1,4 +1,4 @@
-#![allow(unsafe_code)] // module uses ffi
+#![expect(unsafe_code)] // module uses ffi
 use std::cell::{Ref, RefCell};
 use std::rc::Rc;
 
@@ -9,7 +9,7 @@ use crate::mysql::{Mysql, MysqlType};
 use crate::result::QueryResult;
 use crate::row::*;
 
-#[allow(missing_debug_implementations)]
+#[expect(missing_debug_implementations)]
 pub struct StatementIterator<'a> {
     stmt: StatementUse<'a>,
     last_row: Rc<RefCell<PrivateMysqlRow>>,
@@ -132,7 +132,7 @@ impl ExactSizeIterator for StatementIterator<'_> {
 }
 
 #[derive(Clone)]
-#[allow(missing_debug_implementations)]
+#[expect(missing_debug_implementations)]
 pub struct MysqlRow {
     row: Rc<RefCell<PrivateMysqlRow>>,
     metadata: Rc<StatementMetadata>,
@@ -204,7 +204,7 @@ impl<'a> RowIndex<&'a str> for MysqlRow {
     }
 }
 
-#[allow(missing_debug_implementations)]
+#[expect(missing_debug_implementations)]
 pub struct MysqlField<'a> {
     binds: Ref<'a, PrivateMysqlRow>,
     metadata: Rc<StatementMetadata>,
@@ -231,7 +231,7 @@ impl<'a> Field<'a, Mysql> for MysqlField<'a> {
 
 #[cfg(test)]
 #[diesel_test_helper::test]
-#[allow(clippy::drop_non_drop)] // we want to explicitly extend lifetimes here
+#[expect(clippy::drop_non_drop)] // we want to explicitly extend lifetimes here
 fn fun_with_row_iters() {
     crate::table! {
         users(id) {

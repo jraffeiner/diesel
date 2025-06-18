@@ -306,7 +306,7 @@ use super::Mssql;
 type TibClient = Client<TcpStream>;
 
 /// Connection Struct for Mssql Connections
-#[allow(clippy::module_name_repetitions)]
+#[expect(clippy::module_name_repetitions)]
 pub struct MssqlConnection {
     client: TibClient,
     transaction_manager: MssqlTransactionManager,
@@ -334,10 +334,16 @@ impl SimpleConnection for MssqlConnection {
         let r = self.client.execute(query, &[]);
         let r = match r {
             Ok(_) => Ok(()),
-            Err(diesel::mssql::connection::error::Error::Server(TokenError { code: 3903, state: 1, class: 16, .. })) => {
-                self.transaction_manager.status = TransactionManagerStatus::Valid(ValidTransactionManagerStatus {
-                    in_transaction: None,
-                });
+            Err(diesel::mssql::connection::error::Error::Server(TokenError {
+                code: 3903,
+                state: 1,
+                class: 16,
+                ..
+            })) => {
+                self.transaction_manager.status =
+                    TransactionManagerStatus::Valid(ValidTransactionManagerStatus {
+                        in_transaction: None,
+                    });
                 Err(diesel::result::Error::NotInTransaction)
             }
             Err(e) => Err(diesel::result::Error::DeserializationError(Box::new(e))),

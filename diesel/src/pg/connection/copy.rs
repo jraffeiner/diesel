@@ -7,7 +7,7 @@ use super::raw::RawConnection;
 use super::result::PgResult;
 use crate::QueryResult;
 
-#[allow(missing_debug_implementations)] // `PgConnection` is not debug
+#[expect(missing_debug_implementations)] // `PgConnection` is not debug
 pub(in crate::pg) struct CopyFromSink<'conn> {
     conn: &'conn mut RawConnection,
 }
@@ -35,7 +35,7 @@ impl Write for CopyFromSink<'_> {
     }
 }
 
-#[allow(missing_debug_implementations)] // `PgConnection` is not debug
+#[expect(missing_debug_implementations)] // `PgConnection` is not debug
 pub struct CopyToBuffer<'conn> {
     conn: &'conn mut RawConnection,
     ptr: *mut ffi::c_char,
@@ -55,7 +55,7 @@ impl<'conn> CopyToBuffer<'conn> {
         }
     }
 
-    #[allow(unsafe_code)] // construct a slice from a raw ptr
+    #[expect(unsafe_code)] // construct a slice from a raw ptr
     pub(crate) fn data_slice(&self) -> &[u8] {
         if !self.ptr.is_null() && self.offset < self.len {
             let slice = unsafe { std::slice::from_raw_parts(self.ptr as *const u8, self.len - 1) };
@@ -71,7 +71,7 @@ impl<'conn> CopyToBuffer<'conn> {
 }
 
 impl Drop for CopyToBuffer<'_> {
-    #[allow(unsafe_code)] // ffi code
+    #[expect(unsafe_code)] // ffi code
     fn drop(&mut self) {
         if !self.ptr.is_null() {
             unsafe { pq_sys::PQfreemem(self.ptr as *mut ffi::c_void) };
@@ -91,7 +91,7 @@ impl Read for CopyToBuffer<'_> {
 }
 
 impl BufRead for CopyToBuffer<'_> {
-    #[allow(unsafe_code)] // ffi code + ptr arithmetic
+    #[expect(unsafe_code)] // ffi code + ptr arithmetic
     fn fill_buf(&mut self) -> std::io::Result<&[u8]> {
         if self.data_slice().is_empty() {
             unsafe {

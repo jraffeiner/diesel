@@ -302,7 +302,7 @@ fn select_right_side_with_nullable_column_first() {
 }
 
 #[diesel_test_helper::test]
-#[allow(clippy::type_complexity)]
+#[expect(clippy::type_complexity)]
 fn select_left_join_right_side_with_non_null_inside() {
     let connection = &mut connection_with_sean_and_tess_in_users_table();
 

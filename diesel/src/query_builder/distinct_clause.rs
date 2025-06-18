@@ -33,6 +33,6 @@ impl<S, G> ValidDistinctForGroupBy<S, G> for NoDistinctClause {}
 impl<S, G> ValidDistinctForGroupBy<S, G> for DistinctClause {}
 
 // This is rexported from another location
-#[allow(unreachable_pub, unused_imports)]
+#[expect(unreachable_pub, unused_imports)]
 #[cfg(feature = "postgres_backend")]
 pub use crate::pg::DistinctOnClause;

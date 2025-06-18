@@ -5,7 +5,7 @@ use diesel_migrations::MigrationError;
 use crate::infer_schema_internals::TableName;
 
 #[derive(thiserror::Error, Debug)]
-#[allow(clippy::enum_variant_names)]
+#[expect(clippy::enum_variant_names)]
 pub enum Error {
     #[error("Initializing `.env` file failed: {0}")]
     DotenvError(#[from] dotenvy::Error),

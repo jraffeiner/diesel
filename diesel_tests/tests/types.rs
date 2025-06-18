@@ -1,5 +1,5 @@
 // FIXME: Review this module to see if we can do these casts in a more backend agnostic way
-#![allow(warnings)]
+#![expect(warnings)]
 #[cfg(any(feature = "postgres", feature = "mysql"))]
 extern crate bigdecimal;
 extern crate chrono;
@@ -381,7 +381,7 @@ use std::{f32, f64};
 
 #[diesel_test_helper::test]
 #[cfg(feature = "postgres")]
-#[allow(clippy::float_cmp)]
+#[expect(clippy::float_cmp)]
 fn f32_from_sql() {
     assert_eq!(0.0, query_single_value::<Float, f32>("0.0::real"));
     assert_eq!(0.5, query_single_value::<Float, f32>("0.5::real"));
@@ -399,7 +399,7 @@ fn f32_from_sql() {
 
 #[diesel_test_helper::test]
 #[cfg(any(feature = "mysql", feature = "sqlite"))]
-#[allow(clippy::float_cmp)]
+#[expect(clippy::float_cmp)]
 fn f32_from_sql() {
     assert_eq!(0.0, query_single_value::<Float, f32>("0.0"));
     assert_eq!(0.5, query_single_value::<Float, f32>("0.5"));
@@ -414,7 +414,7 @@ fn f32_from_sql() {
 
 #[diesel_test_helper::test]
 #[cfg(feature = "postgres")]
-#[allow(clippy::float_cmp)]
+#[expect(clippy::float_cmp)]
 fn f32_to_sql() {
     assert!(query_to_sql_equality::<Float, f32>("0.0::real", 0.0));
     assert!(query_to_sql_equality::<Float, f32>("0.5::real", 0.5));
@@ -461,7 +461,7 @@ fn f32_to_sql() {
 
 #[diesel_test_helper::test]
 #[cfg(feature = "postgres")]
-#[allow(clippy::float_cmp)]
+#[expect(clippy::float_cmp)]
 fn f64_from_sql() {
     assert_eq!(
         0.0,
@@ -485,7 +485,7 @@ fn f64_from_sql() {
 
 #[diesel_test_helper::test]
 #[cfg(any(feature = "mysql", feature = "sqlite"))]
-#[allow(clippy::float_cmp)]
+#[expect(clippy::float_cmp)]
 fn f64_from_sql() {
     assert_eq!(0.0, query_single_value::<Double, f64>("0.0"));
     assert_eq!(0.5, query_single_value::<Double, f64>("0.5"));

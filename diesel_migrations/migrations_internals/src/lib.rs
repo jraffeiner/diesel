@@ -1,6 +1,6 @@
 // Built-in Lints
 // Clippy lints
-#![allow(
+#![expect(
     clippy::map_unwrap_or,
     clippy::match_same_arms,
     clippy::type_complexity
@@ -27,7 +27,7 @@ use std::path::{Path, PathBuf};
 
 #[doc(hidden)]
 #[derive(Debug, serde::Deserialize)]
-#[allow(missing_copy_implementations)]
+#[expect(missing_copy_implementations)]
 pub struct TomlMetadata {
     #[serde(default)]
     pub run_in_transaction: bool,

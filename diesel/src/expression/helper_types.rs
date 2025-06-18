@@ -138,7 +138,7 @@ pub type Like<Lhs, Rhs> = Grouped<super::operators::Like<Lhs, AsExprOf<Rhs, SqlT
 pub type NotLike<Lhs, Rhs> = Grouped<super::operators::NotLike<Lhs, AsExprOf<Rhs, SqlTypeOf<Lhs>>>>;
 
 /// The return type of [`case_when()`](expression::case_when::case_when)
-#[allow(non_camel_case_types)] // required for `#[auto_type]`
+#[expect(non_camel_case_types)] // required for `#[auto_type]`
 pub type case_when<C, T, ST = <T as Expression>::SqlType> = expression::case_when::CaseWhen<
     expression::case_when::CaseWhenConditionsLeaf<Grouped<C>, Grouped<AsExprOf<T, ST>>>,
     expression::case_when::NoElseExpression,
@@ -193,15 +193,14 @@ pub type Div<L, R> = <L as ::core::ops::Div<R>>::Output;
 // for every item in this module. We reexport
 // everything from `crate::helper_types::`
 #[doc(inline)]
-#[allow(unreachable_pub)]
 pub use super::functions::helper_types::*;
 
 #[doc(inline)]
 #[cfg(feature = "postgres_backend")]
-#[allow(unreachable_pub)]
+#[expect(unreachable_pub)]
 pub use crate::pg::expression::helper_types::*;
 
 #[doc(inline)]
 #[cfg(feature = "sqlite")]
-#[allow(unreachable_pub)]
+#[expect(unreachable_pub)]
 pub use crate::sqlite::expression::helper_types::*;

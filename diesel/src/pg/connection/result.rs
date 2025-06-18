@@ -1,4 +1,4 @@
-#![allow(unsafe_code)] // ffi code
+#![expect(unsafe_code)] // ffi code
 extern crate pq_sys;
 
 use self::pq_sys::*;
@@ -13,7 +13,7 @@ use super::row::PgRow;
 use crate::result::{DatabaseErrorInformation, DatabaseErrorKind, Error, QueryResult};
 use std::cell::OnceCell;
 
-#[allow(missing_debug_implementations)]
+#[expect(missing_debug_implementations)]
 pub struct PgResult {
     internal_result: RawResult,
     column_count: libc::c_int,
@@ -25,7 +25,7 @@ pub struct PgResult {
 }
 
 impl PgResult {
-    #[allow(clippy::new_ret_no_self)]
+    #[expect(clippy::new_ret_no_self)]
     pub(super) fn new(internal_result: RawResult, conn: &RawConnection) -> QueryResult<Self> {
         let result_status = unsafe { PQresultStatus(internal_result.as_ptr()) };
         match result_status {

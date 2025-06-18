@@ -152,7 +152,7 @@ fn setup_notifies_when_creating_a_database() {
 }
 
 #[test]
-#[allow(unused_variables)]
+#[expect(unused_variables)]
 fn setup_doesnt_notify_when_not_creating_a_database() {
     let p = project("setup_doesnt_notify").build();
     let db = database(&p.database_url()).create();

@@ -72,7 +72,7 @@ impl<'idx> RowIndex<&'idx str> for OwnedSqliteRow {
     }
 }
 
-#[allow(missing_debug_implementations)]
+#[expect(missing_debug_implementations)]
 pub struct OwnedSqliteField<'row> {
     pub(super) row: &'row OwnedSqliteRow,
     pub(super) col_idx: usize,

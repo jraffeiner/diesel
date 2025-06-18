@@ -54,7 +54,7 @@ pub(crate) struct RpcParam<'a> {
 }
 
 /// 2.2.6.6 RPC Request
-#[allow(dead_code)]
+#[expect(dead_code)]
 #[repr(u8)]
 #[derive(Clone, Copy, Debug)]
 pub(crate) enum RpcProcId {

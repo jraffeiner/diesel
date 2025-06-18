@@ -84,7 +84,7 @@ impl From<io::Error> for MigrationError {
 
 /// Errors that occur while running migrations
 #[derive(Debug, PartialEq)]
-#[allow(clippy::enum_variant_names)]
+#[expect(clippy::enum_variant_names)]
 #[non_exhaustive]
 pub enum RunMigrationsError {
     /// A general migration error occurred

@@ -38,8 +38,8 @@ impl<'a> MysqlValue<'a> {
     // We use `ptr.read_unaligned()` to read the potential unaligned ptr,
     // so clippy is clearly wrong here
     // https://github.com/rust-lang/rust-clippy/issues/2881
-    #[allow(dead_code, clippy::cast_ptr_alignment)]
-    #[allow(unsafe_code)] // pointer cast
+    #[expect(dead_code, clippy::cast_ptr_alignment)]
+    #[expect(unsafe_code)] // pointer cast
     pub(crate) fn time_value(&self) -> deserialize::Result<MysqlTime> {
         match self.tpe {
             MysqlType::Time | MysqlType::Date | MysqlType::DateTime | MysqlType::Timestamp => {

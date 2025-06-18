@@ -62,7 +62,7 @@ where
     }
 }
 
-#[allow(unsafe_code)] // cast to transparent wrapper type
+#[expect(unsafe_code)] // cast to transparent wrapper type
 impl<'a, T, V, QId, Op, const STATIC_QUERY_ID: bool> DebugQueryHelper<No>
     for DebugQuery<'a, InsertStatement<T, BatchInsert<V, T, QId, STATIC_QUERY_ID>, Op>, Sqlite>
 where
@@ -141,7 +141,7 @@ where
     }
 }
 
-#[allow(missing_debug_implementations, missing_copy_implementations)]
+#[expect(missing_debug_implementations, missing_copy_implementations)]
 pub struct Yes;
 
 impl Default for Yes {
@@ -150,7 +150,7 @@ impl Default for Yes {
     }
 }
 
-#[allow(missing_debug_implementations, missing_copy_implementations)]
+#[expect(missing_debug_implementations, missing_copy_implementations)]
 pub struct No;
 
 impl Default for No {
@@ -473,7 +473,7 @@ where
     }
 }
 
-#[allow(missing_debug_implementations, missing_copy_implementations)]
+#[expect(missing_debug_implementations, missing_copy_implementations)]
 #[repr(transparent)]
 pub struct SqliteBatchInsertWrapper<V, T, QId, const STATIC_QUERY_ID: bool>(
     BatchInsert<V, T, QId, STATIC_QUERY_ID>,
@@ -503,7 +503,7 @@ where
     }
 }
 
-#[allow(missing_copy_implementations, missing_debug_implementations)]
+#[expect(missing_copy_implementations, missing_debug_implementations)]
 #[repr(transparent)]
 pub struct SqliteCanInsertInSingleQueryHelper<T: ?Sized>(T);
 

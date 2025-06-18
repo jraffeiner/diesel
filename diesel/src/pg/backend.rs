@@ -32,7 +32,7 @@ impl From<(u32, u32)> for InnerPgTypeMetadata {
     feature = "i-implement-a-third-party-backend-and-opt-into-breaking-changes",
     cfg(feature = "i-implement-a-third-party-backend-and-opt-into-breaking-changes")
 )]
-#[allow(unreachable_pub)]
+#[expect(unreachable_pub)]
 pub struct FailedToLookupTypeError(Box<PgMetadataCacheKey<'static>>);
 
 impl FailedToLookupTypeError {

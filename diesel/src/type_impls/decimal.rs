@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 #[cfg(feature = "numeric")]
 mod bigdecimal {
     extern crate bigdecimal;

@@ -36,7 +36,6 @@ pub struct Config {
 
 #[derive(Clone, Debug)]
 pub(crate) enum TrustConfig {
-    #[allow(dead_code)]
     CaCertificateLocation(PathBuf),
     TrustAll,
     Default,

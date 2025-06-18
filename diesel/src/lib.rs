@@ -243,7 +243,7 @@
     missing_docs
 )]
 // Clippy lints
-#![allow(
+#![expect(
     clippy::match_same_arms,
     clippy::needless_doctest_main,
     clippy::map_unwrap_or,
@@ -343,7 +343,7 @@ pub use time;
 #[cfg(feature = "chrono")]
 pub use chrono;
 
-#[allow(unknown_lints, ambiguous_glob_reexports)]
+#[expect(ambiguous_glob_reexports)]
 pub mod dsl {
     //! Includes various helper types and bare functions which are named too
     //! generically to be included in prelude, but are often used when using Diesel.
@@ -401,7 +401,7 @@ pub mod helper_types {
     pub type Select<Source, Selection> = <Source as SelectDsl<Selection>>::Output;
 
     /// Represents the return type of [`diesel::select(selection)`](crate::select)
-    #[allow(non_camel_case_types)] // required for `#[auto_type]`
+    #[expect(non_camel_case_types)] // required for `#[auto_type]`
     pub type select<Selection> = crate::query_builder::SelectStatement<
         crate::query_builder::NoFromClause,
         SelectClause<Selection>,
@@ -675,27 +675,27 @@ pub mod helper_types {
         <Q as load_dsl::LoadQuery<'query, Conn, U, B>>::RowIter<'conn>;
 
     /// Represents the return type of [`diesel::delete`]
-    #[allow(non_camel_case_types)] // required for `#[auto_type]`
+    #[expect(non_camel_case_types)] // required for `#[auto_type]`
     pub type delete<T> = crate::query_builder::DeleteStatement<
         <T as HasTable>::Table,
         <T as IntoUpdateTarget>::WhereClause,
     >;
 
     /// Represents the return type of [`diesel::insert_into`]
-    #[allow(non_camel_case_types)] // required for `#[auto_type]`
+    #[expect(non_camel_case_types)] // required for `#[auto_type]`
     pub type insert_into<T> = crate::query_builder::IncompleteInsertStatement<T>;
 
     /// Represents the return type of [`diesel::update`]
-    #[allow(non_camel_case_types)] // required for `#[auto_type]`
+    #[expect(non_camel_case_types)] // required for `#[auto_type]`
     pub type update<T> =
         UpdateStatement<<T as HasTable>::Table, <T as IntoUpdateTarget>::WhereClause>;
 
     /// Represents the return type of [`diesel::insert_or_ignore_into`]
-    #[allow(non_camel_case_types)] // required for `#[auto_type]`
+    #[expect(non_camel_case_types)] // required for `#[auto_type]`
     pub type insert_or_ignore_into<T> = crate::query_builder::IncompleteInsertOrIgnoreStatement<T>;
 
     /// Represents the return type of [`diesel::replace_into`]
-    #[allow(non_camel_case_types)] // required for `#[auto_type]`
+    #[expect(non_camel_case_types)] // required for `#[auto_type]`
     pub type replace_into<T> = crate::query_builder::IncompleteReplaceStatement<T>;
 
     /// Represents the return type of

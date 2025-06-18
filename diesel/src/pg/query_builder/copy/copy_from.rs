@@ -206,7 +206,7 @@ macro_rules! impl_copy_from_insertable_helper_for_values_clause {
 
                 // statically known to always fit
                 // as we don't support more than 128 columns
-                #[allow(clippy::cast_possible_truncation)]
+                #[expect(clippy::cast_possible_truncation)]
                 const COLUMN_COUNT: i16 = $Tuple as i16;
 
                 fn write_to_buffer(&self, idx: i16, out: &mut Vec<u8>) -> QueryResult<IsNull> {
@@ -241,7 +241,7 @@ macro_rules! impl_copy_from_insertable_helper_for_values_clause {
 
                 // statically known to always fit
                 // as we don't support more than 128 columns
-                #[allow(clippy::cast_possible_truncation)]
+                #[expect(clippy::cast_possible_truncation)]
                 const COLUMN_COUNT: i16 = $Tuple as i16;
 
                 fn write_to_buffer(&self, idx: i16, out: &mut Vec<u8>) -> QueryResult<IsNull> {
@@ -385,7 +385,7 @@ where
     /// `target` specifies the column selection that is the target of the `COPY FROM` statement
     /// `action` expects a callback which accepts a [`std::io::Write`] argument. The necessary format
     /// accepted by this writer sink depends on the options provided via the `with_*` methods
-    #[allow(clippy::wrong_self_convention)] // the sql struct is named that way
+    #[expect(clippy::wrong_self_convention)] // the sql struct is named that way
     pub fn from_raw_data<F, C, E>(self, _target: C, action: F) -> CopyFromQuery<T, CopyFrom<C, F>>
     where
         C: CopyTarget<Table = T>,
@@ -410,7 +410,7 @@ where
     ///
     /// This uses the binary format. It internally configures the correct
     /// set of settings and does not allow to set other options
-    #[allow(clippy::wrong_self_convention)] // the sql struct is named that way
+    #[expect(clippy::wrong_self_convention)] // the sql struct is named that way
     pub fn from_insertable<I>(self, insertable: I) -> CopyFromQuery<T, InsertableWrapper<I>>
     where
         InsertableWrapper<I>: CopyFromExpression<T>,

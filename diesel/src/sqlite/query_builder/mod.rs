@@ -9,7 +9,7 @@ mod query_fragment_impls;
 mod returning;
 
 /// Constructs SQL queries for use with the SQLite backend
-#[allow(missing_debug_implementations)]
+#[expect(missing_debug_implementations)]
 #[derive(Default)]
 pub struct SqliteQueryBuilder {
     sql: String,

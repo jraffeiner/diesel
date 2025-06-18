@@ -117,12 +117,11 @@ use super::{CacheSize, Instrumentation};
 pub mod strategy;
 
 /// A prepared statement cache
-#[allow(missing_debug_implementations, unreachable_pub)]
 #[cfg_attr(
     docsrs,
     doc(cfg(feature = "i-implement-a-third-party-backend-and-opt-into-breaking-changes"))
 )]
-#[expect(dead_code)]
+#[allow(unreachable_pub, missing_debug_implementations)]
 pub struct StatementCache<DB: Backend, Statement> {
     cache: Box<dyn StatementCacheStrategy<DB, Statement>>,
     // increment every time a query is cached
@@ -141,20 +140,18 @@ pub struct StatementCache<DB: Backend, Statement> {
     docsrs,
     doc(cfg(feature = "i-implement-a-third-party-backend-and-opt-into-breaking-changes"))
 )]
-#[allow(unreachable_pub)]
-#[allow(dead_code)]
+#[allow(unreachable_pub, dead_code)]
 pub enum PrepareForCache {
     /// The statement will be cached    
     Yes {
         /// Counter might be used as unique identifier for prepared statement.
-        #[allow(dead_code)]
         counter: u64,
     },
     /// The statement won't be cached
     No,
 }
 
-#[allow(clippy::new_without_default, unreachable_pub)]
+#[expect(clippy::new_without_default)]
 impl<DB, Statement> StatementCache<DB, Statement>
 where
     DB: Backend + 'static,
@@ -164,8 +161,7 @@ where
     StatementCacheKey<DB>: Hash + Eq,
 {
     /// Create a new prepared statement cache using [`CacheSize::Unbounded`] as caching strategy.
-    #[expect(dead_code)]
-    #[allow(unreachable_pub)]
+    #[allow(unreachable_pub, dead_code)]
     pub fn new() -> Self {
         StatementCache {
             cache: Box::new(WithCacheStrategy::default()),
@@ -174,7 +170,7 @@ where
     }
 
     /// Set caching strategy from predefined implementations
-    #[expect(dead_code)]
+    #[allow(unreachable_pub, dead_code)]
     pub fn set_cache_size(&mut self, size: CacheSize) {
         if self.cache.cache_size() != size {
             self.cache = match size {
@@ -208,7 +204,7 @@ where
     // Notes:
     // This function takes explicitly a connection and a function pointer (and no generic callback)
     // as argument to ensure that we don't leak generic query types into the prepare function
-    #[allow(unreachable_pub)]
+    #[allow(unreachable_pub, dead_code)]
     pub fn cached_statement<'a, T, R, C>(
         &'a mut self,
         source: &T,
@@ -243,8 +239,8 @@ where
     // Notes:
     // This function takes explicitly a connection and a function pointer (and no generic callback)
     // as argument to ensure that we don't leak generic query types into the prepare function
-    #[allow(unreachable_pub)]
-    #[allow(clippy::too_many_arguments)] // we need all of them
+    #[expect(clippy::too_many_arguments)] // we need all of them
+    #[allow(unreachable_pub, dead_code)]
     pub fn cached_statement_non_generic<'a, R, C>(
         &'a mut self,
         maybe_type_id: Option<TypeId>,
@@ -362,16 +358,17 @@ where
 ///
 /// This preserves the opportunity for the compiler to entirely optimize the `construct_sql`
 /// function as a function that simply returns a constant `String`.
-#[allow(unreachable_pub)]
 #[cfg_attr(
     docsrs,
     doc(cfg(feature = "i-implement-a-third-party-backend-and-opt-into-breaking-changes"))
 )]
+#[allow(unreachable_pub)]
 pub trait QueryFragmentForCachedStatement<DB> {
     /// Convert the query fragment into a SQL string for the given backend
     fn construct_sql(&self, backend: &DB) -> QueryResult<String>;
 
     /// Check whether it's safe to cache the query
+    #[allow(dead_code)]
     fn is_safe_to_cache_prepared(&self, backend: &DB) -> QueryResult<bool>;
 }
 
@@ -396,12 +393,12 @@ where
 ///
 /// Essentially a customized version of [`Cow`]
 /// that does not depend on [`ToOwned`]
-#[allow(missing_debug_implementations, unreachable_pub)]
 #[cfg_attr(
     docsrs,
     doc(cfg(feature = "i-implement-a-third-party-backend-and-opt-into-breaking-changes"))
 )]
 #[non_exhaustive]
+#[allow(unreachable_pub, missing_debug_implementations)]
 pub enum MaybeCached<'a, T: 'a> {
     /// Contains a not cached prepared statement
     CannotCache(T),
@@ -417,7 +414,7 @@ pub enum MaybeCached<'a, T: 'a> {
     docsrs,
     doc(cfg(feature = "i-implement-a-third-party-backend-and-opt-into-breaking-changes"))
 )]
-#[allow(unreachable_pub)]
+#[allow(unreachable_pub, dead_code)]
 pub trait StatementCallbackReturnType<S: 'static, C> {
     /// The return type of `StatementCache::cached_statement`
     ///
@@ -500,12 +497,12 @@ impl<T> DerefMut for MaybeCached<'_, T> {
 /// (representing a statically known query) or a at runtime
 /// calculated query string + parameter types (for queries
 /// that may change depending on their parameters)
-#[allow(missing_debug_implementations, unreachable_pub)]
 #[derive(Hash, PartialEq, Eq)]
 #[cfg_attr(
     docsrs,
     doc(cfg(feature = "i-implement-a-third-party-backend-and-opt-into-breaking-changes"))
 )]
+#[allow(unreachable_pub, missing_debug_implementations)]
 pub enum StatementCacheKey<DB: Backend> {
     /// Represents a at compile time known query
     ///
@@ -532,7 +529,8 @@ where
 {
     /// Create a new statement cache key for the given query source
     // Note: Intentionally monomorphic over source.
-    #[allow(unreachable_pub)]
+
+    #[allow(unreachable_pub, dead_code)]
     pub fn for_source(
         maybe_type_id: Option<TypeId>,
         source: &dyn QueryFragmentForCachedStatement<DB>,
@@ -556,7 +554,7 @@ where
     /// This is an optimization that may skip constructing the query string
     /// twice if it's already part of the current cache key
     // Note: Intentionally monomorphic over source.
-    #[allow(unreachable_pub)]
+    #[allow(unreachable_pub, dead_code)]
     pub fn sql(
         &self,
         source: &dyn QueryFragmentForCachedStatement<DB>,

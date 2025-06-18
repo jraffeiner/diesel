@@ -18,7 +18,7 @@ const AF_INET: u8 = 2;
 #[cfg(target_os = "redox")]
 const AF_INET: u8 = 1;
 
-#[allow(clippy::cast_possible_truncation)] // it's 2
+#[expect(clippy::cast_possible_truncation)] // it's 2
 #[cfg(not(any(windows, target_os = "redox")))]
 const AF_INET: u8 = libc::AF_INET as u8;
 

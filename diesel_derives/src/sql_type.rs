@@ -7,6 +7,7 @@ use crate::model::Model;
 use crate::parsers::PostgresType;
 use crate::util::wrap_in_dummy_mod;
 
+#[expect(clippy::similar_names)]
 pub fn derive(item: DeriveInput) -> Result<TokenStream> {
     let model = Model::from_item(&item, true, false)?;
 

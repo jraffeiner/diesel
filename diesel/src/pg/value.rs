@@ -3,7 +3,7 @@ use std::ops::Range;
 
 /// Raw postgres value as received from the database
 #[derive(Clone, Copy)]
-#[allow(missing_debug_implementations)]
+#[expect(missing_debug_implementations)]
 #[cfg(feature = "postgres_backend")]
 pub struct PgValue<'a> {
     raw_value: &'a [u8],
@@ -25,7 +25,7 @@ pub struct PgValue<'a> {
     docsrs,
     doc(cfg(feature = "i-implement-a-third-party-backend-and-opt-into-breaking-changes"))
 )]
-#[allow(unreachable_pub)]
+#[expect(unreachable_pub)]
 pub trait TypeOidLookup {
     /// Lookup the type oid for the current value
     fn lookup(&self) -> NonZeroU32;

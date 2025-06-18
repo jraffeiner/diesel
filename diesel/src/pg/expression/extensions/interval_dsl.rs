@@ -225,7 +225,7 @@ impl IntervalDsl for i64 {
     }
 }
 
-#[allow(clippy::cast_possible_truncation)] // we want to truncate
+#[expect(clippy::cast_possible_truncation)] // we want to truncate
 impl IntervalDsl for f64 {
     fn microseconds(self) -> PgInterval {
         (self.round() as i64).microseconds()
@@ -249,7 +249,7 @@ impl IntervalDsl for f64 {
 #[cfg(test)]
 // those macros define nested function
 // that's fine for this test code
-#[allow(clippy::items_after_statements)]
+#[expect(clippy::items_after_statements)]
 mod tests {
     extern crate dotenvy;
     extern crate quickcheck;

@@ -69,7 +69,7 @@ macro_rules! test_round_trip {
     };
     ($test_name:ident, $sql_type:ty, $tpe:ty, $map_fn:ident, $cmp: expr) => {
         #[diesel_test_helper::test]
-        #[allow(clippy::type_complexity)]
+        #[expect(clippy::type_complexity)]
         fn $test_name() {
             use diesel::sql_types::*;
 
@@ -92,7 +92,7 @@ macro_rules! test_round_trip {
     };
 }
 
-#[allow(clippy::float_cmp)]
+#[expect(clippy::float_cmp)]
 pub fn f32_ne(a: &f32, b: &f32) -> bool {
     if a.is_nan() && b.is_nan() {
         false
@@ -101,7 +101,7 @@ pub fn f32_ne(a: &f32, b: &f32) -> bool {
     }
 }
 
-#[allow(clippy::float_cmp)]
+#[expect(clippy::float_cmp)]
 pub fn f64_ne(a: &f64, b: &f64) -> bool {
     if a.is_nan() && b.is_nan() {
         false
@@ -301,7 +301,7 @@ mod pg_types {
 
     test_round_trip!(pg_lsn_roundtrips, PgLsn, u64, mk_pg_lsn);
 
-    #[allow(clippy::type_complexity)]
+    #[expect(clippy::type_complexity)]
     fn mk_uuid(data: (u32, u16, u16, (u8, u8, u8, u8, u8, u8, u8, u8))) -> self::uuid::Uuid {
         let a = data.3;
         let b = [a.0, a.1, a.2, a.3, a.4, a.5, a.6, a.7];
@@ -431,7 +431,7 @@ mod pg_types {
         vec![mk_ts_bounds(data)]
     }
 
-    #[allow(clippy::type_complexity)]
+    #[expect(clippy::type_complexity)]
     fn mk_tstz_bound_lists(
         data: (i64, u32, i64, u32),
     ) -> Vec<(Bound<DateTime<Utc>>, Bound<DateTime<Utc>>)> {

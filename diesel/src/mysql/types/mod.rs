@@ -76,7 +76,7 @@ impl ToSql<Unsigned<TinyInt>, Mysql> for u8 {
 
 #[cfg(feature = "mysql_backend")]
 impl FromSql<Unsigned<TinyInt>, Mysql> for u8 {
-    #[allow(clippy::cast_possible_wrap, clippy::cast_sign_loss)] // that's what we want
+    #[expect(clippy::cast_possible_wrap, clippy::cast_sign_loss)] // that's what we want
     fn from_sql(bytes: MysqlValue<'_>) -> deserialize::Result<Self> {
         let signed: i8 = FromSql::<TinyInt, Mysql>::from_sql(bytes)?;
         Ok(signed as u8)
@@ -93,7 +93,7 @@ impl ToSql<Unsigned<SmallInt>, Mysql> for u16 {
 
 #[cfg(feature = "mysql_backend")]
 impl FromSql<Unsigned<SmallInt>, Mysql> for u16 {
-    #[allow(
+    #[expect(
         clippy::cast_possible_wrap,
         clippy::cast_sign_loss,
         clippy::cast_possible_truncation
@@ -114,7 +114,7 @@ impl ToSql<Unsigned<Integer>, Mysql> for u32 {
 
 #[cfg(feature = "mysql_backend")]
 impl FromSql<Unsigned<Integer>, Mysql> for u32 {
-    #[allow(
+    #[expect(
         clippy::cast_possible_wrap,
         clippy::cast_sign_loss,
         clippy::cast_possible_truncation
@@ -135,7 +135,7 @@ impl ToSql<Unsigned<BigInt>, Mysql> for u64 {
 
 #[cfg(feature = "mysql_backend")]
 impl FromSql<Unsigned<BigInt>, Mysql> for u64 {
-    #[allow(
+    #[expect(
         clippy::cast_possible_wrap,
         clippy::cast_sign_loss,
         clippy::cast_possible_truncation

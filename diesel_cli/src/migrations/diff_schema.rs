@@ -309,7 +309,7 @@ fn is_same_type(ty: &ColumnType, tpe: ColumnType) -> bool {
     false
 }
 
-#[allow(clippy::enum_variant_names)]
+#[expect(clippy::enum_variant_names)]
 enum SchemaDiff {
     DropTable {
         table: TableName,

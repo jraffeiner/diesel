@@ -23,7 +23,7 @@ allow_tables_to_appear_in_same_query!(users, posts);
 #[diesel(table_name = users)]
 pub struct NewUser(#[diesel(column_name = name)] &'static str);
 
-#[allow(deprecated)]
+#[expect(deprecated)]
 fn main() {
     use self::users::dsl::*;
     let mut connection = PgConnection::establish("postgres://localhost").unwrap();

@@ -6,7 +6,7 @@ use crate::result::QueryResult;
 use crate::serialize::ToSql;
 use crate::sql_types::HasSqlType;
 
-#[allow(missing_debug_implementations)]
+#[expect(missing_debug_implementations)]
 /// The primary type used when walking a Diesel AST during query execution.
 ///
 /// Executing a query is generally done in multiple passes. This list includes,
@@ -114,7 +114,7 @@ where
     /// done implicitly for references. For structs with lifetimes it must be
     /// done explicitly. This method matches the semantics of what Rust would do
     /// implicitly if you were passing a mutable reference
-    #[allow(clippy::explicit_auto_deref)] // clippy is wrong here
+    #[expect(clippy::explicit_auto_deref)] // clippy is wrong here
     pub fn reborrow(&'_ mut self) -> AstPass<'_, 'b, DB> {
         let internals = match self.internals {
             AstPassInternals::ToSql(ref mut builder, ref mut options) => {
@@ -320,7 +320,6 @@ where
     }
 }
 
-#[allow(missing_debug_implementations)]
 /// This is separate from the struct to cause the enum to be opaque, forcing
 /// usage of the methods provided rather than matching on the enum directly.
 /// This essentially mimics the capabilities that would be available if
@@ -345,8 +344,6 @@ where
 #[diesel_derives::__diesel_public_if(
     feature = "i-implement-a-third-party-backend-and-opt-into-breaking-changes"
 )]
-#[allow(missing_debug_implementations)]
-#[allow(missing_copy_implementations)]
 #[derive(Default)]
 /// This is used to pass down additional settings to the `AstPass`
 /// when rendering the sql string.

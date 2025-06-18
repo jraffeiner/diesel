@@ -158,7 +158,7 @@ cfg_if::cfg_if! {
             connection
         }
 
-        #[allow(dead_code)]
+        #[expect(dead_code)]
         fn sqlite_version(conn: &mut SqliteConnection) -> (u32, u32, u32) {
             let version = diesel::select(diesel::dsl::sql::<diesel::sql_types::Text>("sqlite_version();"))
                 .get_result::<String>(conn)

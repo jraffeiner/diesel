@@ -150,7 +150,7 @@ impl TransactionManagerStatus {
     ///
     /// If that is registered, savepoints rollbacks will still be attempted, but failure to do so
     /// will not result in an error. (Some may succeed, some may not.)
-    #[expect(dead_code)]
+    #[allow(dead_code)]
     pub(crate) fn set_requires_rollback_maybe_up_to_top_level(&mut self, to: bool) {
         if let TransactionManagerStatus::Valid(ValidTransactionManagerStatus {
             in_transaction:
@@ -207,7 +207,6 @@ impl TransactionManagerStatus {
 }
 
 /// Valid transaction status for the manager. Can return the current transaction depth
-#[allow(missing_copy_implementations)]
 #[derive(Debug, Default)]
 #[diesel_derives::__diesel_public_if(
     any(
@@ -223,7 +222,6 @@ pub struct ValidTransactionManagerStatus {
 
 /// Various status fields to track the status of
 /// a transaction manager with a started transaction
-#[allow(missing_copy_implementations)]
 #[derive(Debug)]
 #[diesel_derives::__diesel_public_if(
     any(
@@ -534,7 +532,7 @@ where
 
 #[cfg(test)]
 // that's a false positive for `panic!`/`assert!` on rust 2018
-#[allow(clippy::uninlined_format_args)]
+#[expect(clippy::uninlined_format_args)]
 mod test {
     // Mock connection.
     mod mock {
@@ -837,7 +835,7 @@ mod test {
     #[cfg(feature = "mysql")]
     // This function uses a collect with side effects (spawning threads)
     // so clippy is wrong here
-    #[allow(clippy::needless_collect)]
+    #[expect(clippy::needless_collect)]
     fn mysql_transaction_depth_commits_tracked_properly_on_serialization_failure() {
         use crate::result::DatabaseErrorKind::SerializationFailure;
         use crate::result::Error::DatabaseError;
@@ -943,7 +941,7 @@ mod test {
     #[cfg(feature = "mysql")]
     // This function uses a collect with side effects (spawning threads)
     // so clippy is wrong here
-    #[allow(clippy::needless_collect)]
+    #[expect(clippy::needless_collect)]
     fn mysql_nested_transaction_depth_commits_tracked_properly_on_serialization_failure() {
         use crate::result::DatabaseErrorKind::SerializationFailure;
         use crate::result::Error::DatabaseError;

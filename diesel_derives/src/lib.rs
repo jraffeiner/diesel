@@ -1,5 +1,5 @@
 // Clippy lints
-#![allow(
+#![expect(
     clippy::needless_doctest_main,
     clippy::needless_pass_by_value,
     clippy::map_unwrap_or

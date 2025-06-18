@@ -1,5 +1,5 @@
-#![allow(clippy::too_many_arguments)]
-#![allow(unsafe_code)] // ffi code
+#![expect(clippy::too_many_arguments)]
+#![expect(unsafe_code)] // ffi code
 
 extern crate pq_sys;
 
@@ -14,7 +14,7 @@ use crate::result::*;
 use super::result::PgResult;
 use crate::pg::PgNotification;
 
-#[allow(missing_debug_implementations, missing_copy_implementations)]
+#[expect(missing_debug_implementations, missing_copy_implementations)]
 pub(super) struct RawConnection {
     pub(super) internal_connection: NonNull<PGconn>,
 }
@@ -347,14 +347,14 @@ fn last_error_message(conn: *const PGconn) -> String {
 /// dropped.
 ///
 /// If `Unique` is ever stabilized, we should use it here.
-#[allow(missing_debug_implementations)]
+#[expect(missing_debug_implementations)]
 pub(super) struct RawResult(NonNull<PGresult>);
 
 unsafe impl Send for RawResult {}
 unsafe impl Sync for RawResult {}
 
 impl RawResult {
-    #[allow(clippy::new_ret_no_self)]
+    #[expect(clippy::new_ret_no_self)]
     fn new(ptr: *mut PGresult, conn: &RawConnection) -> QueryResult<Self> {
         NonNull::new(ptr).map(RawResult).ok_or_else(|| {
             Error::DatabaseError(

@@ -1616,7 +1616,7 @@ fn generate_backend(connection_types: &[ConnectionVariant]) -> TokenStream {
         }
 
         #[derive(Default)]
-        #[allow(non_snake_case)]
+        #[expect(non_snake_case)]
         pub struct MultiTypeMetadata {
             #(#type_metadata_variants,)*
         }

@@ -1,4 +1,4 @@
-#![allow(clippy::expect_fun_call)] // My calls are so fun
+#![expect(clippy::expect_fun_call)] // My calls are so fun
 
 use super::data_structures::ForeignKeyConstraint;
 use super::inference::get_primary_keys;

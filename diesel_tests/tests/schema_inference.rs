@@ -211,7 +211,7 @@ mod postgres {
         int8multi: Vec<(Bound<i64>, Bound<i64>)>,
         nummulti: Vec<(Bound<PgNumeric>, Bound<PgNumeric>)>,
         tsmulti: Vec<(Bound<NaiveDateTime>, Bound<NaiveDateTime>)>,
-        #[allow(clippy::type_complexity)]
+        #[expect(clippy::type_complexity)]
         tstzmulti: Vec<(Bound<DateTime<Utc>>, Bound<DateTime<Utc>>)>,
         datemulti: Vec<(Bound<NaiveDate>, Bound<NaiveDate>)>,
     }

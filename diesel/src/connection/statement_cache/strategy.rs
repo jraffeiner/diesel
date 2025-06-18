@@ -15,6 +15,7 @@ use super::{CacheSize, StatementCacheKey};
     allow(missing_debug_implementations)
 )]
 // cannot implement debug easily as StatementCacheKey is not Debug
+#[allow(unreachable_pub, dead_code)]
 pub enum LookupStatementResult<'a, DB, Statement>
 where
     DB: Backend,
@@ -35,10 +36,11 @@ where
     StatementCacheKey<DB>: Hash + Eq,
 {
     /// Returns which prepared statement cache size is implemented by this trait
-    //#[expect(dead_code)]
+    #[allow(dead_code)]
     fn cache_size(&self) -> CacheSize;
 
     /// Returns whether or not the corresponding cache key is already cached
+    #[allow(dead_code)]
     fn lookup_statement(
         &mut self,
         key: StatementCacheKey<DB>,
@@ -46,7 +48,7 @@ where
 }
 
 /// Cache all (safe) statements for as long as connection is alive.
-#[allow(missing_debug_implementations, unreachable_pub)]
+#[allow(unreachable_pub, missing_debug_implementations)]
 pub struct WithCacheStrategy<DB, Statement>
 where
     DB: Backend,
@@ -86,8 +88,8 @@ where
 }
 
 /// No statements will be cached,
-#[allow(missing_debug_implementations, unreachable_pub)]
 #[derive(Clone, Copy, Default)]
+#[allow(unreachable_pub, missing_debug_implementations)]
 pub struct WithoutCacheStrategy {}
 
 impl<DB, Statement> StatementCacheStrategy<DB, Statement> for WithoutCacheStrategy

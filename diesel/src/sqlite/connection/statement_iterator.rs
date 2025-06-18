@@ -5,7 +5,7 @@ use super::row::{PrivateSqliteRow, SqliteRow};
 use super::stmt::StatementUse;
 use crate::result::QueryResult;
 
-#[allow(missing_debug_implementations)]
+#[expect(missing_debug_implementations)]
 pub struct StatementIterator<'stmt, 'query> {
     inner: PrivateStatementIterator<'stmt, 'query>,
     column_names: Option<Rc<[Option<String>]>>,
@@ -14,7 +14,7 @@ pub struct StatementIterator<'stmt, 'query> {
 
 impl<'stmt, 'query> StatementIterator<'stmt, 'query> {
     #[cold]
-    #[allow(unsafe_code)] // call to unsafe function
+    #[expect(unsafe_code)] // call to unsafe function
     fn handle_duplicated_row_case(
         outer_last_row: &mut Rc<RefCell<PrivateSqliteRow<'stmt, 'query>>>,
         column_names: &mut Option<Rc<[Option<String>]>>,
@@ -88,7 +88,7 @@ impl<'stmt, 'query> StatementIterator<'stmt, 'query> {
 impl<'stmt, 'query> Iterator for StatementIterator<'stmt, 'query> {
     type Item = QueryResult<SqliteRow<'stmt, 'query>>;
 
-    #[allow(unsafe_code)] // call to unsafe function
+    #[expect(unsafe_code)] // call to unsafe function
     fn next(&mut self) -> Option<Self::Item> {
         use PrivateStatementIterator::{NotStarted, Started};
         match &mut self.inner {

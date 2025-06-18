@@ -30,7 +30,7 @@ pub fn derive(mut item: DeriveInput) -> TokenStream {
         .map(|ty_param| quote!(<#ty_param as diesel::query_builder::QueryId>::HAS_STATIC_QUERY_ID));
 
     wrap_in_dummy_mod(quote! {
-        #[allow(non_camel_case_types)]
+        #[expect(non_camel_case_types)]
         impl #impl_generics diesel::query_builder::QueryId for #struct_name #ty_generics
         #where_clause
         {

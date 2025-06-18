@@ -363,7 +363,6 @@ pub trait SupportsCombinationClause<Combinator, Rule> {}
 )]
 pub struct ParenthesisWrapper<T> {
     /// the inner parenthesis definition
-    #[expect(dead_code)]
     inner: T,
 }
 

@@ -14,12 +14,14 @@ use crate::insertable::DefaultableColumnInsertValue;
 use crate::query_builder::*;
 use crate::QueryResult;
 
+#[allow(missing_docs, missing_debug_implementations)]
 pub struct FbQueryBuilder {
     query: String,
     pub has_cursor: bool,
 }
 
 impl FbQueryBuilder {
+    #[allow(missing_docs)]
     pub fn new() -> Self {
         FbQueryBuilder {
             query: String::new(),

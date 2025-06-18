@@ -244,7 +244,7 @@ pub(crate) fn expand(input: TableDecl) -> TokenStream {
             pub struct table;
 
             impl table {
-                #[expect(dead_code)]
+                #[allow(dead_code)]
                 /// Represents `table_name.*`, which is sometimes necessary
                 /// for efficient count queries. It cannot be used in place of
                 /// `all_columns`

@@ -116,7 +116,7 @@ fn test_adding_nullables() {
 }
 
 #[diesel_test_helper::test]
-#[allow(clippy::eq_op)]
+#[expect(clippy::eq_op)]
 // As this creates a sql expression clippy is wrong here
 fn test_subtracting_nullables() {
     use crate::schema::nullable_table::dsl::*;
@@ -158,7 +158,7 @@ fn test_multiplying_nullables() {
 }
 
 #[diesel_test_helper::test]
-#[allow(clippy::eq_op)]
+#[expect(clippy::eq_op)]
 // As this creates a sql expression clippy is wrong here
 fn test_dividing_nullables() {
     use crate::schema::nullable_table::dsl::*;
@@ -224,7 +224,7 @@ fn test_adding_unsigned() {
 
 #[diesel_test_helper::test]
 #[cfg(feature = "mysql")]
-#[allow(clippy::eq_op)]
+#[expect(clippy::eq_op)]
 // As this creates a sql expression clippy is wrong here
 fn test_subtracting_unsigned() {
     use crate::schema::unsigned_table::dsl::*;
@@ -244,7 +244,7 @@ fn test_subtracting_unsigned() {
 
 #[diesel_test_helper::test]
 #[cfg(feature = "mysql")]
-#[allow(clippy::identity_op)]
+#[expect(clippy::identity_op)]
 // As this creates a sql expression clippy is wrong here
 fn test_multiplying_unsigned() {
     use crate::schema::unsigned_table::dsl::*;
@@ -264,7 +264,7 @@ fn test_multiplying_unsigned() {
 
 #[diesel_test_helper::test]
 #[cfg(feature = "mysql")]
-#[allow(clippy::identity_op, clippy::eq_op)]
+#[expect(clippy::identity_op, clippy::eq_op)]
 // As this creates a sql expression clippy is wrong here
 fn test_dividing_unsigned() {
     use crate::schema::unsigned_table::dsl::*;

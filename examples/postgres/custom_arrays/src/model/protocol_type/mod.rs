@@ -16,7 +16,7 @@ pub struct PgProtocolType;
 
 #[derive(Debug, Clone, FromSqlRow, AsExpression, PartialEq, Eq)]
 #[diesel(sql_type = PgProtocolType)]
-#[allow(clippy::upper_case_acronyms)]
+#[expect(clippy::upper_case_acronyms)]
 pub enum ProtocolType {
     UnknownProtocol,
     GRPC,

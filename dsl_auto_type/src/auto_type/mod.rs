@@ -180,7 +180,7 @@ pub(crate) fn auto_type_impl(
             let vis = &input_function.vis;
             input_function.sig.output = parse_quote!(-> #type_alias #type_alias_generics);
             quote! {
-                #[allow(non_camel_case_types)]
+                #[expect(non_camel_case_types)]
                 #vis type #type_alias #type_alias_generics = #return_type;
             }
         }
@@ -192,7 +192,7 @@ pub(crate) fn auto_type_impl(
 
     let mut res = quote! {
         #type_alias
-        #[allow(clippy::needless_lifetimes)]
+        #[expect(clippy::needless_lifetimes)]
         #input_function
     };
 

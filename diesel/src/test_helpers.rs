@@ -1,4 +1,4 @@
-#![allow(missing_docs)] // test only module
+#![expect(missing_docs)] // test only module
 extern crate dotenvy;
 
 use crate::prelude::*;

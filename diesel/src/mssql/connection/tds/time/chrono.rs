@@ -11,8 +11,6 @@ use crate::mssql::connection::{FromSql, ToSql};
 use chrono::offset::{FixedOffset, Utc};
 use chrono::{DateTime, NaiveDate, NaiveDateTime, NaiveTime, TimeZone};
 
-use std::ops::Sub;
-
 #[inline]
 fn from_days(days: i64, start_year: i32) -> NaiveDate {
     NaiveDate::from_ymd_opt(start_year, 1, 1).unwrap() + chrono::Duration::days(days)
@@ -70,11 +68,9 @@ from_sql!(
         ColumnData::DateTimeOffset(ref dto) => dto.map(|dto| {
             let date = from_days(dto.datetime2.date.days() as i64, 1);
             let ns = dto.datetime2.time.increments as i64 * 10i64.pow(9 - dto.datetime2.time.scale as u32);
-            let time = NaiveTime::from_hms_opt(0,0,0).unwrap() + chrono::Duration::nanoseconds(ns);
 
-            let offset = chrono::Duration::minutes(dto.offset as i64);
+            let time = NaiveTime::from_hms_opt(0,0,0).unwrap() + chrono::Duration::nanoseconds(ns);
             let naive = NaiveDateTime::new(date, time);
-                //.sub(offset);
 
             chrono::DateTime::from_naive_utc_and_offset(naive, Utc)
         }),
@@ -104,18 +100,33 @@ impl<'a> FromSql<'a> for chrono::DateTime<chrono_tz::Tz> {
             return Ok(None);
         }
         match value {
-            ColumnData::DateTimeOffset(ref dto) => Ok(dto.map(|dto|{
-                let date = from_days(dto.datetime2.date.days() as i64, 1);
-                let ns = dto.datetime2.time.increments as i64 * 10i64.pow(9 - dto.datetime2.time.scale as u32);
-                let time = NaiveTime::from_hms_opt(0, 0, 0).unwrap() + chrono::Duration::nanoseconds(ns);
-                let offset = chrono::Duration::minutes(dto.offset as i64);
-                let naive = NaiveDateTime::new(date, time);//.sub(offset);
-                let offset = chrono::FixedOffset::east_opt((dto.offset as i32)*60).unwrap();
-                let fx = chrono::DateTime::<FixedOffset>::from_naive_utc_and_offset(naive, offset);
-                fx.with_timezone(&chrono_tz::Tz::default())
-            })),
+            ColumnData::DateTimeOffset(ref dto) => dto
+                .map(|dto| {
+                    let date = from_days(dto.datetime2.date.days() as i64, 1);
+                    let ns = dto.datetime2.time.increments as i64
+                        * 10i64.pow(9 - dto.datetime2.time.scale as u32);
+                    let time = NaiveTime::from_hms_opt(0, 0, 0).unwrap()
+                        + chrono::Duration::nanoseconds(ns);
+                    let naive = NaiveDateTime::new(date, time); //.sub(offset);
+                    let offset = chrono::FixedOffset::east_opt((dto.offset as i32) * 60).ok_or(
+                        crate::mssql::connection::Error::Conversion(
+                            format!("cannot interpret {} as offset value in minutes", dto.offset)
+                                .into(),
+                        ),
+                    );
+                    let fx = offset.map(|offset| {
+                        chrono::DateTime::<FixedOffset>::from_naive_utc_and_offset(naive, offset)
+                    });
+                    fx.map(|fx| fx.with_timezone(&chrono_tz::Tz::default()))
+                })
+                .transpose(),
             _ => Err(crate::mssql::connection::Error::Conversion(
-                format!("cannot interpret {:?} as an {} value",value,stringify!(chrono::DateTime<Tz: TimeZone)).into()
+                format!(
+                    "cannot interpret {:?} as an {} value",
+                    value,
+                    stringify!(chrono::DateTime<Tz: TimeZone)
+                )
+                .into(),
             )),
         }
     }

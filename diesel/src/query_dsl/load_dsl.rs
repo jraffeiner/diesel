@@ -107,7 +107,7 @@ mod private {
     use crate::sql_types::{SqlType, Untyped};
     use crate::{QueryResult, Selectable};
 
-    #[allow(missing_debug_implementations)]
+    #[expect(missing_debug_implementations)]
     pub struct LoadIter<U, C, ST, DB> {
         pub(super) cursor: C,
         pub(super) _marker: std::marker::PhantomData<(ST, U, DB)>,

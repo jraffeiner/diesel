@@ -1,5 +1,5 @@
 // FIXME: Remove this attribute once false positive is resolved.
-#![allow(unused_parens)]
+#![expect(unused_parens)]
 // conditionally allow deprecated items to allow using the
 // "deprecated" table! macro
 #![cfg_attr(
@@ -163,7 +163,7 @@ impl<'a> PgMetadataCacheKey<'a> {
 /// Cache for the [OIDs] of custom Postgres types
 ///
 /// [OIDs]: https://www.postgresql.org/docs/current/static/datatype-oid.html
-#[allow(missing_debug_implementations)]
+#[expect(missing_debug_implementations)]
 #[derive(Default)]
 #[cfg_attr(
     feature = "i-implement-a-third-party-backend-and-opt-into-breaking-changes",

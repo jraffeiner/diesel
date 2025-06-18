@@ -32,7 +32,7 @@ impl ToSql<Timestamp, Mysql> for NaiveDateTime {
             hour: self.hour() as libc::c_uint,
             minute: self.minute() as libc::c_uint,
             second: self.second() as libc::c_uint,
-            #[allow(deprecated)] // otherwise we would need to bump our minimal chrono version
+            #[expect(deprecated)] // otherwise we would need to bump our minimal chrono version
             second_part: libc::c_ulong::from(self.timestamp_subsec_micros()),
             neg: false,
             time_type: MysqlTimestampType::MYSQL_TIMESTAMP_DATETIME,

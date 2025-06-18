@@ -15,7 +15,7 @@ pub use diesel_derives::sql_function_proc as sql_function;
 #[cfg(all(feature = "with-deprecated", not(feature = "without-deprecated")))]
 macro_rules! no_arg_sql_function_body_except_to_sql {
     ($type_name:ident, $return_type:ty, $docs:expr) => {
-        #[allow(non_camel_case_types)]
+        #[expect(non_camel_case_types)]
         #[doc=$docs]
         #[derive(
             Debug, Clone, Copy, $crate::query_builder::QueryId, $crate::expression::ValidGrouping,

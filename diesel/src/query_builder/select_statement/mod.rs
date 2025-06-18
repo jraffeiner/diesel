@@ -118,7 +118,7 @@ pub trait SelectStatementAccessor {
     /// Access the select clause
     fn select_clause(&self) -> &Self::Select;
     /// Access the from clause
-    #[allow(clippy::wrong_self_convention)] // obviously wrong, as `from` refers to the clause name
+    #[expect(clippy::wrong_self_convention)] // obviously wrong, as `from` refers to the clause name
     fn from_clause(&self) -> &Self::From;
     /// Access the distinct clause
     fn distinct_clause(&self) -> &Self::Distinct;
@@ -187,7 +187,7 @@ impl<F, S, D, W, O, LOf, G, H, LC> SelectStatementAccessor
 }
 
 impl<F, S, D, W, O, LOf, G, H, LC> SelectStatement<F, S, D, W, O, LOf, G, H, LC> {
-    #[allow(clippy::too_many_arguments)]
+    #[expect(clippy::too_many_arguments)]
     pub(crate) fn new(
         select: S,
         from: F,

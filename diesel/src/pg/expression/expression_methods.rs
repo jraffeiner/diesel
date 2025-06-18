@@ -39,7 +39,7 @@ pub trait PgExpressionMethods: Expression + Sized {
     /// assert_eq!(Ok(1), not_distinct.first(connection));
     /// # }
     /// ```
-    #[allow(clippy::wrong_self_convention)] // This is named after the sql operator
+    #[expect(clippy::wrong_self_convention)] // This is named after the sql operator
     fn is_not_distinct_from<T>(self, other: T) -> dsl::IsNotDistinctFrom<Self, T>
     where
         Self::SqlType: SqlType,
@@ -67,7 +67,7 @@ pub trait PgExpressionMethods: Expression + Sized {
     /// assert_eq!(Ok(1), not_distinct.first(connection));
     /// # }
     /// ```
-    #[allow(clippy::wrong_self_convention)] // This is named after the sql operator
+    #[expect(clippy::wrong_self_convention)] // This is named after the sql operator
     fn is_distinct_from<T>(self, other: T) -> dsl::IsDistinctFrom<Self, T>
     where
         Self::SqlType: SqlType,
@@ -150,7 +150,7 @@ pub trait PgExpressionMethods: Expression + Sized {
     /// #     Ok(())
     /// # }
     /// ```
-    #[allow(clippy::wrong_self_convention)] // This is named after the sql operator
+    #[expect(clippy::wrong_self_convention)] // This is named after the sql operator
     fn is_contained_by_range<T>(self, other: T) -> dsl::IsContainedByRange<Self, T>
     where
         Self::SqlType: SqlType,
@@ -392,7 +392,7 @@ pub trait PgArrayExpressionMethods: Expression + Sized {
     /// #     Ok(())
     /// # }
     /// ```
-    #[allow(clippy::wrong_self_convention)] // This is named after the sql operator
+    #[expect(clippy::wrong_self_convention)] // This is named after the sql operator
     fn is_contained_by<T>(self, other: T) -> dsl::IsContainedBy<Self, T>
     where
         Self::SqlType: SqlType,
@@ -768,7 +768,7 @@ pub trait PgTextExpressionMethods: Expression + Sized {
     /// #     Ok(())
     /// # }
     /// ```
-    #[allow(clippy::wrong_self_convention)] // This is named after the sql operator
+    #[expect(clippy::wrong_self_convention)] // This is named after the sql operator
     fn is_json(self) -> dsl::IsJson<Self> {
         IsJson::new(self)
     }
@@ -806,7 +806,7 @@ pub trait PgTextExpressionMethods: Expression + Sized {
     /// #     Ok(())
     /// # }
     /// ```
-    #[allow(clippy::wrong_self_convention)] // This is named after the sql operator
+    #[expect(clippy::wrong_self_convention)] // This is named after the sql operator
     fn is_not_json(self) -> dsl::IsNotJson<Self> {
         IsNotJson::new(self)
     }
@@ -846,7 +846,7 @@ pub trait PgTextExpressionMethods: Expression + Sized {
     /// #     Ok(())
     /// # }
     /// ```
-    #[allow(clippy::wrong_self_convention)] // This is named after the sql operator
+    #[expect(clippy::wrong_self_convention)] // This is named after the sql operator
     fn is_json_object(self) -> dsl::IsJsonObject<Self> {
         IsJsonObject::new(self)
     }
@@ -886,7 +886,7 @@ pub trait PgTextExpressionMethods: Expression + Sized {
     /// #     Ok(())
     /// # }
     /// ```
-    #[allow(clippy::wrong_self_convention)] // This is named after the sql operator
+    #[expect(clippy::wrong_self_convention)] // This is named after the sql operator
     fn is_not_json_object(self) -> dsl::IsNotJsonObject<Self> {
         IsNotJsonObject::new(self)
     }
@@ -926,7 +926,7 @@ pub trait PgTextExpressionMethods: Expression + Sized {
     /// #     Ok(())
     /// # }
     /// ```
-    #[allow(clippy::wrong_self_convention)] // This is named after the sql operator
+    #[expect(clippy::wrong_self_convention)] // This is named after the sql operator
     fn is_json_array(self) -> dsl::IsJsonArray<Self> {
         IsJsonArray::new(self)
     }
@@ -966,7 +966,7 @@ pub trait PgTextExpressionMethods: Expression + Sized {
     /// #     Ok(())
     /// # }
     /// ```
-    #[allow(clippy::wrong_self_convention)] // This is named after the sql operator
+    #[expect(clippy::wrong_self_convention)] // This is named after the sql operator
     fn is_not_json_array(self) -> dsl::IsNotJsonArray<Self> {
         IsNotJsonArray::new(self)
     }
@@ -1008,7 +1008,7 @@ pub trait PgTextExpressionMethods: Expression + Sized {
     /// #     Ok(())
     /// # }
     /// ```
-    #[allow(clippy::wrong_self_convention)] // This is named after the sql operator
+    #[expect(clippy::wrong_self_convention)] // This is named after the sql operator
     fn is_json_scalar(self) -> dsl::IsJsonScalar<Self> {
         IsJsonScalar::new(self)
     }
@@ -1048,7 +1048,7 @@ pub trait PgTextExpressionMethods: Expression + Sized {
     /// #     Ok(())
     /// # }
     /// ```
-    #[allow(clippy::wrong_self_convention)] // This is named after the sql operator
+    #[expect(clippy::wrong_self_convention)] // This is named after the sql operator
     fn is_not_json_scalar(self) -> dsl::IsNotJsonScalar<Self> {
         IsNotJsonScalar::new(self)
     }
@@ -1307,7 +1307,7 @@ pub trait PgRangeExpressionMethods: Expression + Sized {
     /// #     Ok(())
     /// # }
     /// ```
-    #[allow(clippy::wrong_self_convention)] // This is named after the sql operator
+    #[expect(clippy::wrong_self_convention)] // This is named after the sql operator
     fn is_contained_by<T>(self, other: T) -> dsl::IsContainedBy<Self, T>
     where
         Self::SqlType: SqlType,
@@ -2167,7 +2167,7 @@ pub trait PgNetExpressionMethods: Expression + Sized {
     /// #     Ok(())
     /// # }
     /// ```
-    #[allow(clippy::wrong_self_convention)] // This is named after the sql operator
+    #[expect(clippy::wrong_self_convention)] // This is named after the sql operator
     fn is_contained_by<T>(self, other: T) -> dsl::IsContainedByNet<Self, T>
     where
         T: AsExpression<Inet>,
@@ -2225,7 +2225,7 @@ pub trait PgNetExpressionMethods: Expression + Sized {
     /// #     Ok(())
     /// # }
     /// ```
-    #[allow(clippy::wrong_self_convention)] // This is named after the sql operator
+    #[expect(clippy::wrong_self_convention)] // This is named after the sql operator
     fn is_contained_by_or_eq<T>(self, other: T) -> dsl::IsContainedByNetLoose<Self, T>
     where
         T: AsExpression<Inet>,
@@ -2833,7 +2833,7 @@ pub trait PgJsonbExpressionMethods: Expression + Sized {
     /// #     Ok(())
     /// # }
     /// ```
-    #[allow(clippy::wrong_self_convention)] // This is named after the sql operator
+    #[expect(clippy::wrong_self_convention)] // This is named after the sql operator
     fn is_contained_by<T>(self, other: T) -> dsl::IsContainedBy<Self, T>
     where
         Self::SqlType: SqlType,

@@ -10,7 +10,7 @@ use diesel::migration::{Migration, MigrationName, MigrationSource, MigrationVers
 ///
 /// This source can be created via the [`embed_migrations!`](crate::embed_migrations!)
 /// at compile time.
-#[allow(missing_copy_implementations)]
+#[expect(missing_copy_implementations)]
 pub struct EmbeddedMigrations {
     migrations: &'static [EmbeddedMigration],
 }

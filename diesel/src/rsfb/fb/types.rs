@@ -21,6 +21,7 @@ use time::*;
 /// Supported types by the diesel
 /// Firebird implementation
 #[derive(Debug, Clone, Copy)]
+#[allow(missing_docs)]
 pub enum SupportedType {
     Text,
     SmallInt,
@@ -35,10 +36,11 @@ pub enum SupportedType {
     Blob,
 }
 
+#[allow(missing_docs)]
 impl SupportedType {
     pub fn into_param(self, source_val: Option<Vec<u8>>) -> SqlType {
         if let Some(val) = source_val {
-            #[allow(unreachable_patterns)]
+            #[expect(unreachable_patterns)]
             match self {
                 SupportedType::Text => String::from_utf8(val).expect("Invalid UTF-8").into_param(),
                 SupportedType::SmallInt => Bytes::copy_from_slice(&val).get_i16().into_param(),

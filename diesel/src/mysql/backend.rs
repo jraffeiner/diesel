@@ -11,7 +11,7 @@ use crate::sql_types::TypeMetadata;
 #[derive(Debug, Copy, Clone, Hash, PartialEq, Eq, Default)]
 pub struct Mysql;
 
-#[allow(missing_debug_implementations)]
+#[expect(missing_debug_implementations)]
 /// Represents possible types, that can be transmitted as via the
 /// Mysql wire protocol
 #[derive(Debug, Hash, PartialEq, Eq, Clone, Copy)]

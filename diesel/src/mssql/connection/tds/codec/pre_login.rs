@@ -10,7 +10,7 @@ use uuid::Uuid;
 
 /// Client application activity id token used for debugging purposes introduced
 /// in TDS 7.4.
-#[allow(unused)]
+#[expect(unused)]
 #[derive(Debug, Clone)]
 #[cfg_attr(test, derive(PartialEq))]
 pub(crate) struct ActivityId {

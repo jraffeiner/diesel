@@ -1,4 +1,4 @@
-#![allow(unsafe_code)]
+#![expect(unsafe_code)]
 #[cfg(not(all(target_family = "wasm", target_os = "unknown")))]
 extern crate libsqlite3_sys as ffi;
 

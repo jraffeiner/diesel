@@ -1,4 +1,4 @@
-#![allow(unsafe_code)] // module uses ffi
+#![expect(unsafe_code)] // module uses ffi
 use mysqlclient_sys as ffi;
 use std::ffi::CStr;
 use std::os::raw as libc;
@@ -14,7 +14,7 @@ mod metadata;
 
 pub(super) use self::metadata::{MysqlFieldMetadata, StatementMetadata};
 
-#[allow(dead_code, missing_debug_implementations)]
+#[expect(dead_code, missing_debug_implementations)]
 // https://github.com/rust-lang/rust/issues/81658
 pub struct Statement {
     stmt: NonNull<ffi::MYSQL_STMT>,
@@ -22,7 +22,7 @@ pub struct Statement {
 }
 
 // mysql connection can be shared between threads according to libmysqlclients documentation
-#[allow(unsafe_code)]
+#[expect(unsafe_code)]
 unsafe impl Send for Statement {}
 
 impl Statement {
@@ -157,7 +157,7 @@ impl Drop for Statement {
     }
 }
 
-#[allow(missing_debug_implementations)]
+#[expect(missing_debug_implementations)]
 pub(super) struct StatementUse<'a> {
     inner: MaybeCached<'a, Statement>,
 }
@@ -182,7 +182,7 @@ impl StatementUse<'_> {
         if next_row_result < 0 {
             self.inner.did_an_error_occur().map(Some)
         } else {
-            #[allow(clippy::cast_sign_loss)] // that's how it's supposed to be based on the API
+            #[expect(clippy::cast_sign_loss)] // that's how it's supposed to be based on the API
             match next_row_result as libc::c_uint {
                 ffi::MYSQL_NO_DATA => Ok(None),
                 ffi::MYSQL_DATA_TRUNCATED => binds.populate_dynamic_buffers(self).map(Some),

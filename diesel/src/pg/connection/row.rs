@@ -6,7 +6,7 @@ use crate::row::*;
 use std::rc::Rc;
 
 #[derive(Clone)]
-#[allow(missing_debug_implementations)]
+#[expect(missing_debug_implementations)]
 pub struct PgRow {
     db_result: Rc<PgResult>,
     row_idx: usize,
@@ -66,7 +66,7 @@ impl<'a> RowIndex<&'a str> for PgRow {
     }
 }
 
-#[allow(missing_debug_implementations)]
+#[expect(missing_debug_implementations)]
 pub struct PgField<'a> {
     db_result: &'a PgResult,
     row_idx: usize,

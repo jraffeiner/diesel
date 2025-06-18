@@ -8,11 +8,13 @@ use crate::QueryResult;
 use crate::{connection::*, RunQueryDsl};
 
 /// Firebird transaction manager
+#[allow(missing_debug_implementations)]
 pub struct FbTransactionManager {
     status: TransactionManagerStatus,
 }
 
 impl FbTransactionManager {
+    #[allow(missing_docs)]
     pub fn new() -> Self {
         FbTransactionManager {
             status: Default::default(),

@@ -1,4 +1,4 @@
-#![allow(unsafe_code)] // fii code
+#![expect(unsafe_code)] // fii code
 use super::bind_collector::{InternalSqliteBindValue, SqliteBindCollector};
 use super::raw::RawConnection;
 use super::sqlite_value::OwnedSqliteValue;
@@ -25,7 +25,7 @@ pub(super) struct Statement {
 // This relies on the invariant that RawConnection or Statement are never
 // leaked. If a reference to one of those was held on a different thread, this
 // would not be thread safe.
-#[allow(unsafe_code)]
+#[expect(unsafe_code)]
 unsafe impl Send for Statement {}
 
 impl Statement {
@@ -42,7 +42,7 @@ impl Statement {
             .try_into()
             .map_err(|e| Error::SerializationError(Box::new(e)))?;
         // the cast for `ffi::SQLITE_PREPARE_PERSISTENT` is required for old libsqlite3-sys versions
-        #[allow(clippy::unnecessary_cast)]
+        #[expect(clippy::unnecessary_cast)]
         let prepare_result = unsafe {
             ffi::sqlite3_prepare_v3(
                 raw_connection.internal_connection.as_ptr(),
@@ -431,7 +431,7 @@ impl Drop for BoundStatement<'_, '_> {
     }
 }
 
-#[allow(missing_debug_implementations)]
+#[expect(missing_debug_implementations)]
 pub struct StatementUse<'stmt, 'query> {
     statement: BoundStatement<'stmt, 'query>,
     column_names: OnceCell<Vec<*const str>>,

@@ -23,7 +23,7 @@ mod date_and_time;
 pub mod dsl {
     #[cfg(all(feature = "with-deprecated", not(feature = "without-deprecated")))]
     #[doc(inline)]
-    #[allow(deprecated)]
+    #[expect(deprecated)]
     pub use super::array_comparison::{all, any};
 
     #[doc(inline)]

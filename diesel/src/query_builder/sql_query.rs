@@ -304,7 +304,7 @@ impl<Conn, Query, Value, ST> RunQueryDsl<Conn> for UncheckedBind<Query, Value, S
 /// See [`SqlQuery::into_boxed`].
 ///
 /// [`SqlQuery::into_boxed`]: SqlQuery::into_boxed()
-#[allow(missing_debug_implementations)]
+#[expect(missing_debug_implementations)]
 pub struct BoxedSqlQuery<'f, DB: Backend, Query> {
     query: Query,
     sql: String,

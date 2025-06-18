@@ -1,4 +1,4 @@
-#[allow(unused)]
+#[expect(unused)]
 macro_rules! try_drop {
     ($e:expr, $msg:expr) => {
         match $e {

@@ -1,6 +1,6 @@
 // Built-in Lints
 // Clippy lints
-#![allow(clippy::needless_pass_by_value, clippy::map_unwrap_or)]
+#![expect(clippy::needless_pass_by_value, clippy::map_unwrap_or)]
 #![warn(
     missing_docs,
     clippy::mut_mut,

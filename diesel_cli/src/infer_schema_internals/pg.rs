@@ -192,7 +192,7 @@ mod information_schema {
     }
 }
 
-#[allow(clippy::similar_names)]
+#[expect(clippy::similar_names)]
 pub fn load_foreign_key_constraints(
     connection: &mut PgConnection,
     schema_name: Option<&str>,

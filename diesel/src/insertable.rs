@@ -324,7 +324,7 @@ where
 mod private {
     // This helper exists to differentiate between
     // Insertable implementations for tuples and for single values
-    #[allow(missing_debug_implementations)]
+    #[expect(missing_debug_implementations)]
     pub struct InsertableOptionHelper<T, V>(
         pub(crate) Option<T>,
         pub(crate) std::marker::PhantomData<V>,

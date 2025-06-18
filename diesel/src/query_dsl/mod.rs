@@ -78,7 +78,7 @@ pub mod methods {
 
     #[cfg(all(feature = "with-deprecated", not(feature = "without-deprecated")))]
     #[doc(hidden)]
-    #[allow(deprecated)]
+    #[expect(deprecated)]
     #[deprecated(note = "Use `LoadQuery::RowIter` directly")]
     pub use super::load_dsl::LoadRet;
 }

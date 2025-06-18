@@ -4,7 +4,7 @@ use diesel::*;
 type Backend = <TestConnection as Connection>::Backend;
 
 // https://github.com/rust-lang/rust/issues/124396
-#[allow(unknown_lints, non_local_definitions)]
+#[expect(unknown_lints, non_local_definitions)]
 #[test]
 fn simple_belongs_to() {
     table! {
@@ -132,7 +132,7 @@ fn table_in_different_module() {
 }
 
 // https://github.com/rust-lang/rust/issues/124396
-#[allow(unknown_lints, non_local_definitions)]
+#[expect(unknown_lints, non_local_definitions)]
 #[test]
 fn custom_foreign_key() {
     table! {
