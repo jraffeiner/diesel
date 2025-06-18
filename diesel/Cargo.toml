@@ -115,7 +115,6 @@ i-implement-a-third-party-backend-and-opt-into-breaking-changes = []
 r2d2 = ["diesel_derives/r2d2", "dep:r2d2"]
 chrono = ["diesel_derives/chrono", "dep:chrono", "dep:chrono-tz"]
 time = ["diesel_derives/time", "dep:time"]
-uuid = ["dep:uuid"]
 serde_json = ["dep:serde_json"]
 __with_asan_tests = [
     "libsqlite3-sys?/bundled",
