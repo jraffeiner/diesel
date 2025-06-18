@@ -22,7 +22,7 @@ include = [
 
 [dependencies]
 byteorder = { version = "1.0", optional = true }
-chrono = { version = "0.4.20", optional = true, default-features = false, features = ["clock", "std"] }
+chrono = { version = "0.4.20", optional = true, default-features = false, features = ["clock", "std", "serde"] }
 chrono-tz = { version = "*", optional = true }
 libc = { version = "0.2.0", optional = true }
 mysqlclient-sys = { version = ">=0.2.5, <0.5.0",  optional = true }
