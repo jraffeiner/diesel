@@ -75,7 +75,6 @@ impl fmt::Display for TableName {
 }
 
 #[derive(Debug)]
-#[expect(missing_copy_implementations)]
 pub enum Never {}
 
 impl FromStr for TableName {

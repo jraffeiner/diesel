@@ -320,14 +320,19 @@ pub fn get_table_comment(
 }
 
 fn determine_type_name(sql_type_name: &str) -> Result<String, crate::errors::Error> {
-    let result = if sql_type_name == "tinyint(1)" {
-        "bool"
-    } else if sql_type_name.starts_with("int") {
-        "integer"
-    } else if let Some(idx) = sql_type_name.find('(') {
-        &sql_type_name[..idx]
-    } else {
-        sql_type_name
+    let result = match sql_type_name {
+        "tinyint(1)"|"bit" => "bool",
+        "real" => "float",
+        "datetime2" => "timestamp",
+        "datetimeoffset" => "date_time_offset",
+        sql_type_name if sql_type_name.starts_with("int") => "integer",
+        sql_type_name => {
+            if let Some(idx) = sql_type_name.find('(') {
+                &sql_type_name[..idx]
+            } else {
+                sql_type_name
+            }
+        },
     };
 
     if determine_unsigned(result) {

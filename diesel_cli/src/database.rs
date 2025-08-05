@@ -282,7 +282,7 @@ fn create_default_migration_if_needed(
         return Ok(());
     }
 
-    #[expect(unreachable_patterns, clippy::single_match)]
+    #[allow(unreachable_patterns, clippy::single_match)]
     match Backend::for_url(database_url) {
         #[cfg(feature = "postgres")]
         Backend::Pg => {

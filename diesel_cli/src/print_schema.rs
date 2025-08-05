@@ -160,7 +160,7 @@ fn mssql_diesel_types() -> HashSet<&'static str> {
     types.insert("Tinyint");
     types.insert("Datetime");
     types.insert("Datetime2");
-    types.insert("Datetimeoffset");
+    types.insert("DateTimeOffset");
     types.insert("Real");
     types
 }
