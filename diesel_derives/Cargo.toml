@@ -7,9 +7,9 @@ documentation = "https://diesel.rs/guides/"
 homepage = "https://diesel.rs"
 repository = "https://github.com/diesel-rs/diesel/"
 autotests = false
-include.workspace = true
 rust-version.workspace = true
 edition = "2021"
+include = ["src/*.rs", "src/deprecated/*.rs", "src/parsers/*.rs", "LICENSE-*", "README.md"]
 
 [dependencies]
 syn = { version = "2.0", features = ["derive", "fold", "full"] }
@@ -17,11 +17,12 @@ quote = "1.0.9"
 proc-macro2 = "1.0.27"
 diesel_table_macro_syntax = {version = "0.2", path = "../diesel_table_macro_syntax"}
 dsl_auto_type = { version = "0.1", path = "../dsl_auto_type" }
-darling = "0.20.0"
 
 [dev-dependencies]
 cfg-if = "1"
 dotenvy = "0.15"
+insta = "1.21"
+prettyplease = "0.2"
 
 [dev-dependencies.diesel]
 path = "../diesel"

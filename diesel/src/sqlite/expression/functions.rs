@@ -1,4 +1,6 @@
 //! SQLite specific functions
+#[cfg(doc)]
+use crate::expression::functions::aggregate_expressions::AggregateExpressionMethods;
 use crate::expression::functions::declare_sql_function;
 use crate::sql_types::*;
 use crate::sqlite::expression::expression_methods::BinaryOrNullableBinary;
@@ -11,6 +13,7 @@ use crate::sqlite::expression::expression_methods::TextOrNullableTextOrBinaryOrN
 
 #[cfg(feature = "sqlite")]
 #[declare_sql_function(generate_return_type_helpers = true)]
+#[backends(crate::sqlite::Sqlite)]
 extern "SQL" {
     /// Verifies that its argument is a valid JSON string or JSONB blob and returns a minified
     /// version of that JSON string with all unnecessary whitespace removed.
@@ -280,8 +283,8 @@ extern "SQL" {
     ///         n: 42,
     ///     }
     /// "#;
-    /// let result = diesel::select(json_error_position::<Text, _>(json5))
-    ///     .get_result::<i32>(connection)?;
+    /// let result =
+    ///     diesel::select(json_error_position::<Text, _>(json5)).get_result::<i32>(connection)?;
     ///
     /// assert_eq!(0, result);
     ///
@@ -835,7 +838,13 @@ extern "SQL" {
     /// The `json_group_array(X)` function is an aggregate SQL function that returns a JSON array comprised of
     /// all X values in the aggregation.
     ///
+    /// ## Aggregate Function Expression
+    ///
+    /// This function can be used as aggregate expression. See [`AggregateExpressionMethods`] for details.
+    ///
     /// # Examples
+    ///
+    /// ## Normal function usage
     ///
     /// ```rust
     /// # include!("../../doctest_setup.rs");
@@ -853,22 +862,54 @@ extern "SQL" {
     /// #
     /// #     let connection = &mut establish_connection();
     /// #
-    /// let result = animals.select(json_group_array(species)).get_result::<serde_json::Value>(connection)?;
+    /// let result = animals
+    ///     .select(json_group_array(species))
+    ///     .get_result::<serde_json::Value>(connection)?;
     /// assert_eq!(result, json!(["dog", "spider"]));
     ///
-    /// let result = animals.select(json_group_array(legs)).get_result::<serde_json::Value>(connection)?;
+    /// let result = animals
+    ///     .select(json_group_array(legs))
+    ///     .get_result::<serde_json::Value>(connection)?;
     /// assert_eq!(result, json!([4, 8]));
     ///
-    /// let result = animals.select(json_group_array(name)).get_result::<serde_json::Value>(connection)?;
+    /// let result = animals
+    ///     .select(json_group_array(name))
+    ///     .get_result::<serde_json::Value>(connection)?;
     /// assert_eq!(result, json!(["Jack", null]));
+    ///
+    /// # Ok(())
+    /// # }
+    /// ```
+    /// ## Aggregate function expression
+    ///
+    /// ```rust
+    /// # include!("../../doctest_setup.rs");
+    /// #
+    /// # fn main() {
+    /// #     #[cfg(feature = "serde_json")]
+    /// #     run_test().unwrap();
+    /// # }
+    /// #
+    /// # #[cfg(feature = "serde_json")]
+    /// # fn run_test() -> QueryResult<()> {
+    /// #     use diesel::dsl::*;
+    /// #     use schema::animals::dsl::*;
+    /// #     use serde_json::json;
+    /// #
+    /// #     let connection = &mut establish_connection();
+    /// #
+    /// let result = animals
+    ///     .select(json_group_array(species).aggregate_filter(legs.lt(8)))
+    ///     .get_result::<serde_json::Value>(connection)?;
+    /// assert_eq!(result, json!(["dog"]));
     ///
     /// # Ok(())
     /// # }
     /// ```
     ///
     /// # See also
-    /// - [`jsonb_group_array`] will return data in JSONB format instead of JSON.
-    /// - [`json_group_object`] will return JSON object instead of array.
+    /// - [`jsonb_group_array`](jsonb_group_array()) will return data in JSONB format instead of JSON.
+    /// - [`json_group_object`](json_group_object()) will return JSON object instead of array.
     #[cfg(feature = "sqlite")]
     #[aggregate]
     fn json_group_array<E: SqlType + SingleValue>(elements: E) -> Json;
@@ -876,7 +917,13 @@ extern "SQL" {
     /// The `jsonb_group_array(X)` function is an aggregate SQL function that returns a JSONB array comprised of
     /// all X values in the aggregation.
     ///
+    /// ## Aggregate Function Expression
+    ///
+    /// This function can be used as aggregate expression. See [`AggregateExpressionMethods`] for details.
+    ///
     /// # Examples
+    ///
+    /// ## Normal function usage
     ///
     /// ```rust
     /// # include!("../../doctest_setup.rs");
@@ -894,22 +941,55 @@ extern "SQL" {
     /// #
     /// #     let connection = &mut establish_connection();
     /// #
-    /// let result = animals.select(json_group_array(species)).get_result::<serde_json::Value>(connection)?;
+    /// let result = animals
+    ///     .select(json_group_array(species))
+    ///     .get_result::<serde_json::Value>(connection)?;
     /// assert_eq!(result, json!(["dog", "spider"]));
     ///
-    /// let result = animals.select(json_group_array(legs)).get_result::<serde_json::Value>(connection)?;
+    /// let result = animals
+    ///     .select(json_group_array(legs))
+    ///     .get_result::<serde_json::Value>(connection)?;
     /// assert_eq!(result, json!([4, 8]));
     ///
-    /// let result = animals.select(json_group_array(name)).get_result::<serde_json::Value>(connection)?;
+    /// let result = animals
+    ///     .select(json_group_array(name))
+    ///     .get_result::<serde_json::Value>(connection)?;
     /// assert_eq!(result, json!(["Jack", null]));
     ///
     /// # Ok(())
     /// # }
     /// ```
     ///
+    /// ## Aggregate function expression
+    ///
+    /// ```rust
+    /// # include!("../../doctest_setup.rs");
+    /// #
+    /// # fn main() {
+    /// #     #[cfg(feature = "serde_json")]
+    /// #     run_test().unwrap();
+    /// # }
+    /// #
+    /// # #[cfg(feature = "serde_json")]
+    /// # fn run_test() -> QueryResult<()> {
+    /// #     use diesel::dsl::*;
+    /// #     use schema::animals::dsl::*;
+    /// #     use serde_json::json;
+    /// #
+    /// #     let connection = &mut establish_connection();
+    /// #
+    /// let result = animals
+    ///     .select(json_group_array(species).aggregate_filter(legs.lt(8)))
+    ///     .get_result::<serde_json::Value>(connection)?;
+    /// assert_eq!(result, json!(["dog"]));
+    ///
+    /// # Ok(())
+    /// # }
+    /// ```
+    ///
     /// # See also
-    /// - [`json_group_array`] will return data in JSON format instead of JSONB.
-    /// - [`jsonb_group_object`] will return JSONB object instead of array.
+    /// - [`json_group_array`](json_group_array()) will return data in JSON format instead of JSONB.
+    /// - [`jsonb_group_object`](jsonb_group_object()) will return JSONB object instead of array.
     #[cfg(feature = "sqlite")]
     #[aggregate]
     fn jsonb_group_array<E: SqlType + SingleValue>(elements: E) -> Jsonb;
@@ -923,7 +1003,13 @@ extern "SQL" {
     ///
     /// This function requires at least SQLite 3.38 or newer
     ///
+    /// ## Aggregate Function Expression
+    ///
+    /// This function can be used as aggregate expression. See [`AggregateExpressionMethods`] for details.
+    ///
     /// # Examples
+    ///
+    /// ## Normal function usage
     ///
     /// ```rust
     /// # include!("../../doctest_setup.rs");
@@ -950,9 +1036,47 @@ extern "SQL" {
     /// # }
     /// ```
     ///
+    /// ## Aggregate function expression
+    ///
+    /// ```rust
+    /// # include!("../../doctest_setup.rs");
+    /// #
+    /// # fn main() {
+    /// #     #[cfg(feature = "serde_json")]
+    /// #     run_test().unwrap();
+    /// # }
+    /// #
+    /// # #[cfg(feature = "serde_json")]
+    /// # fn run_test() -> QueryResult<()> {
+    /// #     use diesel::dsl::*;
+    /// #     use diesel::sql_types::Text;
+    /// #     use serde_json::json;
+    /// #     use schema::animals::dsl::*;
+    /// #
+    /// #     let connection = &mut establish_connection();
+    /// #
+    /// #     let version = diesel::select(sql::<Text>("sqlite_version();"))
+    /// #         .get_result::<String>(connection)?;
+    /// #
+    /// #     let version_components: Vec<&str> = version.split('.').collect();
+    /// #     let major: u32 = version_components[0].parse().unwrap();
+    /// #     let minor: u32 = version_components[1].parse().unwrap();
+    /// #
+    /// #     if major < 3 || minor < 38 {
+    /// #         println!("SQLite version is too old, skipping the test.");
+    /// #         return Ok(());
+    /// #     }
+    /// #
+    /// let result = animals.select(json_group_object(species, name).aggregate_filter(legs.lt(8))).get_result::<serde_json::Value>(connection)?;
+    /// assert_eq!(json!({"dog":"Jack"}), result);
+    /// #
+    /// # Ok(())
+    /// # }
+    /// ```
+    ///
     /// # See also
-    /// - [`jsonb_group_object`] will return data in JSONB format instead of JSON.
-    /// - [`json_group_array`] will return JSON array instead of object.
+    /// - [`jsonb_group_object`](jsonb_group_object()) will return data in JSONB format instead of JSON.
+    /// - [`json_group_array`](json_group_array()) will return JSON array instead of object.
     #[cfg(feature = "sqlite")]
     #[aggregate]
     fn json_group_object<
@@ -972,7 +1096,13 @@ extern "SQL" {
     ///
     /// This function requires at least SQLite 3.38 or newer
     ///
+    /// ## Aggregate Function Expression
+    ///
+    /// This function can be used as aggregate expression. See [`AggregateExpressionMethods`] for details.
+    ///
     /// # Examples
+    ///
+    /// ## Normal function usage
     ///
     /// ```rust
     /// # include!("../../doctest_setup.rs");
@@ -999,9 +1129,47 @@ extern "SQL" {
     /// # }
     /// ```
     ///
+    /// ## Aggregate function expression
+    ///
+    /// ```rust
+    /// # include!("../../doctest_setup.rs");
+    /// #
+    /// # fn main() {
+    /// #     #[cfg(feature = "serde_json")]
+    /// #     run_test().unwrap();
+    /// # }
+    /// #
+    /// # #[cfg(feature = "serde_json")]
+    /// # fn run_test() -> QueryResult<()> {
+    /// #     use diesel::dsl::*;
+    /// #     use diesel::sql_types::Text;
+    /// #     use serde_json::json;
+    /// #     use schema::animals::dsl::*;
+    /// #
+    /// #     let connection = &mut establish_connection();
+    /// #
+    /// #     let version = diesel::select(sql::<Text>("sqlite_version();"))
+    /// #         .get_result::<String>(connection)?;
+    /// #
+    /// #     let version_components: Vec<&str> = version.split('.').collect();
+    /// #     let major: u32 = version_components[0].parse().unwrap();
+    /// #     let minor: u32 = version_components[1].parse().unwrap();
+    /// #
+    /// #     if major < 3 || minor < 38 {
+    /// #         println!("SQLite version is too old, skipping the test.");
+    /// #         return Ok(());
+    /// #     }
+    /// #
+    /// let result = animals.select(jsonb_group_object(species, name).aggregate_filter(legs.lt(8))).get_result::<serde_json::Value>(connection)?;
+    /// assert_eq!(json!({"dog":"Jack"}), result);
+    /// #
+    /// # Ok(())
+    /// # }
+    /// ```
+    ///
     /// # See also
-    /// - [`json_group_object`] will return data in JSON format instead of JSONB.
-    /// - [`jsonb_group_array`] will return JSONB array instead of object.
+    /// - [`json_group_object`](jsonb_group_array()) will return data in JSON format instead of JSONB.
+    /// - [`jsonb_group_array`](jsonb_group_array()) will return JSONB array instead of object.
     #[cfg(feature = "sqlite")]
     #[aggregate]
     fn jsonb_group_object<
@@ -1042,8 +1210,7 @@ extern "SQL" {
     /// #     let connection = &mut establish_connection();
     /// #     assert_version!(connection, 3, 38, 0);
     /// #
-    /// let result = diesel::select(json_array_0())
-    ///     .get_result::<serde_json::Value>(connection)?;
+    /// let result = diesel::select(json_array_0()).get_result::<serde_json::Value>(connection)?;
     /// assert_eq!(json!([]), result);
     ///
     /// let result = diesel::select(json_array_1::<Text, _>("abc"))
@@ -1095,8 +1262,7 @@ extern "SQL" {
     /// #     let connection = &mut establish_connection();
     /// #     assert_version!(connection, 3, 38, 0);
     /// #
-    /// let result = diesel::select(jsonb_array_0())
-    ///     .get_result::<serde_json::Value>(connection)?;
+    /// let result = diesel::select(jsonb_array_0()).get_result::<serde_json::Value>(connection)?;
     /// assert_eq!(json!([]), result);
     ///
     /// let result = diesel::select(jsonb_array_1::<Text, _>("abc"))

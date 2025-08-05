@@ -24,6 +24,7 @@ pub trait MySpanned {
     fn span(&self) -> Span;
 }
 
+#[derive(Clone)]
 pub struct AttributeSpanWrapper<T> {
     pub item: T,
     pub attribute_span: Span,
@@ -66,7 +67,7 @@ impl SqlIdentifier {
             Err(_e) if self.field_name.contains(' ') => Err(syn::Error::new(
                 self.span(),
                 format!(
-                    "Expected valid identifier, found `{0}`. \
+                    "expected valid identifier, found `{0}`. \
                  Diesel does not support column names with whitespaces yet",
                     self.field_name
                 ),
@@ -74,7 +75,7 @@ impl SqlIdentifier {
             Err(_e) => Err(syn::Error::new(
                 self.span(),
                 format!(
-                    "Expected valid identifier, found `{0}`. \
+                    "expected valid identifier, found `{0}`. \
                  Diesel automatically renames invalid identifiers, \
                  perhaps you meant to write `{0}_`?",
                     self.field_name

@@ -43,7 +43,7 @@ pub fn parse_eq<T: Parse>(input: ParseStream, help: &str) -> Result<T> {
             input.span(),
             format!(
                 "unexpected end of input, expected `=`\n\
-                 help: The correct format looks like `#[diesel({help})]`",
+                 help: the correct format looks like `#[diesel({help})]`",
             ),
         ));
     }
@@ -58,7 +58,7 @@ pub fn parse_paren<T: Parse>(input: ParseStream, help: &str) -> Result<T> {
             input.span(),
             format!(
                 "unexpected end of input, expected parentheses\n\
-                 help: The correct format looks like `#[diesel({help})]`",
+                 help: the correct format looks like `#[diesel({help})]`",
             ),
         ));
     }
@@ -83,7 +83,7 @@ where
             input.span(),
             format!(
                 "unexpected end of input, expected parentheses\n\
-                 help: The correct format looks like `#[diesel({help})]`",
+                 help: the correct format looks like `#[diesel({help})]`",
             ),
         ));
     }

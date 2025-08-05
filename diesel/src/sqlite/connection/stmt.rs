@@ -11,7 +11,7 @@ use crate::sqlite::{Sqlite, SqliteType};
 #[cfg(not(all(target_family = "wasm", target_os = "unknown")))]
 use libsqlite3_sys as ffi;
 #[cfg(all(target_family = "wasm", target_os = "unknown"))]
-use sqlite_wasm_rs::export as ffi;
+use sqlite_wasm_rs as ffi;
 use std::cell::OnceCell;
 use std::ffi::{CStr, CString};
 use std::io::{stderr, Write};
@@ -248,7 +248,7 @@ impl Drop for Statement {
                 )
                 .expect("Error writing to `stderr`");
             } else {
-                panic!("Error finalizing SQLite prepared statement: {:?}", e);
+                panic!("Error finalizing SQLite prepared statement: {e:?}");
             }
         }
     }

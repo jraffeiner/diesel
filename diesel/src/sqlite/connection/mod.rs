@@ -2,7 +2,7 @@
 extern crate libsqlite3_sys as ffi;
 
 #[cfg(all(target_family = "wasm", target_os = "unknown"))]
-use sqlite_wasm_rs::export as ffi;
+use sqlite_wasm_rs as ffi;
 
 mod bind_collector;
 mod functions;
@@ -69,7 +69,8 @@ use crate::sqlite::Sqlite;
 /// #     use schema::users;
 /// #     let connection = &mut establish_connection();
 /// use diesel::connection::DefaultLoadingMode;
-/// { // scope to restrict the lifetime of the iterator
+/// {
+///     // scope to restrict the lifetime of the iterator
 ///     let iter1 = users::table.load_iter::<(i32, String), DefaultLoadingMode>(connection)?;
 ///
 ///     for r in iter1 {
@@ -214,7 +215,7 @@ impl Connection for SqliteConnection {
     ///
     /// * The database is stored in memory by default.
     /// * Persistent VFS (Virtual File Systems) is optional,
-    ///   see <https://github.com/Spxg/sqlite-wasm-rs/blob/master/VFS.md> for details
+    ///   see <https://github.com/Spxg/sqlite-wasm-rs/blob/master/sqlite-wasm-rs/src/vfs/README.md> for details
     fn establish(database_url: &str) -> ConnectionResult<Self> {
         let mut instrumentation = DynInstrumentation::default_instrumentation();
         instrumentation.on_connection_event(InstrumentationEvent::StartEstablishConnection {

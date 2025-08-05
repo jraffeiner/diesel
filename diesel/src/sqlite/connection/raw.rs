@@ -3,7 +3,7 @@
 extern crate libsqlite3_sys as ffi;
 
 #[cfg(all(target_family = "wasm", target_os = "unknown"))]
-use sqlite_wasm_rs::export as ffi;
+use sqlite_wasm_rs as ffi;
 
 use std::ffi::{CString, NulError};
 use std::io::{stderr, Write};
@@ -274,7 +274,7 @@ impl Drop for RawConnection {
                 write!(stderr(), "Error closing SQLite connection: {error_message}")
                     .expect("Error writing to `stderr`");
             } else {
-                panic!("Error closing SQLite connection: {}", error_message);
+                panic!("Error closing SQLite connection: {error_message}");
             }
         }
     }
