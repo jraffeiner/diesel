@@ -516,16 +516,10 @@ fn expand_nonvariadic(
             __DieselInternal: diesel::backend::Backend,
             #(#arg_name: QueryFragment<__DieselInternal>,)*
         {
-<<<<<<< HEAD
-            #[expect(unused_assignments)]
-            fn walk_ast<'__b>(&'__b self, mut out: AstPass<'_, '__b, __DieselInternal>) -> QueryResult<()>{
-                out.push_sql(concat!(#sql_name, "("));
-=======
             const FUNCTION_NAME: &'static str = #sql_name;
 
             #[allow(unused_assignments)]
             fn walk_arguments<'__b>(&'__b self, mut out: AstPass<'_, '__b, __DieselInternal>) -> QueryResult<()> {
->>>>>>> dcc31935647d8a9add5669fc78e21485d72e1c4a
                 // we unroll the arguments manually here, to prevent borrow check issues
                 let mut needs_comma = false;
                 #(
@@ -566,223 +560,6 @@ fn expand_nonvariadic(
     }
 
     if is_aggregate {
-<<<<<<< HEAD
-        tokens = quote! {
-            #tokens
-
-            impl #impl_generics_internal ValidGrouping<__DieselInternal>
-                for #fn_name #ty_generics
-            {
-                type IsAggregate = diesel::expression::is_aggregate::Yes;
-            }
-        };
-        if is_supported_on_sqlite {
-            tokens = quote! {
-                #tokens
-
-                use diesel::sqlite::{Sqlite, SqliteConnection};
-                use diesel::serialize::ToSql;
-                use diesel::deserialize::{FromSqlRow, StaticallySizedRow};
-                use diesel::sqlite::SqliteAggregateFunction;
-                use diesel::sql_types::IntoNullable;
-            };
-
-            match arg_name.len() {
-                x if x > 1 => {
-                    tokens = quote! {
-                        #tokens
-
-                        #[expect(dead_code)]
-                        /// Registers an implementation for this aggregate function on the given connection
-                        ///
-                        /// This function must be called for every `SqliteConnection` before
-                        /// this SQL function can be used on SQLite. The implementation must be
-                        /// deterministic (returns the same result given the same arguments).
-                        pub fn register_impl<A, #(#arg_name,)*>(
-                            conn: &mut SqliteConnection
-                        ) -> QueryResult<()>
-                            where
-                            A: SqliteAggregateFunction<(#(#arg_name,)*)>
-                                + Send
-                                + 'static
-                                + ::std::panic::UnwindSafe
-                                + ::std::panic::RefUnwindSafe,
-                            A::Output: ToSql<#return_type, Sqlite>,
-                            (#(#arg_name,)*): FromSqlRow<(#(#arg_type,)*), Sqlite> +
-                                StaticallySizedRow<(#(#arg_type,)*), Sqlite> +
-                                ::std::panic::UnwindSafe,
-                        {
-                            conn.register_aggregate_function::<(#(#arg_type,)*), #return_type, _, _, A>(#sql_name)
-                        }
-                    };
-                }
-                1 => {
-                    let arg_name = arg_name[0];
-                    let arg_type = arg_type[0];
-
-                    tokens = quote! {
-                        #tokens
-
-                        #[expect(dead_code)]
-                        /// Registers an implementation for this aggregate function on the given connection
-                        ///
-                        /// This function must be called for every `SqliteConnection` before
-                        /// this SQL function can be used on SQLite. The implementation must be
-                        /// deterministic (returns the same result given the same arguments).
-                        pub fn register_impl<A, #arg_name>(
-                            conn: &mut SqliteConnection
-                        ) -> QueryResult<()>
-                            where
-                            A: SqliteAggregateFunction<#arg_name>
-                                + Send
-                                + 'static
-                                + std::panic::UnwindSafe
-                                + std::panic::RefUnwindSafe,
-                            A::Output: ToSql<#return_type, Sqlite>,
-                            #arg_name: FromSqlRow<#arg_type, Sqlite> +
-                                StaticallySizedRow<#arg_type, Sqlite> +
-                                ::std::panic::UnwindSafe,
-                            {
-                                conn.register_aggregate_function::<#arg_type, #return_type, _, _, A>(#sql_name)
-                            }
-                    };
-                }
-                _ => (),
-            }
-        }
-    } else {
-        tokens = quote! {
-            #tokens
-
-            #[derive(ValidGrouping)]
-            pub struct __Derived<#(#arg_name,)*>(#(#arg_name,)*);
-
-            impl #impl_generics_internal ValidGrouping<__DieselInternal>
-                for #fn_name #ty_generics
-            where
-                __Derived<#(#arg_name,)*>: ValidGrouping<__DieselInternal>,
-            {
-                type IsAggregate = <__Derived<#(#arg_name,)*> as ValidGrouping<__DieselInternal>>::IsAggregate;
-            }
-        };
-
-        if is_supported_on_sqlite && !arg_name.is_empty() {
-            tokens = quote! {
-                #tokens
-
-                use diesel::sqlite::{Sqlite, SqliteConnection};
-                use diesel::serialize::ToSql;
-                use diesel::deserialize::{FromSqlRow, StaticallySizedRow};
-
-                #[expect(dead_code)]
-                /// Registers an implementation for this function on the given connection
-                ///
-                /// This function must be called for every `SqliteConnection` before
-                /// this SQL function can be used on SQLite. The implementation must be
-                /// deterministic (returns the same result given the same arguments). If
-                /// the function is nondeterministic, call
-                /// `register_nondeterministic_impl` instead.
-                pub fn register_impl<F, Ret, #(#arg_name,)*>(
-                    conn: &mut SqliteConnection,
-                    f: F,
-                ) -> QueryResult<()>
-                where
-                    F: Fn(#(#arg_name,)*) -> Ret + std::panic::UnwindSafe + Send + 'static,
-                    (#(#arg_name,)*): FromSqlRow<(#(#arg_type,)*), Sqlite> +
-                        StaticallySizedRow<(#(#arg_type,)*), Sqlite>,
-                    Ret: ToSql<#return_type, Sqlite>,
-                {
-                    conn.register_sql_function::<(#(#arg_type,)*), #return_type, _, _, _>(
-                        #sql_name,
-                        true,
-                        move |(#(#arg_name,)*)| f(#(#arg_name,)*),
-                    )
-                }
-
-                #[expect(dead_code)]
-                /// Registers an implementation for this function on the given connection
-                ///
-                /// This function must be called for every `SqliteConnection` before
-                /// this SQL function can be used on SQLite.
-                /// `register_nondeterministic_impl` should only be used if your
-                /// function can return different results with the same arguments (e.g.
-                /// `random`). If your function is deterministic, you should call
-                /// `register_impl` instead.
-                pub fn register_nondeterministic_impl<F, Ret, #(#arg_name,)*>(
-                    conn: &mut SqliteConnection,
-                    mut f: F,
-                ) -> QueryResult<()>
-                where
-                    F: FnMut(#(#arg_name,)*) -> Ret + std::panic::UnwindSafe + Send + 'static,
-                    (#(#arg_name,)*): FromSqlRow<(#(#arg_type,)*), Sqlite> +
-                        StaticallySizedRow<(#(#arg_type,)*), Sqlite>,
-                    Ret: ToSql<#return_type, Sqlite>,
-                {
-                    conn.register_sql_function::<(#(#arg_type,)*), #return_type, _, _, _>(
-                        #sql_name,
-                        false,
-                        move |(#(#arg_name,)*)| f(#(#arg_name,)*),
-                    )
-                }
-            };
-        }
-
-        if is_supported_on_sqlite && arg_name.is_empty() {
-            tokens = quote! {
-                #tokens
-
-                use diesel::sqlite::{Sqlite, SqliteConnection};
-                use diesel::serialize::ToSql;
-
-                #[expect(dead_code)]
-                /// Registers an implementation for this function on the given connection
-                ///
-                /// This function must be called for every `SqliteConnection` before
-                /// this SQL function can be used on SQLite. The implementation must be
-                /// deterministic (returns the same result given the same arguments). If
-                /// the function is nondeterministic, call
-                /// `register_nondeterministic_impl` instead.
-                pub fn register_impl<F, Ret>(
-                    conn: &SqliteConnection,
-                    f: F,
-                ) -> QueryResult<()>
-                where
-                    F: Fn() -> Ret + std::panic::UnwindSafe + Send + 'static,
-                    Ret: ToSql<#return_type, Sqlite>,
-                {
-                    conn.register_noarg_sql_function::<#return_type, _, _>(
-                        #sql_name,
-                        true,
-                        f,
-                    )
-                }
-
-                #[expect(dead_code)]
-                /// Registers an implementation for this function on the given connection
-                ///
-                /// This function must be called for every `SqliteConnection` before
-                /// this SQL function can be used on SQLite.
-                /// `register_nondeterministic_impl` should only be used if your
-                /// function can return different results with the same arguments (e.g.
-                /// `random`). If your function is deterministic, you should call
-                /// `register_impl` instead.
-                pub fn register_nondeterministic_impl<F, Ret>(
-                    conn: &SqliteConnection,
-                    mut f: F,
-                ) -> QueryResult<()>
-                where
-                    F: FnMut() -> Ret + std::panic::UnwindSafe + Send + 'static,
-                    Ret: ToSql<#return_type, Sqlite>,
-                {
-                    conn.register_noarg_sql_function::<#return_type, _, _>(
-                        #sql_name,
-                        false,
-                        f,
-                    )
-                }
-            };
-        }
-=======
         tokens = generate_tokens_for_aggregate_functions(
             tokens,
             &impl_generics_internal,
@@ -808,7 +585,6 @@ fn expand_nonvariadic(
             &return_type,
             &sql_name,
         );
->>>>>>> dcc31935647d8a9add5669fc78e21485d72e1c4a
     }
 
     let args_iter = args.iter();
