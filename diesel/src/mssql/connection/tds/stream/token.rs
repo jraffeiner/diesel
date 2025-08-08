@@ -144,7 +144,7 @@ where
             self.last_error = Some(Error::Server(err.clone()));
         }
         if err.code == 266 {
-            event!(Level::WARN, message = %err.message, code = err.code);
+            event!(Level::INFO, message = %err.message, code = err.code);
         } else {
             event!(Level::ERROR, message = %err.message, code = err.code);
         }
