@@ -729,6 +729,7 @@ pub mod helper_types {
 }
 
 pub mod prelude {
+
     //! Re-exports important traits and types. Meant to be glob imported when using Diesel.
 
     #[doc(inline)]
@@ -762,6 +763,8 @@ pub mod prelude {
     pub use crate::insertable::Insertable;
     #[doc(inline)]
     pub use crate::macros::prelude::*;
+    #[doc(inline)]
+    pub use crate::query_builder::has_query::HasQuery;
     #[doc(inline)]
     pub use crate::query_builder::AsChangeset;
     #[doc(inline)]

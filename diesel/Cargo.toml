@@ -129,4 +129,4 @@ __with_asan_tests = [
 features = ["postgres", "mysql", "sqlite", "mssql", "extras"]
 no-default-features = true
 rustc-args = ["--cfg", "docsrs"]
-rustdoc-args = ["--cfg", "docsrs"]
+rustdoc-args = ["--cfg", "docsrs", " -Z", "unstable-options", "--generate-link-to-definition"]
