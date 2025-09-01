@@ -321,7 +321,7 @@ pub fn get_table_comment(
 
 fn determine_type_name(sql_type_name: &str) -> Result<String, crate::errors::Error> {
     let result = match sql_type_name {
-        "tinyint(1)"|"bit" => "bool",
+        "tinyint(1)" | "bit" => "bool",
         "real" => "float",
         "datetime2" => "timestamp",
         "datetimeoffset" => "date_time_offset",
@@ -332,7 +332,7 @@ fn determine_type_name(sql_type_name: &str) -> Result<String, crate::errors::Err
             } else {
                 sql_type_name
             }
-        },
+        }
     };
 
     if determine_unsigned(result) {

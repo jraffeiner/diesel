@@ -61,13 +61,16 @@ impl SqlDialect for Fb {
     type SelectStatementSyntax = FbSelectStatementSyntax;
 
     type AliasSyntax = sql_dialect::alias_syntax::AsAliasSyntax;
-    
-    type WindowFrameClauseGroupSupport = sql_dialect::window_frame_clause_group_support::IsoGroupWindowFrameUnit;
-    
-    type WindowFrameExclusionSupport = sql_dialect::window_frame_exclusion_support::FrameExclusionSupport;
-    
-    type AggregateFunctionExpressions = sql_dialect::aggregate_function_expressions::NoAggregateFunctionExpressions;
-    
-    type BuiltInWindowFunctionRequireOrder = sql_dialect::built_in_window_function_require_order::NoOrderRequired;
-    
+
+    type WindowFrameClauseGroupSupport =
+        sql_dialect::window_frame_clause_group_support::IsoGroupWindowFrameUnit;
+
+    type WindowFrameExclusionSupport =
+        sql_dialect::window_frame_exclusion_support::FrameExclusionSupport;
+
+    type AggregateFunctionExpressions =
+        sql_dialect::aggregate_function_expressions::NoAggregateFunctionExpressions;
+
+    type BuiltInWindowFunctionRequireOrder =
+        sql_dialect::built_in_window_function_require_order::NoOrderRequired;
 }
