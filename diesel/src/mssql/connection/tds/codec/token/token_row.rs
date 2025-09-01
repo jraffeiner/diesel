@@ -48,6 +48,7 @@ impl<'a> Encode<BytesMutWithDataColumns<'a>> for TokenRow<'a> {
 
 impl<'a> TokenRow<'a> {
     /// Creates a new empty row.
+    #[allow(unused)]
     pub(crate) const fn new() -> Self {
         Self { data: Vec::new() }
     }
@@ -91,6 +92,7 @@ impl<'a> TokenRow<'a> {
     }
 
     /// Adds a new value to the row.
+    #[allow(unused)]
     pub(crate) fn push(&mut self, value: ColumnData<'a>) {
         self.data.push(value);
     }
