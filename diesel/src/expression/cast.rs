@@ -141,6 +141,12 @@ type_name! {
         Json => "json",
         Jsonb => "jsonb",
     }
+    diesel::mssql::Mssql: "mssql_backend" {
+        Int4 => "int",
+        Int8 => "bigint",
+        Text => "text",
+        TinyInt => "tinyint",
+    }
 }
 
 impl<S, E, ST> FieldAliasMapper<S> for Cast<E, ST>
@@ -211,6 +217,7 @@ casts_impl!(
     (Text <- Time),
     (Json <- Jsonb),
     (Jsonb <- Json),
+    (TinyInt <- Int4),
     "mysql_backend": (Text <- Datetime),
     "postgres_backend": (Text <- Uuid),
 );
