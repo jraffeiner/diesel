@@ -434,6 +434,7 @@ where
 }
 
 #[derive(QueryId)]
+#[allow(dead_code)]
 pub(crate) struct CheckConnectionQuery;
 
 impl<DB> QueryFragment<DB> for CheckConnectionQuery
