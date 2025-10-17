@@ -3,7 +3,7 @@
 use super::backend::Fb;
 use crate::row::RowSealed;
 use crate::row::{Field, PartialRow, Row as DsRow, RowIndex};
-use rsfbclient::Column;
+pub use rsfbclient::Column;
 use rsfbclient::Row as RsRow;
 use std::ops::Range;
 

@@ -12,6 +12,7 @@ mod value;
 pub(crate) mod query_builder;
 
 pub use self::backend::{Mssql, MssqlType};
+pub use self::connection::ColumnData;
 #[cfg(feature = "mssql")]
 pub use self::connection::MssqlConnection;
 pub use self::query_builder::MssqlQueryBuilder;

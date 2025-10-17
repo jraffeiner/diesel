@@ -60,8 +60,8 @@ where
 from_sql!(bool: ColumnData::Bit(val) => (*val, val));
 from_sql!(u8: ColumnData::U8(val) => (*val, val), ColumnData::I32(None) => (None, None));
 from_sql!(i16: ColumnData::I16(val) => (*val, val), ColumnData::U8(None) => (None, None), ColumnData::I32(None) => (None, None));
-from_sql!(i32: ColumnData::I32(val) => (*val, val), ColumnData::U8(None) => (None, None));
-from_sql!(i64: ColumnData::I64(val) => (*val, val), ColumnData::U8(None) => (None, None), ColumnData::I32(None) => (None, None));
+from_sql!(i32: ColumnData::I32(val) => (*val, val), ColumnData::I16(val) => (val.map(i32::from),val.map(i32::from)), ColumnData::U8(None) => (None, None));
+from_sql!(i64: ColumnData::I64(val) => (*val, val), ColumnData::I32(val) => (val.map(i64::from),val.map(i64::from)), ColumnData::I16(val) => (val.map(i64::from),val.map(i64::from)), ColumnData::U8(None) => (None, None));
 from_sql!(u64: ColumnData::I64(val) => (val.map(|i|i as u64), val.map(|i|i as u64)), ColumnData::U8(None) => (None, None), ColumnData::I32(None) => (None, None));
 from_sql!(f32: ColumnData::F32(val) => (*val, val));
 from_sql!(f64: ColumnData::F64(val) => (*val, val));

@@ -70,8 +70,6 @@ mod rust_decimal_impl {
     use diesel::sql_types;
     use rust_decimal::Decimal;
 
-    use crate::Mssql;
-
     use super::unexpected_null;
 
     from_diesel_sql!(sql_types::Decimal, Decimal);
@@ -81,8 +79,6 @@ mod rust_decimal_impl {
 mod bigdecimal_impl {
     use bigdecimal::BigDecimal;
     use diesel::sql_types;
-
-    use crate::Mssql;
 
     use super::unexpected_null;
 

@@ -110,6 +110,7 @@ impl<'a> ColumnData<'a> {
         }
     }
 
+    /// Checks if a value is Null
     pub fn is_null(&self) -> bool {
         match self {
             ColumnData::U8(None)

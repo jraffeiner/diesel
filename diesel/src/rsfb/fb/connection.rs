@@ -16,6 +16,8 @@ use crate::result::*;
 use rsfbclient::{Execute, SqlType};
 use rsfbclient::{Queryable, Row, SimpleConnection as FbRawConnection};
 
+pub use rsfbclient::SqlType as FbSqlType;
+
 #[allow(missing_docs, missing_debug_implementations)]
 pub struct FbConnection {
     pub raw: FbRawConnection,

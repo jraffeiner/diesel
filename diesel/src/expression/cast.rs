@@ -204,6 +204,7 @@ casts_impl!(
     (Int8 <- Int4),
     (Int8 <- Float4),
     (Int8 <- Float8),
+    (Int4 <- Int2),
     (Int4 <- Bool),
     (Int4 <- Float4),
     (Text <- Bool),

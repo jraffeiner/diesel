@@ -254,7 +254,7 @@ use row::MssqlCursor;
 pub(crate) use row::{Column, ColumnType, MssqlRow};
 pub(crate) use tds::codec::framed;
 pub(crate) use tds::{
-    codec::{BulkLoadRequest, ColumnData, ColumnFlag, TokenRow},
+    codec::{BulkLoadRequest, ColumnFlag, TokenRow},
     stream::QueryStream,
     time, xml, EncryptionLevel,
 };
@@ -264,6 +264,8 @@ use sql_read_bytes::*;
 use tds::codec::*;
 use tracing::{error, info, trace};
 use transaction_manager::MssqlTransactionManager;
+
+pub use tds::codec::ColumnData;
 
 /// An alias for a result that holds crate's error type as the error.
 pub(crate) type Result<T> = std::result::Result<T, Error>;

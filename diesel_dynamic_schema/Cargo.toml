@@ -42,7 +42,9 @@ path = "tests/lib.rs"
 harness = true
 
 [features]
-default = []
+default = ["mssql","firebird"]
 postgres = ["diesel/postgres_backend"]
 sqlite = ["diesel/sqlite"]
 mysql = ["diesel/mysql_backend"]
+mssql = ["diesel/mssql"]
+firebird = ["diesel/firebird"]

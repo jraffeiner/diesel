@@ -7,7 +7,7 @@ use crate::backend::*;
 use crate::query_builder::bind_collector::RawBytesBindCollector;
 use crate::sql_types::TypeMetadata;
 
-#[derive(Debug, Copy, Clone, Hash, PartialEq, Eq)]
+#[derive(Debug, Default, Copy, Clone, Hash, PartialEq, Eq)]
 #[allow(missing_docs)]
 pub struct Fb;
 

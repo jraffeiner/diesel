@@ -184,6 +184,20 @@ impl diesel::expression::QueryMetadata<Any> for diesel::mysql::Mysql {
     }
 }
 
+#[cfg(feature = "mssql")]
+impl diesel::expression::QueryMetadata<Any> for diesel::mssql::Mssql {
+    fn row_metadata(_lookup: &mut Self::MetadataLookup, out: &mut Vec<Option<Self::TypeMetadata>>) {
+        out.push(None)
+    }
+}
+
+#[cfg(feature = "firebird")]
+impl diesel::expression::QueryMetadata<Any> for diesel::rsfb::backend::Fb {
+    fn row_metadata(_lookup: &mut Self::MetadataLookup, out: &mut Vec<Option<Self::TypeMetadata>>) {
+        out.push(None)
+    }
+}
+
 /// A dynamically sized container that allows to receive
 /// a not at compile time known number of columns from the database
 #[derive(Debug)]
@@ -261,7 +275,7 @@ impl<I> DynamicRow<NamedField<I>> {
     pub fn get_by_name<S: AsRef<str>>(&self, name: S) -> Option<&I> {
         self.values
             .iter()
-            .find(|f| f.name == name.as_ref())
+            .find(|f| f.name.eq_ignore_ascii_case(name.as_ref()))
             .map(|f| &f.value)
     }
 }
@@ -326,6 +340,26 @@ where
     I: FromSql<Any, diesel::sqlite::Sqlite>,
 {
     fn build<'a>(row: &impl NamedRow<'a, diesel::sqlite::Sqlite>) -> deserialize::Result<Self> {
+        Self::from_row(row)
+    }
+}
+
+#[cfg(feature = "mssql")]
+impl<I> QueryableByName<diesel::mssql::Mssql> for DynamicRow<I>
+where
+    I: FromSql<Any, diesel::mssql::Mssql>,
+{
+    fn build<'a>(row: &impl NamedRow<'a, diesel::mssql::Mssql>) -> deserialize::Result<Self> {
+        Self::from_row(row)
+    }
+}
+
+#[cfg(feature = "firebird")]
+impl<I> QueryableByName<diesel::rsfb::backend::Fb> for DynamicRow<I>
+where
+    I: FromSql<Any, diesel::rsfb::backend::Fb>,
+{
+    fn build<'a>(row: &impl NamedRow<'a, diesel::rsfb::backend::Fb>) -> deserialize::Result<Self> {
         Self::from_row(row)
     }
 }
@@ -403,6 +437,26 @@ where
     I: FromSql<Any, diesel::sqlite::Sqlite>,
 {
     fn build<'a>(row: &impl NamedRow<'a, diesel::sqlite::Sqlite>) -> deserialize::Result<Self> {
+        Self::from_nullable_row(row)
+    }
+}
+
+#[cfg(feature = "mssql")]
+impl<I> QueryableByName<diesel::mssql::Mssql> for DynamicRow<NamedField<Option<I>>>
+where
+    I: FromSql<Any, diesel::mssql::Mssql>,
+{
+    fn build<'a>(row: &impl NamedRow<'a, diesel::mssql::Mssql>) -> deserialize::Result<Self> {
+        Self::from_nullable_row(row)
+    }
+}
+
+#[cfg(feature = "firebird")]
+impl<I> QueryableByName<diesel::rsfb::backend::Fb> for DynamicRow<NamedField<Option<I>>>
+where
+    I: FromSql<Any, diesel::rsfb::backend::Fb>,
+{
+    fn build<'a>(row: &impl NamedRow<'a, diesel::rsfb::backend::Fb>) -> deserialize::Result<Self> {
         Self::from_nullable_row(row)
     }
 }

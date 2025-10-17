@@ -85,7 +85,7 @@ tempfile = "3.10.1"
 diesel_test_helper = { path = "../diesel_test_helper" }
 
 [features]
-default = ["with-deprecated", "32-column-tables", "mssql", "chrono", "r2d2", "firebird"]
+default = ["with-deprecated", "32-column-tables", "mssql", "chrono", "r2d2", "firebird", "bigdecimal"]
 uuid = ["dep:uuid"]
 extras = ["chrono", "time", "serde_json", "uuid", "network-address", "numeric", "r2d2"]
 unstable = ["diesel_derives/nightly"]
@@ -98,7 +98,7 @@ postgres = ["dep:pq-sys", "postgres_backend"]
 sqlite = ["dep:libsqlite3-sys", "dep:sqlite-wasm-rs", "diesel_derives/sqlite", "time?/formatting", "time?/parsing"]
 mysql = ["dep:mysqlclient-sys", "dep:url", "dep:percent-encoding", "dep:bitflags", "mysql_backend"]
 mssql = ["dep:url", "mssql_backend", "dep:thiserror", "dep:uuid", "dep:bytes", "dep:enumflags2", "dep:byteorder", "dep:tracing", "dep:encoding_rs", "dep:connection-string", "dep:pretty-hex","native-tls","winauth","dep:percent-encoding"]
-firebird = ["dep:rsfbclient","chrono"]
+firebird = ["dep:rsfbclient","chrono", "dep:bytes"]
 native-tls = ["dep:native-tls"]
 rustls = ["dep:rustls","dep:rustls-pemfile", "dep:rustls-native-certs"]
 bigdecimal = ["dep:bigdecimal"]
@@ -126,7 +126,7 @@ __with_asan_tests = [
 ]
 
 [package.metadata.docs.rs]
-features = ["postgres", "mysql", "sqlite", "mssql", "extras"]
+features = ["mssql", "firebird", "extras"]
 no-default-features = true
 rustc-args = ["--cfg", "docsrs"]
 rustdoc-args = ["--cfg", "docsrs", " -Z", "unstable-options", "--generate-link-to-definition"]

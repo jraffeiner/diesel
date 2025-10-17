@@ -32,6 +32,8 @@ pub(crate) use rpc_request::*;
 pub(crate) use token::*;
 pub(crate) use type_info::*;
 
+pub use column_data::ColumnData;
+
 const HEADER_BYTES: usize = 8;
 const ALL_HEADERS_LEN_TX: usize = 22;
 
