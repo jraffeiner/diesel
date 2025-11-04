@@ -172,7 +172,7 @@ pub(crate) mod private {
 
     /// This trait restricts who can implement `Row`
     #[cfg_attr(
-        docsrs,
+        diesel_docsrs,
         doc(cfg(feature = "i-implement-a-third-party-backend-and-opt-into-breaking-changes"))
     )]
     pub trait RowSealed {}

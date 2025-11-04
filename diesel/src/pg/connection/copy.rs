@@ -7,8 +7,8 @@ use super::raw::RawConnection;
 use super::result::PgResult;
 use crate::QueryResult;
 
-#[expect(missing_debug_implementations)] // `PgConnection` is not debug
-pub(in crate::pg) struct CopyFromSink<'conn> {
+#[allow(missing_debug_implementations)] // `PgConnection` is not debug
+pub struct CopyFromSink<'conn> {
     conn: &'conn mut RawConnection,
 }
 

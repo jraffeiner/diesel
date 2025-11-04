@@ -7,17 +7,17 @@ LL |     let source = users::table.group_by(users::name).select(users::id);
 note: expected this to be `diesel::expression::is_contained_in_group_by::Yes`
   --> tests/fail/select_requires_valid_grouping.rs:5:1
    |
-5  | / table! {
-6  | |     users {
-7  | |         id -> Integer,
-8  | |         name -> Text,
+ LL | / table! {
+ LL | |     users {
+ LL | |         id -> Integer,
+ LL | |         name -> Text,
 ...  |
 LL | | }
    | |_^
 note: required for `users::columns::id` to implement `ValidGrouping<users::columns::name>`
   --> tests/fail/select_requires_valid_grouping.rs:7:9
    |
-7  |         id -> Integer,
+ LL |         id -> Integer,
    |         ^^
    = note: associated types for the current `impl` cannot be restricted in `where` clauses
    = note: required for `SelectStatement<FromClause<table>, ..., ..., ..., ..., ..., ...>` to implement `SelectDsl<users::columns::id>`
@@ -33,7 +33,7 @@ LL |         .select(users::id);
 note: required for `users::columns::id` to implement `ValidGrouping<(users::columns::name, users::columns::hair_color)>`
   --> tests/fail/select_requires_valid_grouping.rs:7:9
    |
-7  |         id -> Integer,
+ LL |         id -> Integer,
    |         ^^
    = note: associated types for the current `impl` cannot be restricted in `where` clauses
    = note: required for `SelectStatement<FromClause<table>, ..., ..., ..., ..., ..., ...>` to implement `SelectDsl<users::columns::id>`
@@ -49,17 +49,17 @@ LL |         .select((users::name, users::id));
 note: expected this to be `diesel::expression::is_contained_in_group_by::Yes`
   --> tests/fail/select_requires_valid_grouping.rs:5:1
    |
-5  | / table! {
-6  | |     users {
-7  | |         id -> Integer,
-8  | |         name -> Text,
+ LL | / table! {
+ LL | |     users {
+ LL | |         id -> Integer,
+ LL | |         name -> Text,
 ...  |
 LL | | }
    | |_^
 note: required for `users::columns::id` to implement `ValidGrouping<users::columns::name>`
   --> tests/fail/select_requires_valid_grouping.rs:7:9
    |
-7  |         id -> Integer,
+ LL |         id -> Integer,
    |         ^^
    = note: associated types for the current `impl` cannot be restricted in `where` clauses
    = note: 1 redundant requirement hidden
@@ -77,7 +77,7 @@ LL |         .select(users::id);
 note: required for `users::columns::id` to implement `ValidGrouping<(users::columns::name, users::columns::hair_color)>`
   --> tests/fail/select_requires_valid_grouping.rs:7:9
    |
-7  |         id -> Integer,
+ LL |         id -> Integer,
    |         ^^
    = note: associated types for the current `impl` cannot be restricted in `where` clauses
    = note: required for `SelectStatement<FromClause<table>, ..., ..., ..., ..., ..., ...>` to implement `SelectDsl<users::columns::id>`
@@ -93,12 +93,12 @@ LL |         .select((users::all_columns, posts::id));
 note: required for `posts::columns::id` to implement `ValidGrouping<(users::columns::id, posts::columns::title)>`
    --> tests/fail/select_requires_valid_grouping.rs:15:9
     |
-15  |         id -> Integer,
+ LL |         id -> Integer,
     |         ^^
     = note: associated types for the current `impl` cannot be restricted in `where` clauses
     = note: 1 redundant requirement hidden
     = note: required for `((users::columns::id, users::columns::name, users::columns::hair_color), posts::columns::id)` to implement `ValidGrouping<(users::columns::id, posts::columns::title)>`
-    = note: required for `SelectStatement<FromClause<...>, ..., ..., ..., ..., ..., ...>` to implement `SelectDsl<((users::columns::id, users::columns::name, users::columns::hair_color), posts::columns::id)>`
+    = note: required for `SelectStatement<FromClause<...>, ..., ..., ..., ..., ..., ...>` to implement `SelectDsl<((id, name, hair_color), id)>`
  
         = note: this error originates in the macro `table` (in Nightly builds, run with -Z macro-backtrace for more info)
 
@@ -106,8 +106,13 @@ error[E0277]: the trait bound `users::columns::id: IsContainedInGroupBy<comments
    --> tests/fail/select_requires_valid_grouping.rs:107:10
     |
 LL |         .select((users::all_columns, posts::all_columns, comments::id));
-    |          ^^^^^^ the trait `IsContainedInGroupBy<comments::columns::id>` is not implemented for `users::columns::id`
+    |          ^^^^^^ unsatisfied trait bound
     |
+help: the trait `IsContainedInGroupBy<comments::columns::id>` is not implemented for `users::columns::id`
+   --> tests/fail/select_requires_valid_grouping.rs:7:9
+    |
+  LL |         id -> Integer,
+    |         ^^
     = note: if your query contains columns from several tables in your group by or select clause make sure to call `allow_columns_to_appear_in_same_group_by_clause!` with these columns
     = help: the following other types implement trait `IsContainedInGroupBy<T>`:
               `users::columns::id` implements `IsContainedInGroupBy<posts::columns::id>`
@@ -120,11 +125,11 @@ LL |         .select((users::all_columns, posts::all_columns, comments::id));
 note: required for `comments::columns::id` to implement `ValidGrouping<(users::columns::id, posts::columns::id)>`
    --> tests/fail/select_requires_valid_grouping.rs:23:9
     |
-23  |         id -> Integer,
+ LL |         id -> Integer,
     |         ^^
     = note: 2 redundant requirements hidden
     = note: required for `((id, name, hair_color), (id, title, user_id), id)` to implement `ValidGrouping<(users::columns::id, posts::columns::id)>`
-    = note: required for `SelectStatement<FromClause<...>, ..., ..., ..., ..., ..., ...>` to implement `SelectDsl<((users::columns::id, users::columns::name, users::columns::hair_color), (posts::columns::id, posts::columns::title, posts::columns::user_id), comments::columns::id)>`
+    = note: required for `SelectStatement<FromClause<...>, ..., ..., ..., ..., ..., ...>` to implement `SelectDsl<((id, name, hair_color), (id, title, user_id), id)>`
  
         = note: this error originates in the macro `table` (in Nightly builds, run with -Z macro-backtrace for more info)
 
@@ -132,8 +137,13 @@ error[E0277]: the trait bound `posts::columns::id: IsContainedInGroupBy<comments
    --> tests/fail/select_requires_valid_grouping.rs:107:10
     |
 LL |         .select((users::all_columns, posts::all_columns, comments::id));
-    |          ^^^^^^ the trait `IsContainedInGroupBy<comments::columns::id>` is not implemented for `posts::columns::id`
+    |          ^^^^^^ unsatisfied trait bound
     |
+help: the trait `IsContainedInGroupBy<comments::columns::id>` is not implemented for `posts::columns::id`
+   --> tests/fail/select_requires_valid_grouping.rs:15:9
+    |
+ LL |         id -> Integer,
+    |         ^^
     = note: if your query contains columns from several tables in your group by or select clause make sure to call `allow_columns_to_appear_in_same_group_by_clause!` with these columns
     = help: the following other types implement trait `IsContainedInGroupBy<T>`:
               `posts::columns::id` implements `IsContainedInGroupBy<posts::columns::id>`
@@ -148,10 +158,10 @@ LL |         .select((users::all_columns, posts::all_columns, comments::id));
 note: required for `comments::columns::id` to implement `ValidGrouping<(users::columns::id, posts::columns::id)>`
    --> tests/fail/select_requires_valid_grouping.rs:23:9
     |
-23  |         id -> Integer,
+ LL |         id -> Integer,
     |         ^^
     = note: 2 redundant requirements hidden
     = note: required for `((id, name, hair_color), (id, title, user_id), id)` to implement `ValidGrouping<(users::columns::id, posts::columns::id)>`
-    = note: required for `SelectStatement<FromClause<...>, ..., ..., ..., ..., ..., ...>` to implement `SelectDsl<((users::columns::id, users::columns::name, users::columns::hair_color), (posts::columns::id, posts::columns::title, posts::columns::user_id), comments::columns::id)>`
+    = note: required for `SelectStatement<FromClause<...>, ..., ..., ..., ..., ..., ...>` to implement `SelectDsl<((id, name, hair_color), (id, title, user_id), id)>`
  
         = note: this error originates in the macro `table` (in Nightly builds, run with -Z macro-backtrace for more info)

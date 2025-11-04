@@ -232,8 +232,8 @@
     feature = "unstable",
     warn(fuzzy_provenance_casts, lossy_provenance_casts)
 )]
-#![cfg_attr(docsrs, feature(doc_cfg, doc_auto_cfg, rustdoc_internals))]
-#![cfg_attr(docsrs, expect(internal_features))]
+#![cfg_attr(diesel_docsrs, feature(doc_cfg, rustdoc_internals))]
+#![cfg_attr(diesel_docsrs, expect(internal_features))]
 #![cfg_attr(feature = "128-column-tables", recursion_limit = "256")]
 // Built-in Lints
 #![warn(
@@ -266,8 +266,8 @@
     clippy::cast_possible_truncation,
     clippy::cast_sign_loss
 )]
-//#![deny(unsafe_code)]
-#![cfg_attr(test, allow(clippy::map_unwrap_or, clippy::unwrap_used))]
+#![deny(unsafe_code)]
+#![cfg_attr(test, allow(clippy::unwrap_used))]
 
 // Running wasm tests on dedicated_worker
 #[cfg(test)]
@@ -783,6 +783,8 @@ pub mod prelude {
     };
     #[doc(inline)]
     pub use diesel_derives::table_proc as table;
+    #[doc(inline)]
+    pub use diesel_derives::view_proc as view;
 
     #[cfg(feature = "mysql")]
     #[doc(inline)]

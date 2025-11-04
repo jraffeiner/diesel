@@ -23,7 +23,7 @@ LL |         .select(posts::user_id)
 error[E0277]: mixing aggregate and not aggregate expressions is not allowed in SQL
    --> tests/fail/reject_mixed_aggregates_via_distinct_on_clauses.rs:40:17
     |
-40  |         .select(dsl::count(posts::id))
+ LL |         .select(dsl::count(posts::id))
     |          ------ ^^^^^^^^^^^^^^^^^^^^^ the trait `MixedAggregates<diesel::expression::is_aggregate::Yes>` is not implemented for `diesel::expression::is_aggregate::No`
     |          |
     |          required by a bound introduced by this call
@@ -35,8 +35,8 @@ error[E0277]: mixing aggregate and not aggregate expressions is not allowed in S
               `diesel::expression::is_aggregate::No` implements `MixedAggregates<diesel::expression::is_aggregate::Never>`
               `diesel::expression::is_aggregate::No` implements `MixedAggregates<diesel::expression::is_aggregate::No>`
     = note: required for `(user_id, count<Integer, id>)` to implement `ValidGrouping<()>`
-    = note: required for `DistinctOnClause<columns::user_id>` to implement `query_dsl::group_by_dsl::ValidDistinctForGroupBy<diesel::expression::count::count_utils::count<diesel::sql_types::Integer, columns::id>, ()>`
-    = note: required for `SelectStatement<FromClause<table>, DefaultSelectClause<...>, ...>` to implement `SelectDsl<diesel::expression::count::count_utils::count<diesel::sql_types::Integer, columns::id>>`
+    = note: required for `DistinctOnClause<columns::user_id>` to implement `ValidDistinctForGroupBy<count<Integer, id>, ()>`
+    = note: required for `SelectStatement<FromClause<table>, DefaultSelectClause<...>, ...>` to implement `SelectDsl<count<Integer, id>>`
 note: required by a bound in `diesel::QueryDsl::select`
    --> DIESEL/diesel/diesel/src/query_dsl/mod.rs
     |
@@ -50,7 +50,7 @@ LL |         Self: methods::SelectDsl<Selection>,
 error[E0277]: mixing aggregate and not aggregate expressions is not allowed in SQL
    --> tests/fail/reject_mixed_aggregates_via_distinct_on_clauses.rs:46:22
     |
-46  |         .distinct_on(posts::user_id)
+ LL |         .distinct_on(posts::user_id)
     |          ----------- ^^^^^^^^^^^^^^ the trait `MixedAggregates<diesel::expression::is_aggregate::Yes>` is not implemented for `diesel::expression::is_aggregate::No`
     |          |
     |          required by a bound introduced by this call
@@ -87,7 +87,7 @@ LL |         .count()
 error[E0277]: mixing aggregate and not aggregate expressions is not allowed in SQL
    --> tests/fail/reject_mixed_aggregates_via_distinct_on_clauses.rs:58:22
     |
-58  |         .distinct_on(posts::user_id)
+ LL |         .distinct_on(posts::user_id)
     |          ----------- ^^^^^^^^^^^^^^ the trait `MixedAggregates<diesel::expression::is_aggregate::Yes>` is not implemented for `diesel::expression::is_aggregate::No`
     |          |
     |          required by a bound introduced by this call

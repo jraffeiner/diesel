@@ -12,7 +12,7 @@
 //! In order to avoid the cost of re-parsing and planning subsequent queries,
 //! by default Diesel caches the prepared statement whenever possible. This
 //! can be customized by calling
-//! [`Connection::set_cache_size`](super::Connection::set_cache_size).
+//! [`Connection::set_cache_size`](super::Connection::set_prepared_statement_cache_size).
 //!
 //! Queries will fall into one of three buckets:
 //!
@@ -60,7 +60,7 @@
 //! queries, we can bypass the query builder entirely. Since our AST is
 //! generally optimized away by the compiler, for these queries the cost of
 //! fetching a prepared statement from the cache is the cost of [`HashMap<u32,
-//! _>::get`], where the key we're fetching by is a compile time constant. For
+//! _>::get`](std::collections::HashMap::get), where the key we're fetching by is a compile time constant. For
 //! these types, the AST pass to gather the bind parameters will also be
 //! optimized to accessing each parameter individually.
 //!
@@ -118,7 +118,7 @@ pub mod strategy;
 
 /// A prepared statement cache
 #[cfg_attr(
-    docsrs,
+    diesel_docsrs,
     doc(cfg(feature = "i-implement-a-third-party-backend-and-opt-into-breaking-changes"))
 )]
 #[allow(unreachable_pub, missing_debug_implementations)]
@@ -137,12 +137,12 @@ pub struct StatementCache<DB: Backend, Statement> {
 /// preparing the statement
 #[derive(Debug, Clone, Copy)]
 #[cfg_attr(
-    docsrs,
+    diesel_docsrs,
     doc(cfg(feature = "i-implement-a-third-party-backend-and-opt-into-breaking-changes"))
 )]
 #[allow(unreachable_pub, dead_code)]
 pub enum PrepareForCache {
-    /// The statement will be cached    
+    /// The statement will be cached
     Yes {
         /// Counter might be used as unique identifier for prepared statement.
         counter: u64,
@@ -204,7 +204,12 @@ where
     // Notes:
     // This function takes explicitly a connection and a function pointer (and no generic callback)
     // as argument to ensure that we don't leak generic query types into the prepare function
-    #[allow(unreachable_pub, dead_code)]
+    #[allow(unreachable_pub)]
+    #[cfg(any(
+        feature = "i-implement-a-third-party-backend-and-opt-into-breaking-changes",
+        feature = "sqlite",
+        feature = "mysql"
+    ))]
     pub fn cached_statement<'a, T, R, C>(
         &'a mut self,
         source: &T,
@@ -359,7 +364,7 @@ where
 /// This preserves the opportunity for the compiler to entirely optimize the `construct_sql`
 /// function as a function that simply returns a constant `String`.
 #[cfg_attr(
-    docsrs,
+    diesel_docsrs,
     doc(cfg(feature = "i-implement-a-third-party-backend-and-opt-into-breaking-changes"))
 )]
 #[allow(unreachable_pub)]
@@ -394,7 +399,7 @@ where
 /// Essentially a customized version of [`Cow`]
 /// that does not depend on [`ToOwned`]
 #[cfg_attr(
-    docsrs,
+    diesel_docsrs,
     doc(cfg(feature = "i-implement-a-third-party-backend-and-opt-into-breaking-changes"))
 )]
 #[non_exhaustive]
@@ -411,7 +416,7 @@ pub enum MaybeCached<'a, T: 'a> {
 /// The main use-case for this abstraction is to share the same statement cache implementation
 /// between diesel and diesel-async.
 #[cfg_attr(
-    docsrs,
+    diesel_docsrs,
     doc(cfg(feature = "i-implement-a-third-party-backend-and-opt-into-breaking-changes"))
 )]
 #[allow(unreachable_pub, dead_code)]
@@ -499,7 +504,7 @@ impl<T> DerefMut for MaybeCached<'_, T> {
 /// that may change depending on their parameters)
 #[derive(Hash, PartialEq, Eq)]
 #[cfg_attr(
-    docsrs,
+    diesel_docsrs,
     doc(cfg(feature = "i-implement-a-third-party-backend-and-opt-into-breaking-changes"))
 )]
 #[allow(unreachable_pub, missing_debug_implementations)]

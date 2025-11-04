@@ -184,7 +184,7 @@ pub type ContainsNetLoose<Lhs, Rhs> =
 #[doc(hidden)] // used by `#[auto_type]`
 pub type ContainsOrEq<Lhs, Rhs> = ContainsNetLoose<Lhs, Rhs>;
 
-/// The return type of [`lhs.is_contained_by(rhs)`]((super::expression_methods::PgNetExpressionMethods::is_contained_by)
+/// The return type of [`lhs.is_contained_by(rhs)`](super::expression_methods::PgNetExpressionMethods::is_contained_by)
 /// for network types
 #[cfg(feature = "postgres_backend")]
 pub type IsContainedByNet<Lhs, Rhs> =
@@ -340,6 +340,8 @@ pub type NotLikeBinary<Lhs, Rhs> = crate::dsl::NotLike<Lhs, Rhs>;
 #[deprecated(note = "Use `dsl::Concat` instead")]
 pub type ConcatArray<Lhs, Rhs> = crate::dsl::Concat<Lhs, Rhs>;
 
+#[doc(inline)]
+pub use super::return_type_helpers::*;
 /// Return type of [`array_to_string_with_null_string(arr, delim, null_str)`](super::functions::array_to_string_with_null_string())
 #[expect(non_camel_case_types)]
 #[cfg(feature = "postgres_backend")]
