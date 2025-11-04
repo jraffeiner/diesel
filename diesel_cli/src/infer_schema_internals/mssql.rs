@@ -325,6 +325,8 @@ fn determine_type_name(sql_type_name: &str) -> Result<String, crate::errors::Err
         "real" => "float",
         "datetime2" => "timestamp",
         "datetimeoffset" => "date_time_offset",
+        "float" => "double",
+        "nvarchar" => "varchar",
         sql_type_name if sql_type_name.starts_with("int") => "integer",
         sql_type_name => {
             if let Some(idx) = sql_type_name.find('(') {

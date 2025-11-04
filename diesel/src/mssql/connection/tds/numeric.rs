@@ -3,7 +3,7 @@
 use super::codec::Encode;
 use crate::mssql::connection::{sql_read_bytes::SqlReadBytes, Error};
 #[cfg(feature = "bigdecimal")]
-pub use bigdecimal::{num_bigint::BigInt, BigDecimal};
+pub(crate) use bigdecimal::{num_bigint::BigInt, BigDecimal};
 use byteorder::{ByteOrder, LittleEndian};
 use bytes::{BufMut, BytesMut};
 use std::cmp::{Ordering, PartialEq};

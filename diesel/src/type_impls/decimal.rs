@@ -9,5 +9,6 @@ mod bigdecimal {
     #[derive(AsExpression, FromSqlRow)]
     #[diesel(foreign_derive)]
     #[diesel(sql_type = Numeric)]
+    #[allow(dead_code)]
     struct BigDecimalProxy(BigDecimal);
 }
