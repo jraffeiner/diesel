@@ -1,9 +1,5 @@
 // Clippy lints
-#![expect(
-    clippy::needless_doctest_main,
-    clippy::needless_pass_by_value,
-    clippy::map_unwrap_or
-)]
+#![expect(clippy::needless_pass_by_value, clippy::map_unwrap_or)]
 #![warn(
     clippy::mut_mut,
     clippy::non_ascii_literal,

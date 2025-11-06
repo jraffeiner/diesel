@@ -217,7 +217,6 @@ impl MySpanned for FieldAttr {
     }
 }
 
-#[expect(clippy::large_enum_variant)]
 pub enum StructAttr {
     Aggregate(Ident),
     NotSized(Ident),

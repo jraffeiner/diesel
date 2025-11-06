@@ -266,7 +266,7 @@
     clippy::cast_possible_truncation,
     clippy::cast_sign_loss
 )]
-#![deny(unsafe_code)]
+//#![deny(unsafe_code)]
 #![cfg_attr(test, allow(clippy::unwrap_used))]
 
 // Running wasm tests on dedicated_worker

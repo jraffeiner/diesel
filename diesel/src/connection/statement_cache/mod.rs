@@ -534,7 +534,6 @@ where
 {
     /// Create a new statement cache key for the given query source
     // Note: Intentionally monomorphic over source.
-
     #[allow(unreachable_pub, dead_code)]
     pub fn for_source(
         maybe_type_id: Option<TypeId>,

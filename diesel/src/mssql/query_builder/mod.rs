@@ -88,6 +88,14 @@ impl MoveableBindCollector<Mssql> for TdsBindCollector<'static> {
     fn append_bind_data(&mut self, from: &Self::BindData) {
         self.data.append(&mut from.data.clone());
     }
+
+    #[doc = " Push bind data as debug representation"]
+    fn push_debug_binds<'a, 'b>(
+        bind_data: &Self::BindData,
+        f: &'a mut Vec<Box<dyn std::fmt::Debug + 'b>>,
+    ) {
+        f.push(Box::new(bind_data.clone()));
+    }
 }
 
 impl TdsBindCollector<'_> {

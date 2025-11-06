@@ -38,29 +38,6 @@ pub struct TableDecl {
     pub primary_keys: Option<PrimaryKey>,
 }
 
-impl ViewDecl {
-    pub fn column_names(&self) -> Vec<&syn::Ident> {
-        self.column_defs
-            .iter()
-            .map(|c| &c.column_name)
-            .collect::<Vec<_>>()
-    }
-    pub fn imports(&self) -> Vec<ItemUse> {
-        if self.use_statements.is_empty() {
-            vec![parse_quote!(
-                use diesel::sql_types::*;
-            )]
-        } else {
-            self.use_statements.clone()
-        }
-    }
-}
-
-pub struct TableDecl {
-    pub view: ViewDecl,
-    pub primary_keys: Option<PrimaryKey>,
-}
-
 #[expect(dead_code)] // paren_token is currently unused
 pub struct PrimaryKey {
     paren_token: syn::token::Paren,
