@@ -29,7 +29,9 @@ impl QueryBuilder<Mssql> for MssqlQueryBuilder {
     }
 
     fn push_identifier(&mut self, identifier: &str) -> QueryResult<()> {
+        self.push_sql("[");
         self.push_sql(identifier);
+        self.push_sql("]");
         Ok(())
     }
 
