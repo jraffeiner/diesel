@@ -1,9 +1,14 @@
 use crate::{
-    expression::operators::Concat,
+    backend::Backend,
+    expression::{operators::Concat, ValidGrouping},
     mssql::Mssql,
     query_builder::{
-        IntoBoxedClause, QueryFragment, limit_clause::{LimitClause, NoLimitClause}, limit_offset_clause::{BoxedLimitOffsetClause, LimitOffsetClause}, offset_clause::{NoOffsetClause, OffsetClause}
+        limit_clause::{LimitClause, NoLimitClause},
+        limit_offset_clause::{BoxedLimitOffsetClause, LimitOffsetClause},
+        offset_clause::{NoOffsetClause, OffsetClause},
+        AsQuery, FromClause, IntoBoxedClause, QueryFragment, QueryId, SelectStatement,
     },
+    AppearsOnTable, Expression, QuerySource, SelectableExpression, Table,
 };
 
 impl QueryFragment<Mssql> for LimitOffsetClause<NoLimitClause, NoOffsetClause> {
@@ -49,7 +54,10 @@ where
 }
 
 impl QueryFragment<Mssql> for BoxedLimitOffsetClause<'_, Mssql> {
-    fn walk_ast<'b>(&'b self, mut pass: diesel::query_builder::AstPass<'_, 'b, Mssql>) -> diesel::QueryResult<()> {
+    fn walk_ast<'b>(
+        &'b self,
+        mut pass: diesel::query_builder::AstPass<'_, 'b, Mssql>,
+    ) -> diesel::QueryResult<()> {
         match (self.limit.as_ref(), self.offset.as_ref()) {
             (Some(limit), Some(offset)) => {
                 pass.push_sql(" OFFSET ");
@@ -129,4 +137,149 @@ where
         pass.push_sql(") ");
         Ok(())
     }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct NoLock<T>(T);
+
+impl<T: QueryId> QueryId for NoLock<T>
+where
+    T: QueryId,
+{
+    type QueryId = T::QueryId;
+    const HAS_STATIC_QUERY_ID: bool = <T as QueryId>::HAS_STATIC_QUERY_ID;
+    const IS_WINDOW_FUNCTION: bool = T::IS_WINDOW_FUNCTION;
+}
+
+impl<T> diesel::QuerySource for NoLock<T>
+where
+    T: QuerySource,
+    NoLockMarker<<T as QuerySource>::DefaultSelection>: SelectableExpression<NoLock<T>>,
+    Self: Copy,
+{
+    type FromClause = Self;
+
+    type DefaultSelection = NoLockMarker<T::DefaultSelection>;
+
+    fn from_clause(&self) -> Self::FromClause {
+        *self
+    }
+
+    fn default_selection(&self) -> Self::DefaultSelection {
+        NoLockMarker(self.0.default_selection())
+    }
+}
+
+impl<T> QueryFragment<Mssql> for NoLock<T>
+where
+    T: QueryFragment<Mssql>,
+{
+    fn walk_ast<'b>(
+        &'b self,
+        mut pass: diesel::query_builder::AstPass<'_, 'b, Mssql>,
+    ) -> diesel::QueryResult<()> {
+        self.0.walk_ast(pass.reborrow())?;
+        pass.push_sql(" WITH (NOLOCK) ");
+        Ok(())
+    }
+}
+
+impl<T> AsQuery for NoLock<T>
+where
+    T: AsQuery,
+    Self: QuerySource,
+    <Self as QuerySource>::DefaultSelection: ValidGrouping<()>,
+{
+    type SqlType = <<Self as QuerySource>::DefaultSelection as Expression>::SqlType;
+
+    type Query = SelectStatement<FromClause<Self>>;
+
+    fn as_query(self) -> Self::Query {
+        SelectStatement::simple(self)
+    }
+}
+
+impl<T: Table + Copy> Table for NoLock<T>
+where
+    Self: QuerySource,
+    Self: AsQuery,
+    T: QuerySource,
+    NoLockMarker<<T as Table>::AllColumns>: SelectableExpression<NoLock<T>>,
+    NoLockMarker<<T as Table>::PrimaryKey>: SelectableExpression<NoLock<T>>,
+    NoLockMarker<<T as QuerySource>::DefaultSelection>: SelectableExpression<NoLock<T>>,
+{
+    type PrimaryKey = NoLockMarker<T::PrimaryKey>;
+
+    type AllColumns = NoLockMarker<T::AllColumns>;
+
+    fn primary_key(&self) -> Self::PrimaryKey {
+        NoLockMarker(self.0.primary_key())
+    }
+
+    fn all_columns() -> Self::AllColumns {
+        NoLockMarker(T::all_columns())
+    }
+}
+
+impl<EXPR, T> SelectableExpression<NoLock<T>> for NoLockMarker<EXPR> where
+    EXPR: SelectableExpression<T>
+{
+}
+impl<EXPR, T> AppearsOnTable<NoLock<T>> for NoLockMarker<EXPR> where EXPR: AppearsOnTable<T> {}
+
+impl<E> Expression for NoLockMarker<E>
+where
+    E: Expression,
+{
+    type SqlType = E::SqlType;
+}
+
+pub trait WithNoLock: Sized {
+    fn no_lock(self) -> NoLock<Self>;
+}
+
+impl<T> WithNoLock for T
+where
+    T: Table,
+    NoLock<T>: QuerySource,
+    NoLock<T>: AsQuery,
+    T: QuerySource,
+    NoLockMarker<<T as Table>::AllColumns>: SelectableExpression<NoLock<T>>,
+    NoLockMarker<<T as Table>::PrimaryKey>: SelectableExpression<NoLock<T>>,
+    NoLockMarker<<T as QuerySource>::DefaultSelection>: SelectableExpression<NoLock<T>>,
+{
+    fn no_lock(self) -> NoLock<Self> {
+        NoLock(self)
+    }
+}
+
+pub struct NoLockMarker<T>(pub T);
+
+impl<T, G> ValidGrouping<G> for NoLockMarker<T>
+where
+    T: ValidGrouping<G>,
+{
+    type IsAggregate = T::IsAggregate;
+}
+
+impl<T, DB> QueryFragment<DB> for NoLockMarker<T>
+where
+    T: QueryFragment<DB>,
+    DB: Backend,
+{
+    fn walk_ast<'b>(
+        &'b self,
+        pass: crate::query_builder::AstPass<'_, 'b, DB>,
+    ) -> crate::prelude::QueryResult<()> {
+        self.0.walk_ast(pass)
+    }
+}
+
+impl<T> QueryId for NoLockMarker<T>
+where
+    T: QueryId,
+{
+    type QueryId = T::QueryId;
+    const HAS_STATIC_QUERY_ID: bool = T::HAS_STATIC_QUERY_ID;
+    const IS_WINDOW_FUNCTION: bool = T::IS_WINDOW_FUNCTION;
 }

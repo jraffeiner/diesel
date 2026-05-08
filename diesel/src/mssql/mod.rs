@@ -16,6 +16,8 @@ pub use self::connection::ColumnData;
 #[cfg(feature = "mssql")]
 pub use self::connection::MssqlConnection;
 pub use self::query_builder::MssqlQueryBuilder;
+pub use self::query_builder::NoLockMarker;
+pub use self::query_builder::WithNoLock;
 
 /// Mssql specific sql types
 pub mod sql_types {

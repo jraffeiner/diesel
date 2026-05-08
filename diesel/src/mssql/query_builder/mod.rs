@@ -8,6 +8,9 @@ use crate::sql_types::{self, HasSqlType};
 
 mod query_fragment_impls;
 
+pub use query_fragment_impls::NoLockMarker;
+pub use query_fragment_impls::WithNoLock;
+
 /// The Mssql query builder
 #[expect(missing_debug_implementations)]
 #[derive(Default)]
