@@ -1,23 +1,28 @@
 #![allow(unsafe_code)] // module uses ffi
 use alloc::rc::Rc;
 use core::cell::{Ref, RefCell};
+#[cfg(feature = "std")]
+use std::marker::PhantomData;
 
 use super::{OutputBinds, Statement, StatementMetadata, StatementUse};
 use crate::backend::Backend;
 use crate::connection::statement_cache::MaybeCached;
-use crate::mysql::{Mysql, MysqlType};
+use crate::mysql::{Mysql, MysqlLikeBackend, MysqlType};
 use crate::result::QueryResult;
 use crate::row::*;
 
 #[allow(missing_debug_implementations)]
-pub struct StatementIterator<'a> {
+#[expect(private_bounds)]
+pub struct StatementIterator<'a, B: MysqlLikeBackend> {
     stmt: StatementUse<'a>,
     last_row: Rc<RefCell<PrivateMysqlRow>>,
     metadata: Rc<StatementMetadata>,
     len: usize,
+    _phantom: PhantomData<B>,
 }
 
-impl<'a> StatementIterator<'a> {
+#[expect(private_bounds)]
+impl<'a, B: MysqlLikeBackend> StatementIterator<'a, B> {
     pub fn from_stmt(
         stmt: MaybeCached<'a, Statement>,
         types: &[Option<MysqlType>],
@@ -34,12 +39,13 @@ impl<'a> StatementIterator<'a> {
             last_row: Rc::new(RefCell::new(PrivateMysqlRow::Direct(output_binds))),
             len: size,
             stmt,
+            _phantom: PhantomData,
         })
     }
 }
 
-impl Iterator for StatementIterator<'_> {
-    type Item = QueryResult<MysqlRow>;
+impl<B: MysqlLikeBackend> Iterator for StatementIterator<'_, B> {
+    type Item = QueryResult<MysqlRow<B>>;
 
     fn next(&mut self) -> Option<Self::Item> {
         // check if we own the only instance of the bind buffer
@@ -103,6 +109,7 @@ impl Iterator for StatementIterator<'_> {
                 Some(Ok(MysqlRow {
                     metadata: self.metadata.clone(),
                     row: self.last_row.clone(),
+                    _phantom: PhantomData,
                 }))
             }
             Ok(None) => None,
@@ -125,7 +132,7 @@ impl Iterator for StatementIterator<'_> {
     }
 }
 
-impl ExactSizeIterator for StatementIterator<'_> {
+impl<B: MysqlLikeBackend> ExactSizeIterator for StatementIterator<'_, B> {
     fn len(&self) -> usize {
         self.len
     }
@@ -133,9 +140,11 @@ impl ExactSizeIterator for StatementIterator<'_> {
 
 #[derive(Clone)]
 #[allow(missing_debug_implementations)]
-pub struct MysqlRow {
+#[expect(private_bounds)]
+pub struct MysqlRow<B: MysqlLikeBackend> {
     row: Rc<RefCell<PrivateMysqlRow>>,
     metadata: Rc<StatementMetadata>,
+    _phantom: PhantomData<B>,
 }
 
 enum PrivateMysqlRow {
@@ -151,11 +160,11 @@ impl PrivateMysqlRow {
     }
 }
 
-impl RowSealed for MysqlRow {}
+impl<B: MysqlLikeBackend> RowSealed for MysqlRow<B> {}
 
-impl<'a> Row<'a, Mysql> for MysqlRow {
+impl<'a, B: MysqlLikeBackend> Row<'a, B> for MysqlRow<B> {
     type Field<'f>
-        = MysqlField<'f>
+        = MysqlLikeField<'f, B>
     where
         'a: 'f,
         Self: 'f;
@@ -171,19 +180,22 @@ impl<'a> Row<'a, Mysql> for MysqlRow {
         Self: RowIndex<I>,
     {
         let idx = self.idx(idx)?;
-        Some(MysqlField {
+        Some(MysqlLikeField {
             binds: self.row.borrow(),
             metadata: self.metadata.clone(),
             idx,
+            _phantom: PhantomData,
         })
     }
 
     fn partial_row(&self, range: core::ops::Range<usize>) -> PartialRow<'_, Self::InnerPartialRow> {
-        PartialRow::new(self, range)
+        PartialRow::new::<B>(self, range)
     }
 }
 
-impl RowIndex<usize> for MysqlRow {
+impl<B: MysqlLikeBackend> RowIndex<usize> for MysqlRow<B> 
+where MysqlRow<B>: for<'a> Row<'a, B>
+{
     fn idx(&self, idx: usize) -> Option<usize> {
         if idx < self.field_count() {
             Some(idx)
@@ -193,7 +205,7 @@ impl RowIndex<usize> for MysqlRow {
     }
 }
 
-impl<'a> RowIndex<&'a str> for MysqlRow {
+impl<'a,B: MysqlLikeBackend> RowIndex<&'a str> for MysqlRow<B> {
     fn idx(&self, idx: &'a str) -> Option<usize> {
         self.metadata
             .fields()
@@ -205,13 +217,15 @@ impl<'a> RowIndex<&'a str> for MysqlRow {
 }
 
 #[allow(missing_debug_implementations)]
-pub struct MysqlField<'a> {
+#[expect(private_bounds)]
+pub struct MysqlLikeField<'a, B: MysqlLikeBackend> {
     binds: Ref<'a, PrivateMysqlRow>,
     metadata: Rc<StatementMetadata>,
     idx: usize,
+    _phantom: PhantomData<B>,
 }
 
-impl<'a> Field<'a, Mysql> for MysqlField<'a> {
+impl<'a, B: MysqlLikeBackend> Field<'a, B> for MysqlLikeField<'a, B> {
     fn field_name(&self) -> Option<&str> {
         self.metadata.fields()[self.idx].field_name()
     }

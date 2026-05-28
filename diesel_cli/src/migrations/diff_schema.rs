@@ -97,6 +97,10 @@ pub fn generate_sql_based_on_diff_schema(
         InferConnection::Mysql(_) => {
             config.sqlite_integer_primary_key_is_bigint = None;
         }
+        #[cfg(feature = "mariadb")]
+        InferConnection::Mariadb(_) => {
+            config.sqlite_integer_primary_key_is_bigint = None;
+        }
     }
 
     let mut schema_diff = Vec::new();
@@ -204,8 +208,18 @@ pub fn generate_sql_based_on_diff_schema(
             }
             #[cfg(feature = "mysql")]
             InferConnection::Mysql(_) => {
+                use diesel::mysql::Mysql;
+
                 let mut qb = diesel::mysql::MysqlQueryBuilder::default();
-                diff.generate_up_sql(&mut qb, &config)?;
+                diff.generate_up_sql::<Mysql>(&mut qb, &config)?;
+                qb.finish()
+            }
+            #[cfg(feature = "mariadb")]
+            InferConnection::Mariadb(_) => {
+                use diesel::mariadb::Mariadb;
+
+                let mut qb = diesel::mariadb::MariadbQueryBuilder::default();
+                diff.generate_up_sql::<Mariadb>(&mut qb, &config)?;
                 qb.finish()
             }
         };
@@ -225,8 +239,18 @@ pub fn generate_sql_based_on_diff_schema(
             }
             #[cfg(feature = "mysql")]
             InferConnection::Mysql(_) => {
+                use diesel::mysql::Mysql;
+
                 let mut qb = diesel::mysql::MysqlQueryBuilder::default();
-                diff.generate_down_sql(&mut qb, &config)?;
+                diff.generate_down_sql::<Mysql>(&mut qb, &config)?;
+                qb.finish()
+            }
+            #[cfg(feature = "mariadb")]
+            InferConnection::Mariadb(_) => {
+                use diesel::mariadb::Mariadb;
+
+                let mut qb = diesel::mariadb::MariadbQueryBuilder::default();
+                diff.generate_down_sql::<Mariadb>(&mut qb, &config)?;
                 qb.finish()
             }
         };

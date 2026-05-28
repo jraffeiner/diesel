@@ -330,6 +330,9 @@ pub mod row;
 
 #[cfg(feature = "mysql_backend")]
 pub mod mysql;
+
+#[cfg(feature = "mariadb_backend")]
+pub mod mariadb;
 #[cfg(feature = "postgres_backend")]
 pub mod pg;
 #[cfg(feature = "__sqlite-shared")]

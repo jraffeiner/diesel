@@ -1,4 +1,7 @@
+use std::marker::PhantomData;
+
 use super::backend::Mysql;
+use crate::backend::Backend;
 use crate::query_builder::QueryBuilder;
 use crate::result::QueryResult;
 
@@ -9,20 +12,29 @@ mod limit_offset;
 mod query_fragment_impls;
 
 /// The MySQL query builder
+pub type MysqlQueryBuilder = MysqlLikeQueryBuilder<Mysql>;
+
+/// The MySQL query builder
 #[allow(missing_debug_implementations)]
-#[derive(Default)]
-pub struct MysqlQueryBuilder {
+pub struct MysqlLikeQueryBuilder<B: Backend> {
     sql: String,
+    _phantom: PhantomData<B>,
 }
 
-impl MysqlQueryBuilder {
-    /// Constructs a new query builder with an empty query
-    pub fn new() -> Self {
-        MysqlQueryBuilder::default()
+impl<B: Backend> Default for MysqlLikeQueryBuilder<B> {
+    fn default() -> Self {
+        Self { sql: String::default(), _phantom: PhantomData }
     }
 }
 
-impl QueryBuilder<Mysql> for MysqlQueryBuilder {
+impl<B: Backend> MysqlLikeQueryBuilder<B> {
+    /// Constructs a new query builder with an empty query
+    pub fn new() -> Self {
+        MysqlLikeQueryBuilder::default()
+    }
+}
+
+impl<B: Backend> QueryBuilder<B> for MysqlLikeQueryBuilder<B> {
     fn push_sql(&mut self, sql: &str) {
         self.sql.push_str(sql);
     }

@@ -1,18 +1,18 @@
 use crate::deserialize::{self, FromSql};
-use crate::mysql::{Mysql, MysqlValue};
+use crate::mysql::{MysqlLikeBackend, MysqlValue};
 use crate::serialize::{self, IsNull, Output, ToSql};
 use crate::sql_types;
 
-#[cfg(all(feature = "mysql_backend", feature = "serde_json"))]
-impl FromSql<sql_types::Json, Mysql> for serde_json::Value {
+#[cfg(all(any(feature = "mysql_backend", feature = "mariadb_backend"), feature = "serde_json"))]
+impl<B: MysqlLikeBackend> FromSql<sql_types::Json, B> for serde_json::Value {
     fn from_sql(value: MysqlValue<'_>) -> deserialize::Result<Self> {
         serde_json::from_slice(value.as_bytes()).map_err(|_| "Invalid Json".into())
     }
 }
 
-#[cfg(all(feature = "mysql_backend", feature = "serde_json"))]
-impl ToSql<sql_types::Json, Mysql> for serde_json::Value {
-    fn to_sql<'b>(&'b self, out: &mut Output<'b, '_, Mysql>) -> serialize::Result {
+#[cfg(all(any(feature = "mysql_backend", feature = "mariadb_backend"), feature = "serde_json"))]
+impl<B: MysqlLikeBackend> ToSql<sql_types::Json, B> for serde_json::Value {
+    fn to_sql<'b>(&'b self, out: &mut Output<'b, '_, B>) -> serialize::Result {
         serde_json::to_writer(out, self)
             .map(|_| IsNull::No)
             .map_err(Into::into)

@@ -3,6 +3,8 @@ use super::query_helper;
 use clap::{ArgAction, Args, Subcommand};
 use diesel::connection::InstrumentationEvent;
 use diesel::dsl::sql;
+#[cfg(feature = "mariadb")]
+use diesel::mariadb::MariadbConnection;
 use diesel::sql_types::Bool;
 use diesel::*;
 use diesel_migrations::FileBasedMigrations;
@@ -50,6 +52,8 @@ pub enum Backend {
     Sqlite,
     #[cfg(feature = "mysql")]
     Mysql,
+    #[cfg(feature = "mariadb")]
+    Mariadb,
 }
 
 impl Backend {
@@ -78,6 +82,20 @@ impl Backend {
                 {
                     panic!(
                         "Database url `{database_url}` requires the `mysql` feature but it's not enabled."
+                    );
+                }
+            }
+            _ if database_url.starts_with("mariadb://") =>
+            {
+                #[cfg(feature = "mariadb")]
+                {
+                    Backend::Mariadb
+                }
+                #[cfg(not(feature = "mariadb"))]
+                {
+                    panic!(
+                        "Database url `{}` requires the `mariadb` feature but it's not enabled.",
+                        database_url
                     );
                 }
             }
@@ -126,6 +144,9 @@ impl Backend {
             InferConnection::Sqlite(_) => Self::Sqlite,
             #[cfg(feature = "mysql")]
             InferConnection::Mysql(_) => Self::Mysql,
+            #[cfg(feature = "mariadb")]
+            InferConnection::Mariadb(_) => Self::Mariadb,
+        
         }
     }
 }
@@ -138,6 +159,8 @@ pub enum InferConnection {
     Sqlite(SqliteConnection),
     #[cfg(feature = "mysql")]
     Mysql(MysqlConnection),
+    #[cfg(feature = "mariadb")]
+    Mariadb(MariadbConnection),
 }
 
 impl InferConnection {
@@ -156,6 +179,8 @@ impl InferConnection {
             Backend::Pg => PgConnection::establish(&database_url).map(Self::Pg),
             #[cfg(feature = "mysql")]
             Backend::Mysql => MysqlConnection::establish(&database_url).map(Self::Mysql),
+            #[cfg(feature = "mariadb")]
+            Backend::Mariadb => MariadbConnection::establish(&database_url).map(Self::Mariadb),
             #[cfg(feature = "sqlite")]
             Backend::Sqlite => SqliteConnection::establish(&database_url).map(Self::Sqlite),
         };
@@ -301,6 +326,21 @@ fn create_database_if_needed(database_url: &str) -> Result<(), crate::errors::Er
                 query_helper::create_database(&database).execute(&mut conn)?;
             }
         }
+        #[cfg(feature = "mariadb")]
+        Backend::Mariadb => {
+            if MariadbConnection::establish(database_url).is_err() {
+                let (database, mariadb_url) =
+                    change_database_of_url(database_url, "information_schema")?;
+                println!("Creating database: {database}");
+                let mut conn = MariadbConnection::establish(&mariadb_url).map_err(|error| {
+                    crate::errors::Error::ConnectionError {
+                        error,
+                        url: mariadb_url,
+                    }
+                })?;
+                query_helper::create_database(&database).execute(&mut conn)?;
+            }
+        }
     }
 
     Ok(())
@@ -410,6 +450,22 @@ fn drop_database(database_url: &str) -> Result<(), crate::errors::Error> {
                     .execute(&mut conn)?;
             }
         }
+        #[cfg(feature = "mariadb")]
+        Backend::Mariadb => {
+            let (database, mariadb_url) = change_database_of_url(database_url, "information_schema")?;
+            let mut conn = MariadbConnection::establish(&mariadb_url).map_err(|e| {
+                crate::errors::Error::ConnectionError {
+                    error: e,
+                    url: mariadb_url,
+                }
+            })?;
+            if mariadb_database_exists(&mut conn, &database)? {
+                println!("Dropping database: {database}");
+                query_helper::drop_database(&database)
+                    .if_exists()
+                    .execute(&mut conn)?;
+            }
+        }
     }
     Ok(())
 }
@@ -454,6 +510,18 @@ fn mysql_database_exists(conn: &mut MysqlConnection, database_name: &str) -> Que
         .map(|x| x.is_some())
 }
 
+#[cfg(feature = "mariadb")]
+fn mariadb_database_exists(conn: &mut MariadbConnection, database_name: &str) -> QueryResult<bool> {
+    use self::schemata::dsl::*;
+
+    schemata
+        .select(schema_name)
+        .filter(schema_name.eq(database_name))
+        .get_result::<String>(conn)
+        .optional()
+        .map(|x| x.is_some())
+}
+
 /// Returns true if the `__diesel_schema_migrations` table exists in the
 /// database we connect to, returns false if it does not.
 pub fn schema_table_exists(database_url: &str) -> Result<bool, crate::errors::Error> {
@@ -477,6 +545,15 @@ pub fn schema_table_exists(database_url: &str) -> Result<bool, crate::errors::Er
         .get_result(&mut conn),
         #[cfg(feature = "mysql")]
         InferConnection::Mysql(mut conn) => select(sql::<Bool>(
+            "EXISTS \
+                    (SELECT 1 \
+                     FROM information_schema.tables \
+                     WHERE table_name = '__diesel_schema_migrations'
+                     AND table_schema = DATABASE())",
+        ))
+        .get_result(&mut conn),
+        #[cfg(feature = "mariadb")]
+        InferConnection::Mariadb(mut conn) => select(sql::<Bool>(
             "EXISTS \
                     (SELECT 1 \
                      FROM information_schema.tables \

@@ -2,7 +2,9 @@ use crate::Queryable;
 #[cfg(feature = "mysql_backend")]
 use crate::deserialize::FromSqlRef;
 use crate::deserialize::{self, FromSql};
-use crate::mysql::{Mysql, MysqlValue, NumericRepresentation};
+#[cfg(any(feature = "mysql_backend", feature = "mariadb_backend"))]
+use crate::mysql::MysqlLikeBackend;
+use crate::mysql::{MysqlValue, NumericRepresentation};
 use crate::result::Error::DeserializationError;
 use crate::sql_types::{BigInt, Binary, Double, Float, Integer, SmallInt, Text};
 use core::error::Error;
@@ -46,8 +48,8 @@ fn f64_to_i64(f: f64) -> deserialize::Result<i64> {
     }
 }
 
-#[cfg(feature = "mysql_backend")]
-impl FromSql<SmallInt, Mysql> for i16 {
+#[cfg(any(feature = "mysql_backend", feature = "mariadb_backend"))]
+impl<B: MysqlLikeBackend> FromSql<SmallInt, B> for i16 {
     fn from_sql(value: MysqlValue<'_>) -> deserialize::Result<Self> {
         match value.numeric_value()? {
             NumericRepresentation::Tiny(x) => Ok(x.into()),
@@ -77,8 +79,8 @@ impl FromSql<SmallInt, Mysql> for i16 {
     }
 }
 
-#[cfg(feature = "mysql_backend")]
-impl FromSql<Integer, Mysql> for i32 {
+#[cfg(any(feature = "mysql_backend", feature = "mariadb_backend"))]
+impl<B: MysqlLikeBackend> FromSql<Integer, B> for i32 {
     fn from_sql(value: MysqlValue<'_>) -> deserialize::Result<Self> {
         match value.numeric_value()? {
             NumericRepresentation::Tiny(x) => Ok(x.into()),
@@ -108,8 +110,8 @@ impl FromSql<Integer, Mysql> for i32 {
     }
 }
 
-#[cfg(feature = "mysql_backend")]
-impl FromSql<BigInt, Mysql> for i64 {
+#[cfg(any(feature = "mysql_backend", feature = "mariadb_backend"))]
+impl<B: MysqlLikeBackend> FromSql<BigInt, B> for i64 {
     fn from_sql(value: MysqlValue<'_>) -> deserialize::Result<Self> {
         match value.numeric_value()? {
             NumericRepresentation::Tiny(x) => Ok(x.into()),
@@ -123,8 +125,8 @@ impl FromSql<BigInt, Mysql> for i64 {
     }
 }
 
-#[cfg(feature = "mysql_backend")]
-impl FromSql<Float, Mysql> for f32 {
+#[cfg(any(feature = "mysql_backend", feature = "mariadb_backend"))]
+impl<B: MysqlLikeBackend> FromSql<Float, B> for f32 {
     fn from_sql(value: MysqlValue<'_>) -> deserialize::Result<Self> {
         match value.numeric_value()? {
             NumericRepresentation::Tiny(x) => Ok(x.into()),
@@ -140,8 +142,8 @@ impl FromSql<Float, Mysql> for f32 {
     }
 }
 
-#[cfg(feature = "mysql_backend")]
-impl FromSql<Double, Mysql> for f64 {
+#[cfg(any(feature = "mysql_backend", feature = "mariadb_backend"))]
+impl<B: MysqlLikeBackend> FromSql<Double, B> for f64 {
     fn from_sql(value: MysqlValue<'_>) -> deserialize::Result<Self> {
         match value.numeric_value()? {
             NumericRepresentation::Tiny(x) => Ok(x.into()),
@@ -160,24 +162,24 @@ impl FromSql<Double, Mysql> for f64 {
 /// impl in terms of `String`, but don't want to allocate. We have to return a
 /// raw pointer instead of a reference with a lifetime due to the structure of
 /// `FromSql`
-#[cfg(feature = "mysql_backend")]
-impl FromSql<Text, Mysql> for *const str {
+#[cfg(any(feature = "mysql_backend", feature = "mariadb_backend"))]
+impl<B: MysqlLikeBackend> FromSql<Text, B> for *const str {
     fn from_sql(value: MysqlValue<'_>) -> deserialize::Result<Self> {
         let string = str::from_utf8(value.as_bytes())?;
         Ok(string as *const str)
     }
 }
 
-#[cfg(feature = "mysql_backend")]
-impl<'a> FromSqlRef<'a, Text, Mysql> for &'a str {
+#[cfg(any(feature = "mysql_backend", feature = "mariadb_backend"))]
+impl<'a, B: MysqlLikeBackend> FromSqlRef<'a, Text, B> for &'a str {
     fn from_sql(bytes: &'a mut MysqlValue<'_>) -> deserialize::Result<Self> {
         let string = str::from_utf8(bytes.as_bytes())?;
         Ok(string)
     }
 }
 
-#[cfg(feature = "mysql_backend")]
-impl Queryable<Text, Mysql> for *const str {
+#[cfg(any(feature = "mysql_backend", feature = "mariadb_backend"))]
+impl<B: MysqlLikeBackend> Queryable<Text, B> for *const str {
     type Row = Self;
 
     fn build(row: Self::Row) -> deserialize::Result<Self> {
@@ -190,22 +192,22 @@ impl Queryable<Text, Mysql> for *const str {
 /// impl in terms of `Vec<u8>`, but don't want to allocate. We have to return a
 /// raw pointer instead of a reference with a lifetime due to the structure of
 /// `FromSql`
-#[cfg(feature = "mysql_backend")]
-impl FromSql<Binary, Mysql> for *const [u8] {
+#[cfg(any(feature = "mysql_backend", feature = "mariadb_backend"))]
+impl<B: MysqlLikeBackend> FromSql<Binary, B> for *const [u8] {
     fn from_sql(value: MysqlValue<'_>) -> deserialize::Result<Self> {
         Ok(value.as_bytes() as *const [u8])
     }
 }
 
-#[cfg(feature = "mysql_backend")]
-impl<'a> FromSqlRef<'a, Binary, Mysql> for &'a [u8] {
+#[cfg(any(feature = "mysql_backend", feature = "mariadb_backend"))]
+impl<'a, B: MysqlLikeBackend> FromSqlRef<'a, Binary, B> for &'a [u8] {
     fn from_sql(bytes: &'a mut MysqlValue<'_>) -> deserialize::Result<Self> {
         Ok(bytes.as_bytes())
     }
 }
 
-#[cfg(feature = "mysql_backend")]
-impl Queryable<Binary, Mysql> for *const [u8] {
+#[cfg(any(feature = "mysql_backend", feature = "mariadb_backend"))]
+impl<B: MysqlLikeBackend> Queryable<Binary, B> for *const [u8] {
     type Row = Self;
 
     fn build(row: Self::Row) -> deserialize::Result<Self> {

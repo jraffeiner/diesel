@@ -12,6 +12,8 @@ mod pg;
 mod schema_resolver;
 #[cfg(feature = "sqlite")]
 mod sqlite;
+#[cfg(feature = "mariadb")]
+mod mariadb;
 
 pub use self::data_structures::*;
 pub use self::foreign_keys::*;

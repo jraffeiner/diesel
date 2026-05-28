@@ -16,6 +16,7 @@ pub fn derive(item: DeriveInput) -> Result<TokenStream> {
 
     let sqlite_tokens = sqlite_tokens(&item, &model);
     let mysql_tokens = mysql_tokens(&item, &model);
+    let mariadb_tokens = mariadb_tokens(&item, &model);
     let pg_tokens = pg_tokens(&item, &model);
 
     let is_array = struct_name == "Array" && generic_count == 1;
@@ -38,6 +39,7 @@ pub fn derive(item: DeriveInput) -> Result<TokenStream> {
 
         #sqlite_tokens
         #mysql_tokens
+        #mariadb_tokens
         #pg_tokens
     }))
 }
@@ -88,6 +90,32 @@ fn mysql_tokens(item: &DeriveInput, model: &Model) -> Option<TokenStream> {
                 {
                     fn metadata(_: &mut ()) -> diesel::mysql::MysqlType {
                         diesel::mysql::MysqlType::#ty
+                    }
+                }
+            })
+        })
+}
+
+fn mariadb_tokens(item: &DeriveInput, model: &Model) -> Option<TokenStream> {
+    model
+        .mysql_type
+        .as_ref()
+        .map(|mysql_type| Ident::new(&mysql_type.name.value(), Span::call_site()))
+        .and_then(|ty| {
+            if cfg!(not(feature = "mariadb")) {
+                return None;
+            }
+
+            let struct_name = &item.ident;
+            let (impl_generics, ty_generics, where_clause) = item.generics.split_for_impl();
+
+            Some(quote! {
+                impl #impl_generics diesel::sql_types::HasSqlType<#struct_name #ty_generics>
+                    for diesel::mariadb::Mariadb
+                #where_clause
+                {
+                    fn metadata(_: &mut ()) -> diesel::mariadb::MariadbType {
+                        diesel::mariadb::MariadbType::#ty
                     }
                 }
             })
