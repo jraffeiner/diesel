@@ -23,7 +23,7 @@ impl TypeMetadata for Mariadb {
 }
 
 impl SqlDialect for Mariadb {
-    type ReturningClause = sql_dialect::returning_clause::DoesNotSupportReturningClause;
+    type ReturningClause = sql_dialect::returning_clause::PgLikeReturningClause;
 
     type OnConflictClause = MariadbOnConflictClause;
 
