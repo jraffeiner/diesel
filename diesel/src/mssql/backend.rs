@@ -98,7 +98,7 @@ impl TypeMetadata for Mssql {
 }
 
 impl SqlDialect for Mssql {
-    type ReturningClause = sql_dialect::returning_clause::DoesNotSupportReturningClause;
+    type ReturningClause = MssqlOutputClause;
 
     type OnConflictClause = sql_dialect::on_conflict_clause::DoesNotSupportOnConflictClause;
 
@@ -130,6 +130,9 @@ impl SqlDialect for Mssql {
 
 impl DieselReserveSpecialization for Mssql {}
 impl TrustedBackend for Mssql {}
+
+#[derive(Debug, Clone, Copy)]
+pub struct MssqlOutputClause;
 
 #[derive(Debug, Clone, Copy)]
 pub struct MssqlConcatClause;

@@ -178,7 +178,7 @@ impl<'a> QueryStream<'a> {
     /// # }
     /// ```
     pub fn columns(&mut self) -> crate::mssql::connection::Result<Option<&[Column]>> {
-        use ReceivedToken::*;
+        use ReceivedToken::{NewResultset, Row};
 
         loop {
             let item = self

@@ -274,6 +274,10 @@ impl HasSqlType<Unsigned<BigInt>> for Mysql {
     not(feature = "time"),
     doc = " [`time::OffsetDateTime`]: https://docs.rs/time/0.3.9/time/struct.OffsetDateTime.html"
 )]
+#[cfg_attr(
+    feature = "jiff",
+    doc = " [`jiff::Timestamp`]: jiff::Timestamp"
+)]
 #[derive(Debug, Clone, Copy, Default, QueryId, SqlType)]
 #[diesel(mysql_type(name = "DateTime"))]
 #[cfg(feature = "mysql_backend")]

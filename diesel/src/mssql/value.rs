@@ -1,3 +1,5 @@
+#[cfg(feature = "uuid")]
+use crate::sql_types::Uuid;
 use crate::sql_types::{BigInt, Binary, Bool, Double, Float, Integer, SmallInt, Text, TinyInt};
 
 macro_rules! from_diesel_sql {
@@ -9,7 +11,7 @@ macro_rules! from_diesel_sql {
                 bytes: <crate::mssql::Mssql as diesel::backend::Backend>::RawValue<'_>,
             ) -> diesel::deserialize::Result<Self> {
                 let res = crate::mssql::connection::FromSql::from_sql(&bytes)?;
-                res.ok_or(unexpected_null())
+                res.ok_or(crate::mssql::value::unexpected_null())
             }
         }
     };
@@ -19,7 +21,7 @@ macro_rules! from_diesel_sql {
                 bytes: <crate::mssql::Mssql as diesel::backend::Backend>::RawValue<'_>,
             ) -> diesel::deserialize::Result<Self> {
                 let res = crate::mssql::connection::FromSql::from_sql(&bytes)?;
-                res.ok_or(unexpected_null())
+                res.ok_or(crate::mssql::value::unexpected_null())
             }
         }
     };
@@ -34,7 +36,7 @@ macro_rules! owned_from_diesel_sql {
                 bytes: <crate::mssql::Mssql as diesel::backend::Backend>::RawValue<'_>,
             ) -> diesel::deserialize::Result<Self> {
                 let res = crate::mssql::connection::FromSqlOwned::from_sql_owned(bytes)?;
-                res.ok_or(unexpected_null())
+                res.ok_or(crate::mssql::value::unexpected_null())
             }
         }
     };
@@ -44,7 +46,7 @@ macro_rules! owned_from_diesel_sql {
                 bytes: <crate::mssql::Mssql as diesel::backend::Backend>::RawValue<'_>,
             ) -> diesel::deserialize::Result<Self> {
                 let res = crate::mssql::connection::FromSqlOwned::from_sql_owned(bytes)?;
-                res.ok_or(unexpected_null())
+                res.ok_or(crate::mssql::value::unexpected_null())
             }
         }
     };
@@ -60,6 +62,9 @@ from_diesel_sql!(Integer, u64);
 from_diesel_sql!(Double, f64);
 from_diesel_sql!(Float, f32);
 from_diesel_sql!(TinyInt, u8);
+
+#[cfg(feature = "uuid")]
+from_diesel_sql!(Uuid, uuid::Uuid);
 
 fn unexpected_null() -> Box<diesel::result::UnexpectedNullError> {
     Box::new(diesel::result::UnexpectedNullError)
@@ -80,8 +85,6 @@ mod bigdecimal_impl {
     use bigdecimal::BigDecimal;
     use diesel::sql_types;
 
-    use super::unexpected_null;
-
     from_diesel_sql!(sql_types::Decimal, BigDecimal);
 }
 
@@ -89,8 +92,6 @@ mod bigdecimal_impl {
 mod chrono_impl {
     use chrono::{DateTime, NaiveDate, NaiveDateTime, NaiveTime};
     use diesel::sql_types;
-
-    use super::unexpected_null;
 
     from_diesel_sql!(sql_types::Date, NaiveDate);
     from_diesel_sql!(sql_types::Time, NaiveTime);
@@ -106,8 +107,6 @@ mod time_impl {
     use diesel::sql_types;
     use time::{Date, Time};
 
-    use super::unexpected_null;
-
     from_diesel_sql!(sql_types::Date, Date);
     from_diesel_sql!(sql_types::Time, Time);
     from_diesel_sql!(sql_types::Timestamp, time::PrimitiveDateTime);
@@ -115,5 +114,24 @@ mod time_impl {
     from_diesel_sql!(
         crate::mssql::sql_types::DateTimeOffset,
         time::OffsetDateTime
+    );
+}
+
+#[cfg(feature = "jiff")]
+mod jiff_impl {
+    use diesel::sql_types;
+    use jiff::{Timestamp, Zoned};
+    use jiff::civil::{Date, Time};
+
+    from_diesel_sql!(sql_types::Date, Date);
+    from_diesel_sql!(sql_types::Time, Time);
+    from_diesel_sql!(sql_types::Timestamp, Timestamp);
+    from_diesel_sql!(
+        crate::mssql::sql_types::DateTimeOffset,
+        Zoned
+    );
+    from_diesel_sql!(
+        crate::mssql::sql_types::DateTimeOffset,
+        Timestamp
     );
 }

@@ -151,7 +151,6 @@ pub enum PrepareForCache {
     No,
 }
 
-#[expect(clippy::new_without_default)]
 impl<DB, Statement> StatementCache<DB, Statement>
 where
     DB: Backend + 'static,

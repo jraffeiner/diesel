@@ -105,3 +105,53 @@ mod time {
     #[cfg_attr(feature = "mssql_backend", diesel(sql_type = crate::mssql::sql_types::DateTimeOffset))]
     struct DateTimeProxy(OffsetDateTime);
 }
+
+
+#[cfg(feature = "jiff")]
+mod jiff {
+    use jiff::civil::{Date as NaiveDate, Time as NaiveTime};
+    use jiff::{Timestamp as NaiveDateTime, Zoned as DateTime, Span as Duration};
+    use crate::deserialize::FromSqlRow;
+    use crate::expression::AsExpression;
+    use crate::sql_types::{Date, Interval, Time, Timestamp};
+
+    #[derive(AsExpression, FromSqlRow)]
+    #[diesel(foreign_derive)]
+    #[diesel(sql_type = Date)]
+    struct NaiveDateProxy(NaiveDate);
+
+    #[derive(AsExpression, FromSqlRow)]
+    #[diesel(foreign_derive)]
+    #[diesel(sql_type = Time)]
+    struct NaiveTimeProxy(NaiveTime);
+
+    #[derive(AsExpression, FromSqlRow)]
+    #[diesel(foreign_derive)]
+    #[diesel(sql_type = Timestamp)]
+    #[cfg_attr(
+        feature = "postgres_backend",
+        diesel(sql_type = crate::sql_types::Timestamptz)
+    )]
+    #[cfg_attr(feature = "mysql_backend", diesel(sql_type = crate::sql_types::Datetime))]
+    #[cfg_attr(feature = "mssql_backend", diesel(sql_type = crate::mssql::sql_types::DateTimeOffset))]
+    struct NaiveDateTimeProxy(NaiveDateTime);
+
+    #[derive(FromSqlRow)]
+    #[diesel(foreign_derive)]
+    #[cfg_attr(
+        any(feature = "postgres_backend", feature = "sqlite", feature = "mssql"),
+        derive(AsExpression)
+    )]
+    #[cfg_attr(
+        feature = "postgres_backend",
+        diesel(sql_type = crate::sql_types::Timestamptz)
+    )]
+    #[cfg_attr(feature = "sqlite", diesel(sql_type = crate::sql_types::TimestamptzSqlite))]
+    #[cfg_attr(feature = "mssql_backend", diesel(sql_type = crate::mssql::sql_types::DateTimeOffset))]
+    struct DateTimeProxy(DateTime);
+
+    #[derive(AsExpression, FromSqlRow)]
+    #[diesel(foreign_derive)]
+    #[diesel(sql_type = Interval)]
+    struct DurationProxy(Duration);
+}

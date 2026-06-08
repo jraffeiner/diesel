@@ -162,6 +162,7 @@ fn mssql_diesel_types() -> HashSet<&'static str> {
     types.insert("Datetime2");
     types.insert("DateTimeOffset");
     types.insert("Real");
+    types.insert("Uuid");
     types
 }
 
@@ -253,7 +254,7 @@ pub fn output_schema(
                                         ColumnType {
                                             rust_name: format!(
                                                 "{} {} {}",
-                                                &t.name.rust_name, &c.rust_name, &ty.rust_name
+                                                &cd.table_name().rust_name, &c.rust_name, &ty.rust_name
                                             )
                                             .to_upper_camel_case(),
                                             ..ty.clone()
@@ -561,8 +562,8 @@ impl Display for CustomTypesForTablesForDisplay<'_> {
                     .zip(self.tables)
                     .flat_map(|(ct, t)| {
                         ct.iter()
-                            .zip(&t.column_data)
-                            .map(move |(ct, c)| (ct, c, &t.name))
+                            .zip(t.columns())
+                            .map(move |(ct, c)| (ct, c, t.table_name()))
                     })
                     .filter_map(|(ct, c, t)| ct.as_ref().map(|ct| (ct, t, c)))
                     .collect();

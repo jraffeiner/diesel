@@ -1,14 +1,7 @@
 use crate::{
-    backend::Backend,
-    expression::{operators::Concat, ValidGrouping},
-    mssql::Mssql,
-    query_builder::{
-        limit_clause::{LimitClause, NoLimitClause},
-        limit_offset_clause::{BoxedLimitOffsetClause, LimitOffsetClause},
-        offset_clause::{NoOffsetClause, OffsetClause},
-        AsQuery, FromClause, IntoBoxedClause, QueryFragment, QueryId, SelectStatement,
-    },
-    AppearsOnTable, Expression, QuerySource, SelectableExpression, Table,
+    AppearsOnTable, Expression, QuerySource, SelectableExpression, Table, backend::Backend, expression::{ValidGrouping, operators::Concat}, mssql::Mssql, query_builder::{
+        AsQuery, FromClause, IntoBoxedClause, QueryFragment, QueryId, SelectStatement, limit_clause::{LimitClause, NoLimitClause}, limit_offset_clause::{BoxedLimitOffsetClause, LimitOffsetClause}, offset_clause::{NoOffsetClause, OffsetClause}, returning_clause::ReturningClause
+    }
 };
 
 impl QueryFragment<Mssql> for LimitOffsetClause<NoLimitClause, NoOffsetClause> {
@@ -139,6 +132,16 @@ where
     }
 }
 
+impl<E> QueryFragment<Mssql, crate::mssql::backend::MssqlOutputClause> for ReturningClause<E>
+where E: QueryFragment<Mssql>,
+{
+    fn walk_ast<'b>(&'b self, mut pass: crate::query_builder::AstPass<'_, 'b, Mssql>) -> crate::prelude::QueryResult<()> {
+        pass.push_sql(" OUTPUT ");
+        self.0.walk_ast(pass.reborrow())
+    }
+}
+
+/// Adds table hine `NO LOCK` to query table, columns need to be wrapped in `NoLockMarker<T>`
 #[derive(Debug, Clone, Copy)]
 pub struct NoLock<T>(T);
 
@@ -234,7 +237,9 @@ where
     type SqlType = E::SqlType;
 }
 
+/// Adds a `no_lock` method to tables, which adds `NO LOCK` to the query when used in a `FROM` clause. Columns need to be wrapped in `NoLockMarker<T>` for use with `NO LOCK`
 pub trait WithNoLock: Sized {
+    /// Adds `NO LOCK` to the query when used in a `FROM` clause. Columns need to be wrapped in `NoLockMarker<T>` for use with `NO LOCK`
     fn no_lock(self) -> NoLock<Self>;
 }
 
@@ -253,6 +258,8 @@ where
     }
 }
 
+/// Columns need to wrapped with this struct for use with `NoLock<T>`
+#[derive(Debug)]
 pub struct NoLockMarker<T>(pub T);
 
 impl<T, G> ValidGrouping<G> for NoLockMarker<T>

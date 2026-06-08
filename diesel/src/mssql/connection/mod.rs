@@ -308,7 +308,6 @@ use super::Mssql;
 type TibClient = Client<TcpStream>;
 
 /// Connection Struct for Mssql Connections
-#[expect(clippy::module_name_repetitions)]
 pub struct MssqlConnection {
     client: TibClient,
     transaction_manager: MssqlTransactionManager,

@@ -33,3 +33,6 @@ impl SqlOrd for sql_types::Unsigned<sql_types::SmallInt> {}
 impl SqlOrd for sql_types::Unsigned<sql_types::Integer> {}
 #[cfg(feature = "mysql_backend")]
 impl SqlOrd for sql_types::Unsigned<sql_types::BigInt> {}
+
+#[cfg(feature = "mssql_backend")]
+impl SqlOrd for sql_types::DateTimeOffset {}

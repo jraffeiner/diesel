@@ -114,7 +114,6 @@ where
     /// done implicitly for references. For structs with lifetimes it must be
     /// done explicitly. This method matches the semantics of what Rust would do
     /// implicitly if you were passing a mutable reference
-    #[expect(clippy::explicit_auto_deref)] // clippy is wrong here
     pub fn reborrow(&'_ mut self) -> AstPass<'_, 'b, DB> {
         let internals = match self.internals {
             AstPassInternals::ToSql(ref mut builder, ref mut options) => {

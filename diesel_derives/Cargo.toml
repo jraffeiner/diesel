@@ -49,6 +49,7 @@ with-deprecated = []
 r2d2 = []
 chrono = []
 time = []
+jiff = []
 numeric = []
 
 [package.metadata.docs.rs]

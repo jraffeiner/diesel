@@ -22,6 +22,7 @@ impl Packet {
 }
 
 impl Encode<BytesMut> for Packet {
+    #[expect(clippy::cast_possible_truncation)]
     fn encode(self, dst: &mut BytesMut) -> crate::mssql::connection::Result<()> {
         let size = (self.payload.len() as u16 + HEADER_BYTES as u16).to_be_bytes();
 

@@ -91,6 +91,7 @@ impl<'a> From<RpcProcId> for RpcProcIdValue<'a> {
 }
 
 impl<'a> Encode<BytesMut> for TokenRpcRequest<'a> {
+    #[expect(clippy::cast_possible_truncation)]
     fn encode(self, dst: &mut BytesMut) -> Result<()> {
         dst.put_u32_le(ALL_HEADERS_LEN_TX as u32);
         dst.put_u32_le(ALL_HEADERS_LEN_TX as u32 - 4);

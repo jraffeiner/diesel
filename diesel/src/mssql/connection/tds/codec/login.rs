@@ -243,6 +243,7 @@ impl<'a> LoginMessage<'a> {
 }
 
 impl<'a> Encode<BytesMut> for LoginMessage<'a> {
+    #[expect(clippy::cast_possible_truncation)]
     fn encode(self, dst: &mut BytesMut) -> crate::mssql::connection::Result<()> {
         let mut cursor = Cursor::new(Vec::with_capacity(512));
 

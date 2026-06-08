@@ -79,6 +79,11 @@ pub mod multiconnection {
     pub use time;
 
     #[doc(hidden)]
+    #[cfg(feature = "jiff")]
+    pub use jiff;
+
+
+    #[doc(hidden)]
     #[cfg(feature = "numeric")]
     pub use bigdecimal;
 }

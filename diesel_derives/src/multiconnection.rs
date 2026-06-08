@@ -683,6 +683,20 @@ fn generate_bind_collector(connection_types: &[ConnectionVariant]) -> TokenStrea
             quote::quote!(diesel::internal::derives::multiconnection::time::Date),
         ));
     }
+    if cfg!(feature = "jiff") {
+        to_sql_impls.push((
+            quote::quote!(diesel::sql_types::Timestamp),
+            quote::quote!(diesel::internal::derives::multiconnection::jiff::Timestamp),
+        ));
+        to_sql_impls.push((
+            quote::quote!(diesel::sql_types::Time),
+            quote::quote!(diesel::internal::derives::multiconnection::jiff::civil::Time),
+        ));
+        to_sql_impls.push((
+            quote::quote!(diesel::sql_types::Date),
+            quote::quote!(diesel::internal::derives::multiconnection::jiff::civil::Date),
+        ));
+    }
     let to_sql_impls = to_sql_impls
         .into_iter()
         .map(|t| generate_to_sql_impls(t, connection_types));
@@ -741,6 +755,20 @@ fn generate_bind_collector(connection_types: &[ConnectionVariant]) -> TokenStrea
         from_sql_impls.push((
             quote::quote!(diesel::sql_types::Date),
             quote::quote!(diesel::internal::derives::multiconnection::time::Date),
+        ));
+    }
+    if cfg!(feature = "jiff") {
+        from_sql_impls.push((
+            quote::quote!(diesel::sql_types::Timestamp),
+            quote::quote!(diesel::internal::derives::multiconnection::jiff::Timestamp),
+        ));
+        from_sql_impls.push((
+            quote::quote!(diesel::sql_types::Time),
+            quote::quote!(diesel::internal::derives::multiconnection::jiff::Time),
+        ));
+        from_sql_impls.push((
+            quote::quote!(diesel::sql_types::Date),
+            quote::quote!(diesel::internal::derives::multiconnection::jiff::Date),
         ));
     }
     let from_sql_impls = from_sql_impls.into_iter().map(generate_from_sql_impls);

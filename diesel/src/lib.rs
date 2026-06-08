@@ -246,7 +246,7 @@
 // Clippy lints
 #![expect(
     clippy::match_same_arms,
-    clippy::needless_doctest_main,
+    //clippy::needless_doctest_main,
     clippy::map_unwrap_or,
     clippy::redundant_field_names,
     clippy::type_complexity
@@ -343,6 +343,9 @@ pub use time;
 
 #[cfg(feature = "chrono")]
 pub use chrono;
+
+#[cfg(feature = "jiff")]
+pub use jiff;
 
 #[expect(ambiguous_glob_reexports)]
 pub mod dsl {

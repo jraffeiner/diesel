@@ -15,8 +15,6 @@ use rsfbclient::{ColumnToVal, IntoParam, SqlType};
 use std::boxed::Box;
 use std::error::Error;
 use std::io::Write;
-#[cfg(feature = "time")]
-use time::*;
 
 /// Supported types by the diesel
 /// Firebird implementation

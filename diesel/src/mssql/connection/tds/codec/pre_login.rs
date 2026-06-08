@@ -42,6 +42,7 @@ pub(crate) struct PreloginMessage {
 }
 
 impl PreloginMessage {
+    #[expect(clippy::cast_possible_truncation)]
     pub(crate) fn new() -> PreloginMessage {
         let driver_version = crate::mssql::connection::get_driver_version();
         PreloginMessage {
@@ -91,6 +92,7 @@ const PRELOGIN_NONCEOPT: u8 = 7;
 const PRELOGIN_TERMINATOR: u8 = 0xff;
 
 impl Encode<BytesMut> for PreloginMessage {
+    #[expect(clippy::cast_possible_truncation)]
     fn encode(self, dst: &mut BytesMut) -> Result<()> {
         let mut fields = Vec::new();
         let mut data_cursor = Cursor::new(Vec::with_capacity(512));

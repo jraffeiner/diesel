@@ -10,6 +10,7 @@ where
     T: Iterator<Item = I>,
     I: Display,
 {
+    #[expect(clippy::unwrap_used)]
     fn join(mut self, sep: &str) -> String {
         let (lower_bound, _) = self.size_hint();
         let mut out = String::with_capacity(sep.len() * lower_bound);

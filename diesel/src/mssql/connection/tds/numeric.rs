@@ -87,6 +87,7 @@ impl Numeric {
         }
     }
 
+    #[expect(clippy::cast_possible_wrap)]
     pub(crate) fn decode<R>(
         src: &mut R,
         scale: u8,
@@ -156,6 +157,7 @@ impl Numeric {
 }
 
 impl Encode<BytesMut> for Numeric {
+    #[expect(clippy::cast_possible_truncation)]
     fn encode(self, dst: &mut BytesMut) -> crate::mssql::connection::Result<()> {
         dst.put_u8(self.len());
 

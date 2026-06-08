@@ -6,12 +6,6 @@ use crate::pg::{Pg, PgValue};
 use crate::serialize::{self, IsNull, Output, ToSql};
 use crate::sql_types::Uuid;
 
-#[derive(AsExpression, FromSqlRow)]
-#[diesel(foreign_derive)]
-#[diesel(sql_type = Uuid)]
-#[expect(dead_code)]
-struct UuidProxy(uuid::Uuid);
-
 #[cfg(all(feature = "postgres_backend", feature = "uuid"))]
 impl FromSql<Uuid, Pg> for uuid::Uuid {
     fn from_sql(value: PgValue<'_>) -> deserialize::Result<Self> {

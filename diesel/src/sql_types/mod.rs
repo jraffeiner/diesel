@@ -383,6 +383,10 @@ pub struct Time;
     not(feature = "time"),
     doc = " [`time::OffsetDateTime`]: https://docs.rs/time/0.3.9/time/struct.OffsetDateTime.html"
 )]
+#[cfg_attr(
+    feature = "jiff",
+    doc = " [Timestamp]: jiff::Timestamp"
+)]
 /// [Timespec]: /time/struct.Timespec.html
 #[derive(Debug, Clone, Copy, Default, QueryId, SqlType)]
 #[diesel(postgres_type(oid = 1114, array_oid = 1115))]
@@ -539,6 +543,26 @@ pub struct Json;
 #[diesel(postgres_type(oid = 3802, array_oid = 3807))]
 #[diesel(sqlite_type(name = "Binary"))]
 pub struct Jsonb;
+
+/// The [`UUID`] SQL type. This type can only be used with `feature = "uuid"`
+///
+/// ### [`ToSql`] impls
+///
+/// - [`uuid::Uuid`][Uuid]
+///
+/// ### [`FromSql`] impls
+///
+/// - [`uuid::Uuid`][Uuid]
+///
+/// [`ToSql`]: crate::serialize::ToSql
+/// [`FromSql`]: crate::deserialize::FromSql
+/// [Uuid]: https://docs.rs/uuid/*/uuid/struct.Uuid.html
+/// [`UUID`]: https://www.postgresql.org/docs/current/datatype-uuid.html
+#[cfg(any(feature = "postgres_backend", feature = "mssql_backend"))]
+#[derive(Debug, Clone, Copy, Default, QueryId, SqlType)]
+#[diesel(postgres_type(oid = 2950, array_oid = 2951))]
+#[diesel(mssql_type(name = "Guid"))]
+pub struct Uuid;
 
 /// The nullable SQL type.
 ///

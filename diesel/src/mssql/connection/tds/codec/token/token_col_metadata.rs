@@ -197,6 +197,7 @@ impl BaseMetaDataColumn {
 }
 
 impl<'a> Encode<BytesMut> for TokenColMetaData<'a> {
+    #[expect(clippy::cast_possible_truncation)]
     fn encode(self, dst: &mut BytesMut) -> crate::mssql::connection::Result<()> {
         dst.put_u8(TokenType::ColMetaData as u8);
         dst.put_u16_le(self.columns.len() as u16);
@@ -312,7 +313,7 @@ impl BaseMetaDataColumn {
     where
         R: SqlReadBytes,
     {
-        use VarLenType::*;
+        use VarLenType::{Text, NText, Image};
 
         let _user_ty = src.read_u32_le()?;
 

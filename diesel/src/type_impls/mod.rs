@@ -12,3 +12,6 @@ mod json;
 mod option;
 mod primitives;
 pub(crate) mod tuples;
+
+#[cfg(all(any(feature = "postgres_backend", feature = "mssql_backend"), feature = "uuid"))]
+mod uuid;

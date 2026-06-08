@@ -95,7 +95,6 @@ impl<DB: Backend + TypeMetadata> Default for RawBytesBindCollector<DB> {
     }
 }
 
-#[expect(clippy::new_without_default)]
 impl<DB: Backend + TypeMetadata> RawBytesBindCollector<DB> {
     /// Construct an empty `RawBytesBindCollector`
     pub fn new() -> Self {

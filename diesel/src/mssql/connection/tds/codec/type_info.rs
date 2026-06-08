@@ -66,6 +66,7 @@ impl VarLenContext {
 }
 
 impl Encode<BytesMut> for VarLenContext {
+    #[expect(clippy::cast_possible_truncation)]
     fn encode(self, dst: &mut BytesMut) -> crate::mssql::connection::Result<()> {
         dst.put_u8(self.r#type() as u8);
 
@@ -169,6 +170,7 @@ uint_enum! {
 }
 
 impl Encode<BytesMut> for TypeInfo {
+    #[expect(clippy::cast_possible_truncation)]
     fn encode(self, dst: &mut BytesMut) -> crate::mssql::connection::Result<()> {
         match self {
             TypeInfo::FixedLen(ty) => {

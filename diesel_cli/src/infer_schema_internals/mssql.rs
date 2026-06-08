@@ -278,6 +278,7 @@ pub fn determine_column_type(attr: &ColumnInformation) -> Result<ColumnType, cra
         is_nullable: attr.nullable,
         is_unsigned: unsigned,
         max_length: attr.max_length,
+        record: None,
     })
 }
 
@@ -327,6 +328,7 @@ fn determine_type_name(sql_type_name: &str) -> Result<String, crate::errors::Err
         "datetimeoffset" => "date_time_offset",
         "float" => "double",
         "nvarchar" => "varchar",
+        "uniqueidentifier" => "uuid",
         sql_type_name if sql_type_name.starts_with("int") => "integer",
         sql_type_name => {
             if let Some(idx) = sql_type_name.find('(') {

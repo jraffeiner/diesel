@@ -130,6 +130,9 @@ to_diesel_sql!(sql_types::Integer, i32);
 to_diesel_sql!(sql_types::SmallInt, i16);
 to_diesel_sql!(sql_types::Text, str);
 
+#[cfg(feature = "uuid")]
+to_diesel_sql!(sql_types::Uuid, uuid::Uuid);
+
 #[cfg(feature = "rust_decimal")]
 to_diesel_sql!(sql_types::Decimal, Decimal);
 
@@ -172,4 +175,20 @@ mod time_impl {
     to_diesel_sql!(sql_types::Date, Date);
     to_diesel_sql!(sql_types::Timestamp, OffsetDateTime);
     to_diesel_sql!(super::sql_types::DateTimeOffset, OffsetDateTime);
+}
+
+#[cfg(feature = "jiff")]
+mod jiff_impl {
+    use super::Mssql;
+    use super::Output;
+use jiff::{Timestamp, Zoned};
+    use jiff::civil::{Date, Time};
+    use diesel::sql_types;
+
+    to_diesel_sql!(sql_types::Timestamp, Timestamp);
+    to_diesel_sql!(super::sql_types::DateTimeOffset, Timestamp);
+    to_diesel_sql!(sql_types::Time, Time);
+    to_diesel_sql!(sql_types::Date, Date);
+    to_diesel_sql!(super::sql_types::DateTimeOffset, Zoned);
+
 }

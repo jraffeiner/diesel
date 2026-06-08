@@ -17,6 +17,7 @@ macro_rules! uint_enum {
 
         impl ::std::convert::TryFrom<u8> for $ty {
             type Error = ();
+            #[allow(clippy::cast_possible_truncation)]
             fn try_from(n: u8) -> ::std::result::Result<$ty, ()> {
                 match n {
                     $( x if x == $ty::$variant as u8 => Ok($ty::$variant), )*
@@ -27,6 +28,7 @@ macro_rules! uint_enum {
 
         impl ::std::convert::TryFrom<u32> for $ty {
             type Error = ();
+            #[allow(clippy::cast_possible_truncation)]
             fn try_from(n: u32) -> ::std::result::Result<$ty, ()> {
                 match n {
                     $( x if x == $ty::$variant as u32 => Ok($ty::$variant), )*

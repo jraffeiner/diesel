@@ -27,6 +27,9 @@ pub(crate) mod chrono;
 #[cfg(feature = "time")]
 pub(crate) mod time;
 
+#[cfg(feature = "jiff")]
+pub(crate) mod jiff;
+
 use crate::mssql::connection::{tds::codec::Encode, SqlReadBytes};
 use byteorder::{ByteOrder, LittleEndian};
 use bytes::{BufMut, BytesMut};
@@ -279,6 +282,7 @@ impl Time {
 }
 
 impl Encode<BytesMut> for Time {
+    #[expect(clippy::cast_possible_truncation)]
     fn encode(self, dst: &mut BytesMut) -> crate::mssql::connection::Result<()> {
         match self.len()? {
             3 => {

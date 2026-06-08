@@ -101,6 +101,7 @@ impl<'a> TokenRow<'a> {
 impl TokenRow<'static> {
     /// Normal row. We'll read the metadata what we've cached and parse columns
     /// based on that.
+    #[expect(clippy::unwrap_used)]
     pub(crate) fn decode<R>(src: &mut R) -> crate::mssql::connection::Result<Self>
     where
         R: SqlReadBytes,
@@ -121,6 +122,7 @@ impl TokenRow<'static> {
 
     /// SQL Server has packed nulls on this row type. We'll read what columns
     /// are null from the bitmap.
+    #[expect(clippy::unwrap_used)]
     pub(crate) fn decode_nbc<R>(src: &mut R) -> crate::mssql::connection::Result<Self>
     where
         R: SqlReadBytes,
@@ -182,7 +184,7 @@ impl RowBitmap {
     where
         R: SqlReadBytes,
     {
-        let size = (columns + 8 - 1) / 8;
+        let size = columns.div_ceil(8);
         let mut data = vec![0; size];
         src.read_exact(&mut data[0..size])?;
 
