@@ -8,9 +8,9 @@ mod information_schema;
 #[cfg(feature = "mariadb")]
 mod mariadb;
 #[cfg(feature = "mysql")]
-mod mysql;
+pub mod mysql;
 #[cfg(feature = "postgres")]
-mod pg;
+pub mod pg;
 mod schema_resolver;
 #[cfg(feature = "sqlite")]
 mod sqlite;

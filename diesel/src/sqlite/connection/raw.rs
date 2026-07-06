@@ -5,22 +5,39 @@ extern crate libsqlite3_sys as ffi;
 #[cfg(all(target_family = "wasm", target_os = "unknown"))]
 use sqlite_wasm_rs as ffi;
 
+use super::SqliteConnection;
+use super::authorizer::{AuthorizerContext, AuthorizerDecision};
 use super::functions::{build_sql_function_args, process_sql_function_result};
+use super::limits::SqliteLimit;
 use super::serialized_database::SerializedDatabase;
 use super::stmt::ensure_sqlite_ok;
+use super::trace::{SqliteTraceEvent, SqliteTraceFlags, TRACE_PROFILE, TRACE_ROW, TRACE_STMT};
+use super::{BusyDecision, CommitDecision, ProgressDecision};
 use super::{Sqlite, SqliteAggregateFunction};
 use crate::deserialize::FromSqlRow;
 use crate::result::Error::DatabaseError;
 use crate::result::*;
 use crate::serialize::ToSql;
 use crate::sql_types::HasSqlType;
-use alloc::borrow::ToOwned;
+use crate::sqlite::SqliteFunctionBehavior;
+use alloc::borrow::{Cow, ToOwned};
 use alloc::boxed::Box;
 use alloc::ffi::{CString, NulError};
 use alloc::string::{String, ToString};
 use core::ffi as libc;
+use core::ffi::CStr;
+use core::num::NonZeroU32;
 use core::ptr::NonNull;
 use core::{mem, ptr, slice, str};
+
+// `sqlite3_db_config()` option codes controlling whether ATTACH may create new
+// database files (ATTACH_CREATE) or open them in write mode (ATTACH_WRITE).
+// Introduced in SQLite 3.49.0 / `libsqlite3-sys` 0.35.0, but Diesel supports
+// `libsqlite3-sys` >= 0.17.2, so we define them here to build against any
+// supported version. On an older linked SQLite the `sqlite3_db_config()` call
+// fails at runtime, which callers already handle.
+pub(super) const SQLITE_DBCONFIG_ENABLE_ATTACH_CREATE: i32 = 1020;
+pub(super) const SQLITE_DBCONFIG_ENABLE_ATTACH_WRITE: i32 = 1021;
 
 /// For use in FFI function, which cannot unwind.
 /// Print the message, ask to open an issue at Github and [`abort`](std::process::abort).
@@ -39,9 +56,38 @@ macro_rules! assert_fail {
 #[allow(missing_debug_implementations, missing_copy_implementations)]
 pub(super) struct RawConnection {
     pub(super) internal_connection: NonNull<ffi::sqlite3>,
+    /// Boxed closure kept alive while the commit hook is registered.
+    commit_hook: Option<Box<dyn FnMut() -> CommitDecision + Send>>,
+    /// Boxed closure kept alive while the rollback hook is registered.
+    rollback_hook: Option<Box<dyn FnMut() + Send>>,
+    /// Boxed closure kept alive while the progress handler is registered.
+    progress_hook: Option<Box<dyn FnMut() -> ProgressDecision + Send>>,
+    /// Boxed closure kept alive while the WAL hook is registered.
+    wal_hook: Option<Box<dyn Fn(&mut SqliteConnection, &str, u32) + Send>>,
+    /// Boxed closure kept alive while the busy handler is registered.
+    busy_handler: Option<Box<dyn FnMut(i32) -> BusyDecision + Send>>,
+    /// Boxed closure kept alive while the authorizer is registered.
+    authorizer_hook: Option<Box<dyn FnMut(AuthorizerContext<'_>) -> AuthorizerDecision + Send>>,
+    /// Boxed closure kept alive while the trace callback is registered.
+    trace_hook: Option<Box<dyn FnMut(SqliteTraceEvent<'_>) + Send>>,
 }
 
 impl RawConnection {
+    /// Wraps a borrowed `sqlite3` pointer this `RawConnection` does not own
+    /// (kept in a `ManuallyDrop` for SQL-function callbacks, so `Drop` never runs).
+    pub(super) fn from_ptr(conn: NonNull<ffi::sqlite3>) -> Self {
+        RawConnection {
+            internal_connection: conn,
+            commit_hook: None,
+            rollback_hook: None,
+            progress_hook: None,
+            wal_hook: None,
+            busy_handler: None,
+            authorizer_hook: None,
+            trace_hook: None,
+        }
+    }
+
     pub(super) fn establish(database_url: &str) -> ConnectionResult<Self> {
         let mut conn_pointer = ptr::null_mut();
 
@@ -60,6 +106,13 @@ impl RawConnection {
                 let conn_pointer = unsafe { NonNull::new_unchecked(conn_pointer) };
                 Ok(RawConnection {
                     internal_connection: conn_pointer,
+                    commit_hook: None,
+                    rollback_hook: None,
+                    progress_hook: None,
+                    wal_hook: None,
+                    busy_handler: None,
+                    authorizer_hook: None,
+                    trace_hook: None,
                 })
             }
             err_code => {
@@ -108,7 +161,7 @@ impl RawConnection {
         &self,
         fn_name: &str,
         num_args: usize,
-        deterministic: bool,
+        behavior: SqliteFunctionBehavior,
         f: F,
     ) -> QueryResult<()>
     where
@@ -120,7 +173,7 @@ impl RawConnection {
         Sqlite: HasSqlType<RetSqlType>,
     {
         let c_fn_name = Self::get_fn_name(fn_name)?;
-        let flags = Self::get_flags(deterministic);
+        let flags = behavior.to_flags();
         let num_args = num_args
             .try_into()
             .map_err(|e| Error::SerializationError(Box::new(e)))?;
@@ -152,6 +205,7 @@ impl RawConnection {
         &self,
         fn_name: &str,
         num_args: usize,
+        behavior: SqliteFunctionBehavior,
     ) -> QueryResult<()>
     where
         A: SqliteAggregateFunction<Args, Output = Ret> + 'static + Send + core::panic::UnwindSafe,
@@ -160,7 +214,7 @@ impl RawConnection {
         Sqlite: HasSqlType<RetSqlType>,
     {
         let fn_name = Self::get_fn_name(fn_name)?;
-        let flags = Self::get_flags(false);
+        let flags = behavior.to_flags();
         let num_args = num_args
             .try_into()
             .map_err(|e| Error::SerializationError(Box::new(e)))?;
@@ -232,7 +286,11 @@ impl RawConnection {
         }
     }
 
-    pub(super) fn deserialize(&mut self, data: &[u8]) -> QueryResult<()> {
+    // SAFETY:
+    // Any caller must ensure that the provided data buffer is valid and not modified until the database connection is closed
+    // Sqlite's documentation states:
+    // Applications must not modify the buffer P or invalidate it before the database connection D is closed.
+    pub(super) unsafe fn deserialize(&mut self, data: &[u8]) -> QueryResult<()> {
         let db_size = data
             .len()
             .try_into()
@@ -253,16 +311,53 @@ impl RawConnection {
         }
     }
 
-    fn get_fn_name(fn_name: &str) -> Result<CString, NulError> {
-        CString::new(fn_name)
+    pub(super) fn set_limit(&self, limit: SqliteLimit, value: i32) -> i32 {
+        unsafe { ffi::sqlite3_limit(self.internal_connection.as_ptr(), limit.to_ffi(), value) }
     }
 
-    fn get_flags(deterministic: bool) -> i32 {
-        let mut flags = ffi::SQLITE_UTF8;
-        if deterministic {
-            flags |= ffi::SQLITE_DETERMINISTIC;
+    pub(super) fn get_limit(&self, limit: SqliteLimit) -> i32 {
+        unsafe {
+            // Passing -1 queries the current value without changing it
+            ffi::sqlite3_limit(self.internal_connection.as_ptr(), limit.to_ffi(), -1)
         }
-        flags
+    }
+
+    /// Set a boolean db_config option.
+    pub(super) fn set_db_config_bool(&self, op: i32, value: bool) -> QueryResult<()> {
+        let mut result_value: libc::c_int = 0;
+        let new_value: libc::c_int = if value { 1 } else { 0 };
+
+        let result = unsafe {
+            ffi::sqlite3_db_config(
+                self.internal_connection.as_ptr(),
+                op,
+                new_value,
+                &mut result_value as *mut libc::c_int,
+            )
+        };
+
+        ensure_sqlite_ok(result, self.internal_connection.as_ptr())
+    }
+
+    /// Get a boolean db_config option.
+    pub(super) fn get_db_config_bool(&self, op: i32) -> QueryResult<bool> {
+        let mut current_value: libc::c_int = 0;
+
+        let result = unsafe {
+            ffi::sqlite3_db_config(
+                self.internal_connection.as_ptr(),
+                op,
+                -1_i32, // -1 queries without changing
+                &mut current_value as *mut libc::c_int,
+            )
+        };
+
+        ensure_sqlite_ok(result, self.internal_connection.as_ptr())?;
+        Ok(current_value != 0)
+    }
+
+    fn get_fn_name(fn_name: &str) -> Result<CString, NulError> {
+        CString::new(fn_name)
     }
 
     fn process_sql_function_result(result: i32) -> Result<(), Error> {
@@ -325,11 +420,378 @@ impl RawConnection {
             _pd: core::marker::PhantomData,
         })
     }
+
+    /// Sets the commit hook, replacing any previous one.
+    ///
+    /// # Safety
+    ///
+    /// The `ptr` is derived from `&raw mut *boxed` and points to the heap
+    /// allocation of the closure. The `commit_hook_trampoline` function
+    /// matches the signature expected by `sqlite3_commit_hook`. The pointer
+    /// remains valid because we store `boxed` in `self.commit_hook` below,
+    /// keeping it alive for the lifetime of this `RawConnection`.
+    pub(super) fn set_commit_hook<F>(&mut self, hook: F)
+    where
+        F: FnMut() -> CommitDecision + Send + 'static,
+    {
+        let mut boxed: Box<dyn FnMut() -> CommitDecision + Send> = Box::new(hook);
+        let ptr = &raw mut *boxed as *mut libc::c_void;
+
+        unsafe {
+            ffi::sqlite3_commit_hook(
+                self.internal_connection.as_ptr(),
+                Some(commit_hook_trampoline::<F>),
+                ptr,
+            );
+        }
+
+        // The old Box (if any) is dropped here after SQLite has already
+        // switched to the new callback, preventing use-after-free.
+        self.commit_hook = Some(boxed);
+    }
+
+    /// Removes the commit hook.
+    ///
+    /// # Safety
+    ///
+    /// `self.internal_connection` is a valid pointer to an open SQLite
+    /// connection. Passing `None` as the hook and `null_mut()` as the user
+    /// data unregisters any existing commit hook. The hook is unregistered
+    /// before dropping `self.commit_hook` to prevent callbacks from firing
+    /// during cleanup.
+    pub(super) fn remove_commit_hook(&mut self) {
+        unsafe {
+            ffi::sqlite3_commit_hook(self.internal_connection.as_ptr(), None, ptr::null_mut());
+        }
+        self.commit_hook = None;
+    }
+
+    /// Sets the rollback hook, replacing any previous one.
+    ///
+    /// # Safety
+    ///
+    /// The `ptr` is derived from `&raw mut *boxed` and points to the heap
+    /// allocation of the closure. The `rollback_hook_trampoline` function
+    /// matches the signature expected by `sqlite3_rollback_hook`. The pointer
+    /// remains valid because we store `boxed` in `self.rollback_hook` below,
+    /// keeping it alive for the lifetime of this `RawConnection`.
+    pub(super) fn set_rollback_hook<F>(&mut self, hook: F)
+    where
+        F: FnMut() + Send + 'static,
+    {
+        let mut boxed: Box<dyn FnMut() + Send> = Box::new(hook);
+        let ptr = &raw mut *boxed as *mut libc::c_void;
+
+        unsafe {
+            ffi::sqlite3_rollback_hook(
+                self.internal_connection.as_ptr(),
+                Some(rollback_hook_trampoline::<F>),
+                ptr,
+            );
+        }
+
+        // The old Box (if any) is dropped here after SQLite has already
+        // switched to the new callback, preventing use-after-free.
+        self.rollback_hook = Some(boxed);
+    }
+
+    /// Removes the rollback hook.
+    ///
+    /// # Safety
+    ///
+    /// `self.internal_connection` is a valid pointer to an open SQLite
+    /// connection. Passing `None` as the hook and `null_mut()` as the user
+    /// data unregisters any existing rollback hook. The hook is unregistered
+    /// before dropping `self.rollback_hook` to prevent callbacks from firing
+    /// during cleanup.
+    pub(super) fn remove_rollback_hook(&mut self) {
+        unsafe {
+            ffi::sqlite3_rollback_hook(self.internal_connection.as_ptr(), None, ptr::null_mut());
+        }
+        self.rollback_hook = None;
+    }
+
+    /// Sets the progress handler, replacing any previous one.
+    ///
+    /// `n` is the approximate number of VM instructions between callbacks.
+    ///
+    /// # Safety
+    ///
+    /// The `ptr` is derived from `&raw mut *boxed` and points to the heap
+    /// allocation of the closure. The `progress_handler_trampoline` function
+    /// matches the signature expected by `sqlite3_progress_handler`. The
+    /// pointer remains valid because we store `boxed` in `self.progress_hook`
+    /// below, keeping it alive for the lifetime of this `RawConnection`.
+    pub(super) fn set_progress_handler<F>(&mut self, n: NonZeroU32, hook: F)
+    where
+        F: FnMut() -> ProgressDecision + Send + 'static,
+    {
+        let mut boxed: Box<dyn FnMut() -> ProgressDecision + Send> = Box::new(hook);
+        let ptr = &raw mut *boxed as *mut libc::c_void;
+
+        // `sqlite3_progress_handler` takes a c_int. A value above `i32::MAX`
+        // would wrap to a non-positive number and disable the handler, so clamp
+        // it to `i32::MAX` instead.
+        let n = i32::try_from(n.get()).unwrap_or(i32::MAX);
+
+        unsafe {
+            ffi::sqlite3_progress_handler(
+                self.internal_connection.as_ptr(),
+                n,
+                Some(progress_handler_trampoline::<F>),
+                ptr,
+            );
+        }
+
+        // The old Box (if any) is dropped here after SQLite has already
+        // switched to the new callback, preventing use-after-free.
+        self.progress_hook = Some(boxed);
+    }
+
+    /// Removes the progress handler.
+    ///
+    /// # Safety
+    ///
+    /// `self.internal_connection` is a valid pointer to an open SQLite
+    /// connection. Passing `None` as the handler and `null_mut()` as the user
+    /// data unregisters any existing progress handler. The handler is
+    /// unregistered before dropping `self.progress_hook` to prevent callbacks
+    /// from firing during cleanup.
+    pub(super) fn remove_progress_handler(&mut self) {
+        unsafe {
+            ffi::sqlite3_progress_handler(
+                self.internal_connection.as_ptr(),
+                0,
+                None,
+                ptr::null_mut(),
+            );
+        }
+        self.progress_hook = None;
+    }
+
+    /// Sets the WAL hook, replacing any previous one.
+    ///
+    /// The callback receives a borrowed `&mut SqliteConnection`, the database
+    /// name (e.g. `"main"`) and the number of pages currently in the WAL file.
+    ///
+    /// # Safety
+    ///
+    /// The `ptr` is derived from `&raw const *boxed` and points to the heap
+    /// allocation of the closure. The `wal_hook_trampoline` function matches the
+    /// signature expected by `sqlite3_wal_hook`. The pointer remains valid
+    /// because we store `boxed` in `self.wal_hook` below, keeping it alive for
+    /// the lifetime of this `RawConnection`.
+    pub(super) fn set_wal_hook<F>(&mut self, hook: F)
+    where
+        F: Fn(&mut SqliteConnection, &str, u32) + Send + 'static,
+    {
+        let boxed: Box<dyn Fn(&mut SqliteConnection, &str, u32) + Send> = Box::new(hook);
+        let ptr = &raw const *boxed as *mut libc::c_void;
+
+        unsafe {
+            ffi::sqlite3_wal_hook(
+                self.internal_connection.as_ptr(),
+                Some(wal_hook_trampoline::<F>),
+                ptr,
+            );
+        }
+
+        // The old Box (if any) is dropped here after SQLite has already
+        // switched to the new callback, preventing use-after-free.
+        self.wal_hook = Some(boxed);
+    }
+
+    /// Removes the WAL hook.
+    ///
+    /// # Safety
+    ///
+    /// `self.internal_connection` is a valid pointer to an open SQLite
+    /// connection. Passing `None` as the hook and `null_mut()` as the user
+    /// data unregisters any existing WAL hook. The hook is unregistered before
+    /// dropping `self.wal_hook` to prevent callbacks from firing during
+    /// cleanup.
+    pub(super) fn remove_wal_hook(&mut self) {
+        unsafe {
+            ffi::sqlite3_wal_hook(self.internal_connection.as_ptr(), None, ptr::null_mut());
+        }
+        self.wal_hook = None;
+    }
+
+    /// Sets the busy handler, replacing any previous one.
+    ///
+    /// Only one busy handler can be active at a time. Setting this clears any
+    /// busy timeout previously set with `set_busy_timeout`.
+    ///
+    /// # Safety
+    ///
+    /// The `ptr` is derived from `&raw mut *boxed` and points to the heap
+    /// allocation of the closure. The `busy_handler_trampoline` function
+    /// matches the signature expected by `sqlite3_busy_handler`. The pointer
+    /// remains valid because we store `boxed` in `self.busy_handler` below,
+    /// keeping it alive for the lifetime of this `RawConnection`.
+    pub(super) fn set_busy_handler<F>(&mut self, hook: F)
+    where
+        F: FnMut(i32) -> BusyDecision + Send + 'static,
+    {
+        let mut boxed: Box<dyn FnMut(i32) -> BusyDecision + Send> = Box::new(hook);
+        let ptr = &raw mut *boxed as *mut libc::c_void;
+
+        unsafe {
+            ffi::sqlite3_busy_handler(
+                self.internal_connection.as_ptr(),
+                Some(busy_handler_trampoline::<F>),
+                ptr,
+            );
+        }
+
+        // The old Box (if any) is dropped here after SQLite has already
+        // switched to the new callback, preventing use-after-free.
+        self.busy_handler = Some(boxed);
+    }
+
+    /// Removes the busy handler.
+    ///
+    /// # Safety
+    ///
+    /// `self.internal_connection` is a valid pointer to an open SQLite
+    /// connection. Passing `None` as the hook and `null_mut()` as the user
+    /// data unregisters any existing busy handler. The hook is unregistered
+    /// before dropping `self.busy_handler` to prevent callbacks from firing
+    /// during cleanup.
+    pub(super) fn remove_busy_handler(&mut self) {
+        unsafe {
+            ffi::sqlite3_busy_handler(self.internal_connection.as_ptr(), None, ptr::null_mut());
+        }
+        self.busy_handler = None;
+    }
+
+    /// Sets a simple timeout-based busy handler.
+    ///
+    /// SQLite will sleep and retry until `ms` milliseconds have elapsed.
+    /// Setting this clears any custom busy handler.
+    ///
+    /// # Safety
+    ///
+    /// `self.internal_connection` is a valid pointer to an open SQLite
+    /// connection. `sqlite3_busy_timeout` installs its own internal busy
+    /// handler, so the stored `busy_handler` is dropped afterwards to release
+    /// the now-unused closure.
+    pub(super) fn set_busy_timeout(&mut self, ms: i32) {
+        unsafe {
+            ffi::sqlite3_busy_timeout(self.internal_connection.as_ptr(), ms);
+        }
+        self.busy_handler = None;
+    }
+
+    /// Sets the authorizer callback, replacing any previous one. Only one
+    /// can be active at a time per connection.
+    ///
+    /// # Safety
+    ///
+    /// The `ptr` is derived from `&raw mut *boxed` and points to the heap
+    /// allocation of the closure. The `authorizer_trampoline` function
+    /// matches the signature expected by `sqlite3_set_authorizer`. The pointer
+    /// remains valid because we store `boxed` in `self.authorizer_hook` below,
+    /// keeping it alive for the lifetime of this `RawConnection`.
+    pub(super) fn set_authorizer<F>(&mut self, hook: F)
+    where
+        F: FnMut(AuthorizerContext<'_>) -> AuthorizerDecision + Send + 'static,
+    {
+        let mut boxed: Box<dyn FnMut(AuthorizerContext<'_>) -> AuthorizerDecision + Send> =
+            Box::new(hook);
+        let ptr = &raw mut *boxed as *mut libc::c_void;
+
+        unsafe {
+            ffi::sqlite3_set_authorizer(
+                self.internal_connection.as_ptr(),
+                Some(authorizer_trampoline::<F>),
+                ptr,
+            );
+        }
+
+        // The old Box (if any) is dropped here after SQLite has already
+        // switched to the new callback, preventing use-after-free.
+        self.authorizer_hook = Some(boxed);
+    }
+
+    /// Removes the authorizer callback.
+    ///
+    /// # Safety
+    ///
+    /// `self.internal_connection` is a valid pointer to an open SQLite
+    /// connection. Passing `None` as the callback and `null_mut()` as the
+    /// user data unregisters any existing authorizer. The authorizer is
+    /// unregistered before dropping `self.authorizer_hook` to prevent
+    /// callbacks from firing during cleanup.
+    pub(super) fn remove_authorizer(&mut self) {
+        unsafe {
+            ffi::sqlite3_set_authorizer(self.internal_connection.as_ptr(), None, ptr::null_mut());
+        }
+        self.authorizer_hook = None;
+    }
+
+    /// Sets a trace callback, replacing any previous one.
+    ///
+    /// The callback is invoked for SQL execution tracing based on the
+    /// provided event mask.
+    ///
+    /// # Safety
+    ///
+    /// The `ptr` is derived from `&raw mut *boxed` and points to the heap
+    /// allocation of the closure. The `trace_trampoline` function matches the
+    /// signature expected by `sqlite3_trace_v2`. The pointer remains valid
+    /// because we store `boxed` in `self.trace_hook` below, keeping it alive
+    /// for the lifetime of this `RawConnection`.
+    pub(super) fn set_trace<F>(&mut self, mask: SqliteTraceFlags, hook: F)
+    where
+        F: FnMut(SqliteTraceEvent<'_>) + Send + 'static,
+    {
+        let mut boxed: Box<dyn FnMut(SqliteTraceEvent<'_>) + Send> = Box::new(hook);
+        let ptr = &raw mut *boxed as *mut libc::c_void;
+
+        unsafe {
+            ffi::sqlite3_trace_v2(
+                self.internal_connection.as_ptr(),
+                mask.bits(),
+                Some(trace_trampoline::<F>),
+                ptr,
+            );
+        }
+
+        // The old Box (if any) is dropped here after SQLite has already
+        // switched to the new callback, preventing use-after-free.
+        self.trace_hook = Some(boxed);
+    }
+
+    /// Removes the trace callback.
+    ///
+    /// # Safety
+    ///
+    /// `self.internal_connection` is a valid pointer to an open SQLite
+    /// connection. Passing a mask of `0`, `None` as the callback, and
+    /// `null_mut()` as the user data unregisters any existing trace callback.
+    /// The callback is unregistered before dropping `self.trace_hook` to
+    /// prevent callbacks from firing during cleanup.
+    pub(super) fn remove_trace(&mut self) {
+        unsafe {
+            ffi::sqlite3_trace_v2(self.internal_connection.as_ptr(), 0, None, ptr::null_mut());
+        }
+        self.trace_hook = None;
+    }
 }
 
 impl Drop for RawConnection {
     fn drop(&mut self) {
         use crate::util::std_compat::panicking;
+
+        // Unregister before close so the boxed closures drop before sqlite3_close.
+        self.remove_commit_hook();
+        self.remove_rollback_hook();
+        self.remove_progress_handler();
+        self.remove_wal_hook();
+        self.remove_busy_handler();
+        self.remove_authorizer();
+        self.remove_trace();
 
         let close_result = unsafe { ffi::sqlite3_close(self.internal_connection.as_ptr()) };
         if close_result != ffi::SQLITE_OK {
@@ -398,9 +860,7 @@ extern "C" fn run_custom_function<F, Ret, RetSqlType>(
     let conn = match unsafe { NonNull::new(ffi::sqlite3_context_db_handle(ctx)) } {
         // We use `ManuallyDrop` here because we do not want to run the
         // Drop impl of `RawConnection` as this would close the connection
-        Some(conn) => mem::ManuallyDrop::new(RawConnection {
-            internal_connection: conn,
-        }),
+        Some(conn) => mem::ManuallyDrop::new(RawConnection::from_ptr(conn)),
         None => {
             unsafe { context_error_str(ctx, NULL_CONN_ERR) };
             return;
@@ -421,6 +881,9 @@ extern "C" fn run_custom_function<F, Ret, RetSqlType>(
     // We need this to move the reference into the catch_unwind part
     // this is sound as `F` itself and the stored string is `UnwindSafe`
     let callback = core::panic::AssertUnwindSafe(&mut data_ptr.callback);
+    // conn holds a `Box<dyn FnMut() -> CommitDecision + Send>` hook field which is not UnwindSafe.
+    // The ManuallyDrop wrapper ensures we never run RawConnection's Drop.
+    let conn = core::panic::AssertUnwindSafe(conn);
 
     let result = crate::util::std_compat::catch_unwind(move || {
         let _ = &callback;
@@ -697,4 +1160,288 @@ where
 extern "C" fn destroy_boxed<F>(data: *mut libc::c_void) {
     let ptr = data as *mut F;
     unsafe { core::mem::drop(Box::from_raw(ptr)) };
+}
+
+/// C trampoline for `sqlite3_commit_hook`.
+///
+/// # Safety
+///
+/// `user_data` must point to a live `F` stored in `RawConnection::commit_hook`.
+unsafe extern "C" fn commit_hook_trampoline<F>(user_data: *mut libc::c_void) -> libc::c_int
+where
+    F: FnMut() -> CommitDecision,
+{
+    let result = crate::util::std_compat::catch_unwind(core::panic::AssertUnwindSafe(|| {
+        // SAFETY: `user_data` points to a live `F` in `RawConnection::commit_hook`.
+        let f = unsafe { &mut *(user_data as *mut F) };
+        f()
+    }));
+
+    match result {
+        Ok(CommitDecision::Rollback) => 1,
+        Ok(CommitDecision::Proceed) => 0,
+        Err(_) => {
+            assert_fail!("Panic in sqlite3_commit_hook trampoline. ");
+        }
+    }
+}
+
+/// C trampoline for `sqlite3_rollback_hook`.
+///
+/// # Safety
+///
+/// `user_data` must point to a live `F` stored in `RawConnection::rollback_hook`.
+unsafe extern "C" fn rollback_hook_trampoline<F>(user_data: *mut libc::c_void)
+where
+    F: FnMut(),
+{
+    let result = crate::util::std_compat::catch_unwind(core::panic::AssertUnwindSafe(|| {
+        // SAFETY: `user_data` points to a live `F` in `RawConnection::rollback_hook`.
+        let f = unsafe { &mut *(user_data as *mut F) };
+        f();
+    }));
+
+    if result.is_err() {
+        assert_fail!("Panic in sqlite3_rollback_hook trampoline. ");
+    }
+}
+
+/// C trampoline for `sqlite3_progress_handler`.
+///
+/// # Safety
+///
+/// `user_data` must point to a live `F` stored in `RawConnection::progress_hook`.
+unsafe extern "C" fn progress_handler_trampoline<F>(user_data: *mut libc::c_void) -> libc::c_int
+where
+    F: FnMut() -> ProgressDecision,
+{
+    let result = crate::util::std_compat::catch_unwind(core::panic::AssertUnwindSafe(|| {
+        // SAFETY: `user_data` points to a live `F` in `RawConnection::progress_hook`.
+        let f = unsafe { &mut *(user_data as *mut F) };
+        f()
+    }));
+
+    match result {
+        Ok(ProgressDecision::Interrupt) => 1,
+        Ok(ProgressDecision::Continue) => 0,
+        Err(_) => {
+            assert_fail!("Panic in sqlite3_progress_handler trampoline. ");
+        }
+    }
+}
+
+/// C trampoline for `sqlite3_wal_hook`.
+///
+/// # Safety
+///
+/// `user_data` must point to a live `F` in `RawConnection::wal_hook`. `db` is
+/// the `sqlite3` handle that fired the hook, open and unlocked for the duration
+/// of the call.
+unsafe extern "C" fn wal_hook_trampoline<F>(
+    user_data: *mut libc::c_void,
+    db: *mut ffi::sqlite3,
+    db_name: *const libc::c_char,
+    n_pages: libc::c_int,
+) -> libc::c_int
+where
+    F: Fn(&mut SqliteConnection, &str, u32),
+{
+    let result = crate::util::std_compat::catch_unwind(core::panic::AssertUnwindSafe(|| {
+        // SAFETY: `user_data` points to a live `F` in `RawConnection::wal_hook`.
+        let f = unsafe { &*(user_data as *const F) };
+
+        // SAFETY: when non-null, `db_name` is a valid C string from SQLite. Use
+        // a lossy conversion so a pathological name cannot abort, and map null
+        // to "".
+        let db_name: Cow<'_, str> = if db_name.is_null() {
+            Cow::Borrowed("")
+        } else {
+            unsafe { CStr::from_ptr(db_name) }.to_string_lossy()
+        };
+        // SQLite always reports a non-negative page count. Clamp defensively.
+        let n_pages = u32::try_from(n_pages).unwrap_or(0);
+
+        let Some(db) = NonNull::new(db) else {
+            return;
+        };
+
+        // SAFETY: per the `sqlite3_wal_hook` docs the commit is complete and the
+        // write-lock released, so `db` may be used. `with_borrowed_connection`
+        // finalizes statements on return and never closes `db`. The callback is
+        // `Fn`, so a re-entrant call (a committing write inside it) is sound.
+        unsafe {
+            SqliteConnection::with_borrowed_connection(db, |conn| f(conn, &db_name, n_pages));
+        }
+    }));
+
+    if result.is_err() {
+        assert_fail!("Panic in sqlite3_wal_hook trampoline. ");
+    }
+
+    ffi::SQLITE_OK
+}
+
+/// C trampoline for `sqlite3_busy_handler`.
+///
+/// # Safety
+///
+/// `user_data` must point to a live `F` stored in `RawConnection::busy_handler`.
+unsafe extern "C" fn busy_handler_trampoline<F>(
+    user_data: *mut libc::c_void,
+    retry_count: libc::c_int,
+) -> libc::c_int
+where
+    F: FnMut(i32) -> BusyDecision,
+{
+    let result = crate::util::std_compat::catch_unwind(core::panic::AssertUnwindSafe(|| {
+        // SAFETY: `user_data` points to a live `F` in `RawConnection::busy_handler`.
+        let f = unsafe { &mut *(user_data as *mut F) };
+        f(retry_count)
+    }));
+
+    match result {
+        Ok(BusyDecision::Retry) => 1,
+        Ok(BusyDecision::GiveUp) => 0,
+        Err(_) => {
+            assert_fail!("Panic in sqlite3_busy_handler trampoline. ");
+        }
+    }
+}
+
+/// C trampoline for `sqlite3_set_authorizer`.
+///
+/// # Safety
+///
+/// `user_data` must point to a live `F` stored in `RawConnection::authorizer_hook`.
+unsafe extern "C" fn authorizer_trampoline<F>(
+    user_data: *mut libc::c_void,
+    action_code: libc::c_int,
+    arg1: *const libc::c_char,
+    arg2: *const libc::c_char,
+    db_name: *const libc::c_char,
+    accessor: *const libc::c_char,
+) -> libc::c_int
+where
+    F: FnMut(AuthorizerContext<'_>) -> AuthorizerDecision,
+{
+    // Convert a nullable C string argument to `Option<&str>`. A null pointer or
+    // a non-UTF-8 string both map to `None`. The borrow is tied to this call via
+    // the generic lifetime, and the resulting `&str` only lives inside the
+    // `AuthorizerContext` passed to the callback, which cannot escape the call.
+    fn to_str<'a>(ptr: *const libc::c_char) -> Option<&'a str> {
+        if ptr.is_null() {
+            None
+        } else {
+            // SAFETY: per the `sqlite3_set_authorizer` contract a non-null
+            // pointer is a valid C string for the duration of the call.
+            unsafe { CStr::from_ptr(ptr) }.to_str().ok()
+        }
+    }
+
+    let result = crate::util::std_compat::catch_unwind(core::panic::AssertUnwindSafe(|| {
+        // SAFETY: `user_data` points to a live `F` in `RawConnection::authorizer_hook`.
+        let f = unsafe { &mut *(user_data as *mut F) };
+
+        let ctx = AuthorizerContext::from_ffi(
+            action_code,
+            to_str(arg1),
+            to_str(arg2),
+            to_str(db_name),
+            to_str(accessor),
+        );
+
+        f(ctx)
+    }));
+
+    match result {
+        Ok(decision) => decision.to_ffi(),
+        Err(_) => {
+            assert_fail!("Panic in sqlite3_set_authorizer trampoline. ");
+        }
+    }
+}
+
+/// C trampoline for `sqlite3_trace_v2`.
+///
+/// # Safety
+///
+/// `user_data` must point to a live `F` stored in `RawConnection::trace_hook`.
+unsafe extern "C" fn trace_trampoline<F>(
+    event_code: libc::c_uint,
+    user_data: *mut libc::c_void,
+    p: *mut libc::c_void,
+    x: *mut libc::c_void,
+) -> libc::c_int
+where
+    F: FnMut(SqliteTraceEvent<'_>) + Send + 'static,
+{
+    let result = crate::util::std_compat::catch_unwind(core::panic::AssertUnwindSafe(|| {
+        // SAFETY: `user_data` points to a live `F` in `RawConnection::trace_hook`.
+        let f = unsafe { &mut *(user_data as *mut F) };
+
+        // The callback is invoked inside each arm so the lossy `Cow` holding the
+        // SQL text outlives the `&str` borrow handed to it. `TRACE_STMT`,
+        // `TRACE_PROFILE`, and `TRACE_ROW` are the `u32`-normalized event codes
+        // from the `trace` module, so they match `event_code` directly.
+        match event_code {
+            TRACE_STMT => {
+                // p = sqlite3_stmt*, x = const char* (unexpanded SQL).
+                let stmt_ptr = p as *mut ffi::sqlite3_stmt;
+                let sql_ptr = x as *const libc::c_char;
+                if sql_ptr.is_null() {
+                    return;
+                }
+                // SAFETY: a non-null `x` is a valid C string from SQLite. Use a
+                // lossy conversion so non-UTF-8 SQL cannot abort the process.
+                let sql = unsafe { CStr::from_ptr(sql_ptr) }.to_string_lossy();
+                let readonly =
+                    !stmt_ptr.is_null() && unsafe { ffi::sqlite3_stmt_readonly(stmt_ptr) != 0 };
+                f(SqliteTraceEvent::Statement {
+                    sql: &sql,
+                    readonly,
+                });
+            }
+            TRACE_PROFILE => {
+                // p = sqlite3_stmt*, x = sqlite3_int64* (nanoseconds).
+                let stmt_ptr = p as *mut ffi::sqlite3_stmt;
+                let duration_ns = unsafe {
+                    // x points to a sqlite3_int64. The duration is non-negative.
+                    (x as *const ffi::sqlite3_int64).as_ref()
+                }
+                .copied()
+                .unwrap_or_default()
+                .cast_unsigned();
+
+                let readonly =
+                    !stmt_ptr.is_null() && unsafe { ffi::sqlite3_stmt_readonly(stmt_ptr) != 0 };
+                let sql_ptr = if stmt_ptr.is_null() {
+                    core::ptr::null()
+                } else {
+                    unsafe { ffi::sqlite3_sql(stmt_ptr) }
+                };
+                // SAFETY: when non-null, `sqlite3_sql` returns a valid C string.
+                let sql = if sql_ptr.is_null() {
+                    Cow::Borrowed("")
+                } else {
+                    unsafe { CStr::from_ptr(sql_ptr) }.to_string_lossy()
+                };
+                f(SqliteTraceEvent::Profile {
+                    sql: &sql,
+                    duration_ns,
+                    readonly,
+                });
+            }
+            TRACE_ROW => f(SqliteTraceEvent::Row),
+            // Unknown or unhandled events are ignored. CLOSE is intentionally
+            // not handled: diesel removes the trace before closing the
+            // connection, so it never fires.
+            _ => {}
+        }
+    }));
+
+    if result.is_err() {
+        assert_fail!("Panic in sqlite3_trace_v2 trampoline. ");
+    }
+
+    0 // Return value is currently unused by SQLite
 }
