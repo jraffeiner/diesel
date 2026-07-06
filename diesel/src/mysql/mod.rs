@@ -44,19 +44,26 @@ pub mod sql_types {
 }
 
 pub(crate) trait MysqlLikeBackend
-where Self: for<'a> Backend<RawValue<'a> = MysqlValue<'a>, BindCollector<'a> = RawBytesBindCollector<Self>>,
+where
+    Self: for<'a> Backend<
+            RawValue<'a> = MysqlValue<'a>,
+            BindCollector<'a> = RawBytesBindCollector<Self>,
+        >,
     Self: TypeMetadata<TypeMetadata = MysqlType, MetadataLookup = ()>,
     Self: Backend<QueryBuilder = MysqlLikeQueryBuilder<Self>>,
     Self: Hash + Eq + Default,
     Self: DieselReserveSpecialization,
     Self: 'static,
-{}
+{
+}
 
 impl<B: Backend> MysqlLikeBackend for B
-where B: for<'a> Backend<RawValue<'a> = MysqlValue<'a>, BindCollector<'a> = RawBytesBindCollector<B>>,
+where
+    B: for<'a> Backend<RawValue<'a> = MysqlValue<'a>, BindCollector<'a> = RawBytesBindCollector<B>>,
     B: TypeMetadata<TypeMetadata = MysqlType, MetadataLookup = ()>,
     B: Backend<QueryBuilder = MysqlLikeQueryBuilder<B>>,
     B: Hash + Eq + Default,
     B: DieselReserveSpecialization,
     B: 'static,
-{}
+{
+}

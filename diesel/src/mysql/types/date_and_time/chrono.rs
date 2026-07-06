@@ -8,21 +8,30 @@ use crate::sql_types::{Date, Datetime, Time, Timestamp};
 
 use super::{MysqlTime, MysqlTimestampType};
 
-#[cfg(all(feature = "chrono", any(feature = "mysql_backend", feature = "mariadb_backend")))]
+#[cfg(all(
+    feature = "chrono",
+    any(feature = "mysql_backend", feature = "mariadb_backend")
+))]
 impl<B: MysqlLikeBackend> ToSql<Datetime, B> for NaiveDateTime {
     fn to_sql<'b>(&'b self, out: &mut Output<'b, '_, B>) -> serialize::Result {
         <NaiveDateTime as ToSql<Timestamp, B>>::to_sql(self, out)
     }
 }
 
-#[cfg(all(feature = "chrono", any(feature = "mysql_backend", feature = "mariadb_backend")))]
+#[cfg(all(
+    feature = "chrono",
+    any(feature = "mysql_backend", feature = "mariadb_backend")
+))]
 impl<B: MysqlLikeBackend> FromSql<Datetime, B> for NaiveDateTime {
     fn from_sql(bytes: MysqlValue<'_>) -> deserialize::Result<Self> {
         <NaiveDateTime as FromSql<Timestamp, B>>::from_sql(bytes)
     }
 }
 
-#[cfg(all(feature = "chrono", any(feature = "mysql_backend", feature = "mariadb_backend")))]
+#[cfg(all(
+    feature = "chrono",
+    any(feature = "mysql_backend", feature = "mariadb_backend")
+))]
 impl<B: MysqlLikeBackend> ToSql<Timestamp, B> for NaiveDateTime {
     fn to_sql<'b>(&'b self, out: &mut Output<'b, '_, B>) -> serialize::Result {
         let mysql_time = MysqlTime {
@@ -43,7 +52,10 @@ impl<B: MysqlLikeBackend> ToSql<Timestamp, B> for NaiveDateTime {
     }
 }
 
-#[cfg(all(feature = "chrono", any(feature = "mysql_backend", feature = "mariadb_backend")))]
+#[cfg(all(
+    feature = "chrono",
+    any(feature = "mysql_backend", feature = "mariadb_backend")
+))]
 impl<B: MysqlLikeBackend> FromSql<Timestamp, B> for NaiveDateTime {
     fn from_sql(bytes: MysqlValue<'_>) -> deserialize::Result<Self> {
         let mysql_time = <MysqlTime as FromSql<Timestamp, B>>::from_sql(bytes)?;
@@ -61,7 +73,10 @@ impl<B: MysqlLikeBackend> FromSql<Timestamp, B> for NaiveDateTime {
     }
 }
 
-#[cfg(all(feature = "chrono", any(feature = "mysql_backend", feature = "mariadb_backend")))]
+#[cfg(all(
+    feature = "chrono",
+    any(feature = "mysql_backend", feature = "mariadb_backend")
+))]
 impl<B: MysqlLikeBackend> ToSql<Time, B> for NaiveTime {
     fn to_sql<'b>(&'b self, out: &mut serialize::Output<'b, '_, B>) -> serialize::Result {
         let mysql_time = MysqlTime {
@@ -81,7 +96,10 @@ impl<B: MysqlLikeBackend> ToSql<Time, B> for NaiveTime {
     }
 }
 
-#[cfg(all(feature = "chrono", any(feature = "mysql_backend", feature = "mariadb_backend")))]
+#[cfg(all(
+    feature = "chrono",
+    any(feature = "mysql_backend", feature = "mariadb_backend")
+))]
 impl<B: MysqlLikeBackend> FromSql<Time, B> for NaiveTime {
     fn from_sql(bytes: MysqlValue<'_>) -> deserialize::Result<Self> {
         let mysql_time = <MysqlTime as FromSql<Time, B>>::from_sql(bytes)?;
@@ -90,7 +108,10 @@ impl<B: MysqlLikeBackend> FromSql<Time, B> for NaiveTime {
     }
 }
 
-#[cfg(all(feature = "chrono", any(feature = "mysql_backend", feature = "mariadb_backend")))]
+#[cfg(all(
+    feature = "chrono",
+    any(feature = "mysql_backend", feature = "mariadb_backend")
+))]
 impl<B: MysqlLikeBackend> ToSql<Date, B> for NaiveDate {
     fn to_sql<'b>(&'b self, out: &mut Output<'b, '_, B>) -> serialize::Result {
         let mysql_time = MysqlTime {
@@ -110,7 +131,10 @@ impl<B: MysqlLikeBackend> ToSql<Date, B> for NaiveDate {
     }
 }
 
-#[cfg(all(feature = "chrono", any(feature = "mysql_backend", feature = "mariadb_backend")))]
+#[cfg(all(
+    feature = "chrono",
+    any(feature = "mysql_backend", feature = "mariadb_backend")
+))]
 impl<B: MysqlLikeBackend> FromSql<Date, B> for NaiveDate {
     fn from_sql(bytes: MysqlValue<'_>) -> deserialize::Result<Self> {
         let mysql_time = <MysqlTime as FromSql<Date, B>>::from_sql(bytes)?;

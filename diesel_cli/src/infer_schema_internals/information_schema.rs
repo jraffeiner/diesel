@@ -35,7 +35,7 @@ impl DefaultSchema for Pg {
     }
 }
 
-#[cfg(any(feature = "mysql",feature = "mariadb"))]
+#[cfg(any(feature = "mysql", feature = "mariadb"))]
 #[diesel::declare_sql_function]
 extern "SQL" {
     fn database() -> VarChar;
@@ -51,7 +51,6 @@ impl DefaultSchema for Mysql {
         select(database()).get_result(conn)
     }
 }
-
 
 #[cfg(feature = "mariadb")]
 impl DefaultSchema for Mariadb {

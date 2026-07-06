@@ -339,8 +339,7 @@ fn update_transaction_manager_status<T>(
     query_result
 }
 
-impl<B: MysqlLikeBackend> LoadConnection<DefaultLoadingMode> for MysqlLikeConnection<B> 
-{
+impl<B: MysqlLikeBackend> LoadConnection<DefaultLoadingMode> for MysqlLikeConnection<B> {
     type Cursor<'conn, 'query> = self::stmt::iterator::StatementIterator<'conn, B>;
     type Row<'conn, 'query> = self::stmt::iterator::MysqlRow<B>;
 

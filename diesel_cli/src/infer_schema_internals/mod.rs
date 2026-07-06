@@ -5,6 +5,8 @@ mod table_data;
 
 #[cfg(feature = "uses_information_schema")]
 mod information_schema;
+#[cfg(feature = "mariadb")]
+mod mariadb;
 #[cfg(feature = "mysql")]
 mod mysql;
 #[cfg(feature = "postgres")]
@@ -12,8 +14,6 @@ mod pg;
 mod schema_resolver;
 #[cfg(feature = "sqlite")]
 mod sqlite;
-#[cfg(feature = "mariadb")]
-mod mariadb;
 
 pub use self::data_structures::*;
 pub use self::foreign_keys::*;

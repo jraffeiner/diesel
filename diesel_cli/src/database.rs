@@ -85,8 +85,7 @@ impl Backend {
                     );
                 }
             }
-            _ if database_url.starts_with("mariadb://") =>
-            {
+            _ if database_url.starts_with("mariadb://") => {
                 #[cfg(feature = "mariadb")]
                 {
                     Backend::Mariadb
@@ -146,7 +145,6 @@ impl Backend {
             InferConnection::Mysql(_) => Self::Mysql,
             #[cfg(feature = "mariadb")]
             InferConnection::Mariadb(_) => Self::Mariadb,
-        
         }
     }
 }
@@ -452,7 +450,8 @@ fn drop_database(database_url: &str) -> Result<(), crate::errors::Error> {
         }
         #[cfg(feature = "mariadb")]
         Backend::Mariadb => {
-            let (database, mariadb_url) = change_database_of_url(database_url, "information_schema")?;
+            let (database, mariadb_url) =
+                change_database_of_url(database_url, "information_schema")?;
             let mut conn = MariadbConnection::establish(&mariadb_url).map_err(|e| {
                 crate::errors::Error::ConnectionError {
                     error: e,

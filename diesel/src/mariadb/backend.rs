@@ -1,5 +1,8 @@
 use crate::{
-    backend::{Backend, DieselReserveSpecialization, SqlDialect, TrustedBackend, sql_dialect}, mariadb::{MariadbQueryBuilder, MariadbValue}, query_builder::bind_collector::RawBytesBindCollector, sql_types::TypeMetadata
+    backend::{Backend, DieselReserveSpecialization, SqlDialect, TrustedBackend, sql_dialect},
+    mariadb::{MariadbQueryBuilder, MariadbValue},
+    query_builder::bind_collector::RawBytesBindCollector,
+    sql_types::TypeMetadata,
 };
 
 /// The MariaDB backend
@@ -39,11 +42,25 @@ impl SqlDialect for Mariadb {
 
     type ConcatClause = MariadbConcatClause;
     type AliasSyntax = sql_dialect::alias_syntax::AsAliasSyntax;
+
+    type WindowFrameClauseGroupSupport =
+        sql_dialect::window_frame_clause_group_support::NoGroupWindowFrameUnit;
+
+    type WindowFrameExclusionSupport =
+        sql_dialect::window_frame_exclusion_support::NoFrameFrameExclusionSupport;
+
+    type AggregateFunctionExpressions =
+        sql_dialect::aggregate_function_expressions::NoAggregateFunctionExpressions;
+
+    type BuiltInWindowFunctionRequireOrder = MariadbRequiresOrderForWindowFunctions;
 }
 
 impl DieselReserveSpecialization for Mariadb {}
 impl TrustedBackend for Mariadb {}
 
 pub(crate) type MariadbOnConflictClause = crate::mysql::backend::MysqlOnConflictClause;
-pub(crate) type MariadbStyleDefaultValueClause = crate::mysql::backend::MysqlStyleDefaultValueClause;
+pub(crate) type MariadbStyleDefaultValueClause =
+    crate::mysql::backend::MysqlStyleDefaultValueClause;
 pub(crate) type MariadbConcatClause = crate::mysql::backend::MysqlConcatClause;
+pub(crate) type MariadbRequiresOrderForWindowFunctions =
+    crate::mysql::backend::MysqlRequiresOrderForWindowFunctions;

@@ -193,8 +193,9 @@ impl<'a, B: MysqlLikeBackend> Row<'a, B> for MysqlRow<B> {
     }
 }
 
-impl<B: MysqlLikeBackend> RowIndex<usize> for MysqlRow<B> 
-where MysqlRow<B>: for<'a> Row<'a, B>
+impl<B: MysqlLikeBackend> RowIndex<usize> for MysqlRow<B>
+where
+    MysqlRow<B>: for<'a> Row<'a, B>,
 {
     fn idx(&self, idx: usize) -> Option<usize> {
         if idx < self.field_count() {
@@ -205,7 +206,7 @@ where MysqlRow<B>: for<'a> Row<'a, B>
     }
 }
 
-impl<'a,B: MysqlLikeBackend> RowIndex<&'a str> for MysqlRow<B> {
+impl<'a, B: MysqlLikeBackend> RowIndex<&'a str> for MysqlRow<B> {
     fn idx(&self, idx: &'a str) -> Option<usize> {
         self.metadata
             .fields()

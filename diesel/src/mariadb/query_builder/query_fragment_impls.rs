@@ -1,6 +1,6 @@
 use crate::expression::operators::Concat;
-use crate::mariadb::backend::MariadbOnConflictClause;
 use crate::mariadb::Mariadb;
+use crate::mariadb::backend::MariadbOnConflictClause;
 use crate::query_builder::insert_statement::DefaultValues;
 use crate::query_builder::locking_clause::{ForShare, ForUpdate, NoModifier, NoWait, SkipLocked};
 use crate::query_builder::nodes::StaticQueryFragment;
@@ -47,7 +47,9 @@ impl QueryFragment<Mariadb> for NoWait {
     }
 }
 
-impl QueryFragment<Mariadb, crate::mariadb::backend::MariadbStyleDefaultValueClause> for DefaultValues {
+impl QueryFragment<Mariadb, crate::mariadb::backend::MariadbStyleDefaultValueClause>
+    for DefaultValues
+{
     fn walk_ast<'b>(&'b self, mut out: AstPass<'_, 'b, Mariadb>) -> QueryResult<()> {
         out.push_sql("() VALUES ()");
         Ok(())
@@ -85,7 +87,8 @@ where
     }
 }
 
-impl<T, Tab> QueryFragment<Mariadb, crate::mariadb::backend::MariadbOnConflictClause> for DoUpdate<T, Tab>
+impl<T, Tab> QueryFragment<Mariadb, crate::mariadb::backend::MariadbOnConflictClause>
+    for DoUpdate<T, Tab>
 where
     T: QueryFragment<Mariadb>,
     Tab: Table + StaticQueryFragment,

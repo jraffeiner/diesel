@@ -94,8 +94,9 @@ impl<B: MysqlLikeBackend> ToSql<Unsigned<SmallInt>, B> for u16 {
 }
 
 #[cfg(any(feature = "mysql_backend", feature = "mariadb_backend"))]
-impl<B: MysqlLikeBackend> FromSql<Unsigned<SmallInt>, B> for u16 
-where i32: deserialize::FromSql<sql_types::Integer, B>
+impl<B: MysqlLikeBackend> FromSql<Unsigned<SmallInt>, B> for u16
+where
+    i32: deserialize::FromSql<sql_types::Integer, B>,
 {
     #[allow(
         clippy::cast_possible_wrap,
@@ -117,8 +118,9 @@ impl<B: MysqlLikeBackend> ToSql<Unsigned<Integer>, B> for u32 {
 }
 
 #[cfg(any(feature = "mysql_backend", feature = "mariadb_backend"))]
-impl<B: MysqlLikeBackend> FromSql<Unsigned<Integer>, B> for u32 
-where i64: deserialize::FromSql<sql_types::BigInt, B>
+impl<B: MysqlLikeBackend> FromSql<Unsigned<Integer>, B> for u32
+where
+    i64: deserialize::FromSql<sql_types::BigInt, B>,
 {
     #[allow(
         clippy::cast_possible_wrap,
@@ -140,8 +142,9 @@ impl<B: MysqlLikeBackend> ToSql<Unsigned<BigInt>, B> for u64 {
 }
 
 #[cfg(any(feature = "mysql_backend", feature = "mariadb_backend"))]
-impl<B: MysqlLikeBackend> FromSql<Unsigned<BigInt>, B> for u64 
-where i64: deserialize::FromSql<sql_types::BigInt, B>
+impl<B: MysqlLikeBackend> FromSql<Unsigned<BigInt>, B> for u64
+where
+    i64: deserialize::FromSql<sql_types::BigInt, B>,
 {
     #[allow(
         clippy::cast_possible_wrap,

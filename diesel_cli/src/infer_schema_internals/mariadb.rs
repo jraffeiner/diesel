@@ -10,9 +10,13 @@ use super::information_schema::DefaultSchema;
 use super::table_data::TableName;
 use crate::print_schema::ColumnSorting;
 
-diesel::define_sql_function! {
+#[diesel::declare_sql_function]
+extern "SQL" {
     #[sql_name = "NULLIF"]
-    fn null_if_text(lhs: sql_types::Text, rhs: sql_types::Text) -> sql_types::Nullable<sql_types::Text>
+    fn null_if_text(
+        lhs: sql_types::Text,
+        rhs: sql_types::Text,
+    ) -> sql_types::Nullable<sql_types::Text>;
 }
 
 pub fn get_table_data(
@@ -35,7 +39,7 @@ pub fn get_table_data(
             type_schema,
             __is_nullable,
             character_maximum_length,
-            // Mariadb comments are not nullable and are empty strings if not set
+            // MySQL comments are not nullable and are empty strings if not set
             null_if_text(column_comment, ""),
         ))
         .filter(table_name.eq(&table.sql_name))
@@ -46,13 +50,13 @@ pub fn get_table_data(
     };
     for c in &mut table_columns {
         if c.max_length.is_some() && !c.type_name.contains('(') {
-            // Mariadb returns something in character_maximum_length regardless
+            // Mysql returns something in character_maximum_length regardless
             // of whether it's specified at field creation time
             // In addition there is typically a shared limitation at row level,
             // so it's typically not even the real max.
             // This basically means no max.
-            // https://dev.Mariadb.com/doc/refman/8.0/en/column-count-limit.html
-            // https://chartio.com/resources/tutorials/understanding-strorage-sizes-for-Mariadb-text-data-types/
+            // https://dev.mysql.com/doc/refman/8.0/en/column-count-limit.html
+            // https://chartio.com/resources/tutorials/understanding-strorage-sizes-for-mysql-text-data-types/
             c.max_length = None;
         }
     }
@@ -143,7 +147,7 @@ mod information_schema {
     allow_tables_to_appear_in_same_query!(table_constraints, key_column_usage);
 }
 
-/// Even though this is using `information_schema`, Mariadb needs non-ANSI columns
+/// Even though this is using `information_schema`, MySQL needs non-ANSI columns
 /// in order to do this.
 pub fn load_foreign_key_constraints(
     connection: &mut MariadbConnection,
@@ -218,6 +222,7 @@ pub fn determine_column_type(attr: &ColumnInformation) -> Result<ColumnType, cra
         is_array: false,
         is_nullable: attr.nullable,
         is_unsigned: unsigned,
+        record: None,
         max_length: attr.max_length,
     })
 }
@@ -325,13 +330,13 @@ mod test {
     use super::*;
     use std::env;
 
-    fn connection() -> MariadbConnection {
+    fn connection() -> MysqlConnection {
         dotenv().ok();
 
-        let connection_url = env::var("Mariadb_DATABASE_URL")
+        let connection_url = env::var("MYSQL_DATABASE_URL")
             .or_else(|_| env::var("DATABASE_URL"))
             .expect("DATABASE_URL must be set in order to run tests");
-        let mut connection = MariadbConnection::establish(&connection_url).unwrap();
+        let mut connection = MysqlConnection::establish(&connection_url).unwrap();
         connection.begin_test_transaction().unwrap();
         connection
     }

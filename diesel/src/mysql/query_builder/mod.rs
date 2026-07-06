@@ -23,7 +23,10 @@ pub struct MysqlLikeQueryBuilder<B: Backend> {
 
 impl<B: Backend> Default for MysqlLikeQueryBuilder<B> {
     fn default() -> Self {
-        Self { sql: String::default(), _phantom: PhantomData }
+        Self {
+            sql: String::default(),
+            _phantom: PhantomData,
+        }
     }
 }
 
