@@ -1,4 +1,6 @@
 use crate::backend::DieselReserveSpecialization;
+#[cfg(feature = "mssql")]
+use crate::mssql::Mssql;
 use crate::query_builder::*;
 use std::marker::PhantomData;
 
@@ -26,6 +28,17 @@ where
     T::Component: QueryFragment<DB>,
 {
     fn walk_ast<'b>(&'b self, pass: AstPass<'_, 'b, DB>) -> QueryResult<()> {
+        T::STATIC_COMPONENT.walk_ast(pass)
+    }
+}
+
+#[cfg(feature = "mssql")]
+impl<T> QueryFragment<Mssql> for StaticQueryFragmentInstance<T>
+where
+    T: StaticQueryFragment,
+    T::Component: QueryFragment<Mssql>,
+{
+    fn walk_ast<'b>(&'b self, pass: AstPass<'_, 'b, Mssql>) -> QueryResult<()> {
         T::STATIC_COMPONENT.walk_ast(pass)
     }
 }
@@ -73,6 +86,21 @@ where
     M: MiddleFragment<DB>,
 {
     fn walk_ast<'b>(&'b self, mut out: AstPass<'_, 'b, DB>) -> QueryResult<()> {
+        self.lhs.walk_ast(out.reborrow())?;
+        self.middle.push_sql(out.reborrow());
+        self.rhs.walk_ast(out.reborrow())?;
+        Ok(())
+    }
+}
+
+#[cfg(feature = "mssql")]
+impl<T, U, M> QueryFragment<Mssql> for InfixNode<T, U, M>
+where
+    T: QueryFragment<Mssql>,
+    U: QueryFragment<Mssql>,
+    M: MiddleFragment<Mssql>,
+{
+    fn walk_ast<'b>(&'b self, mut out: AstPass<'_, 'b, Mssql>) -> QueryResult<()> {
         self.lhs.walk_ast(out.reborrow())?;
         self.middle.push_sql(out.reborrow());
         self.rhs.walk_ast(out.reborrow())?;

@@ -1,6 +1,8 @@
 use crate::backend::{Backend, DieselReserveSpecialization};
 use crate::expression::expression_types::NotSelectable;
 use crate::expression::{TypedExpressionType, ValidGrouping};
+#[cfg(feature = "mssql")]
+use crate::mssql::Mssql;
 use crate::pg::Pg;
 use crate::query_builder::update_statement::changeset::AssignmentTarget;
 use crate::query_builder::{AstPass, QueryFragment, QueryId};
@@ -187,6 +189,16 @@ where
     DB: Backend + DieselReserveSpecialization,
 {
     fn walk_ast<'b>(&'b self, mut out: AstPass<'_, 'b, DB>) -> QueryResult<()> {
+        out.push_identifier(C::NAME)
+    }
+}
+
+#[cfg(feature = "mssql")]
+impl<C> QueryFragment<Mssql> for UncorrelatedColumn<C>
+where
+    C: Column,
+{
+    fn walk_ast<'b>(&'b self, mut out: AstPass<'_, 'b, Mssql>) -> QueryResult<()> {
         out.push_identifier(C::NAME)
     }
 }

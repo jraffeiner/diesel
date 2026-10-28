@@ -5,6 +5,8 @@ use crate::dsl::AsExprOf;
 use crate::expression::subselect::ValidSubselect;
 use crate::expression::*;
 use crate::insertable::Insertable;
+#[cfg(feature = "mssql")]
+use crate::mssql::Mssql;
 use crate::query_builder::combination_clause::*;
 use crate::query_builder::distinct_clause::DistinctClause;
 use crate::query_builder::group_by_clause::ValidGroupByClause;
@@ -221,6 +223,19 @@ where
     BoxedLimitOffsetClause<'a, DB>: QueryFragment<DB>,
 {
     fn walk_ast<'b>(&'b self, out: AstPass<'_, 'b, DB>) -> QueryResult<()> {
+        self.build_query(out, |where_clause, out| where_clause.walk_ast(out))
+    }
+}
+
+#[cfg(feature = "mssql")]
+impl<'a, ST, QS, GB>
+    QueryFragment<Mssql, sql_dialect::select_statement_syntax::AnsiSqlSelectStatement>
+    for BoxedSelectStatement<'a, ST, QS, Mssql, GB>
+where
+    QS: QueryFragment<Mssql>,
+    BoxedLimitOffsetClause<'a, Mssql>: QueryFragment<Mssql>,
+{
+    fn walk_ast<'b>(&'b self, out: AstPass<'_, 'b, Mssql>) -> QueryResult<()> {
         self.build_query(out, |where_clause, out| where_clause.walk_ast(out))
     }
 }

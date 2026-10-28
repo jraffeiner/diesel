@@ -4,6 +4,8 @@ use crate::expression::{
     AppearsOnTable, Expression, QueryMetadata, Selectable, SelectableExpression,
     TypedExpressionType, ValidGrouping,
 };
+#[cfg(feature = "mssql")]
+use crate::mssql::Mssql;
 use crate::query_builder::*;
 use crate::result::QueryResult;
 
@@ -103,6 +105,17 @@ where
     DB: Backend + DieselReserveSpecialization,
 {
     fn walk_ast<'b>(&'b self, out: AstPass<'_, 'b, DB>) -> QueryResult<()> {
+        self.selection.walk_ast(out)
+    }
+}
+
+#[cfg(feature = "mssql")]
+impl<T> QueryFragment<Mssql> for SelectBy<T, Mssql>
+where
+    T: Selectable<Mssql>,
+    T::SelectExpression: QueryFragment<Mssql>,
+{
+    fn walk_ast<'b>(&'b self, out: AstPass<'_, 'b, Mssql>) -> QueryResult<()> {
         self.selection.walk_ast(out)
     }
 }

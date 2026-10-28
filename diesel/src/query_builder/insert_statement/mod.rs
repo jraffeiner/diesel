@@ -24,6 +24,9 @@ use std::marker::PhantomData;
 
 pub(crate) use self::private::InsertAutoTypeHelper;
 
+#[cfg(feature = "mssql")]
+use crate::mssql::Mssql;
+
 #[cfg(feature = "sqlite")]
 mod insert_with_default_for_sqlite;
 
@@ -246,6 +249,75 @@ where
         out.push_sql(" ");
         self.records.walk_ast(out.reborrow())?;
         self.returning.walk_ast(out.reborrow())?;
+        Ok(())
+    }
+}
+
+#[cfg(feature = "mssql")]
+impl<T, V, Op, Ret> QueryFragment<Mssql>
+    for InsertStatement<T, ValuesClause<V, T>, Op, ReturningClause<Ret>>
+where
+    T: Table,
+    T::FromClause: QueryFragment<Mssql>,
+    V: InsertValues<Mssql, T>,
+    ValuesClause<V, T>: QueryFragment<Mssql> + CanInsertInSingleQuery<Mssql>,
+    Op: QueryFragment<Mssql>,
+    Ret: QueryFragment<Mssql>,
+{
+    fn walk_ast<'b>(
+        &'b self,
+        mut out: crate::query_builder::AstPass<'_, 'b, Mssql>,
+    ) -> QueryResult<()> {
+        if self.records.rows_to_insert() == Some(0) {
+            out.push_sql("SELECT 1 FROM ");
+            self.into_clause.walk_ast(out.reborrow())?;
+            out.push_sql(" WHERE 1=0");
+            return Ok(());
+        }
+
+        self.operator.walk_ast(out.reborrow())?;
+        out.push_sql(" INTO ");
+        self.into_clause.walk_ast(out.reborrow())?;
+        if self.records.values.is_noop(out.backend())? {
+            self.returning.walk_ast(out.reborrow())?;
+            <DefaultValues as QueryFragment<Mssql>>::walk_ast(&DefaultValues, out)?;
+        } else {
+            out.push_sql("(");
+            self.records.values.column_names(out.reborrow())?;
+            out.push_sql(")");
+            self.returning.walk_ast(out.reborrow())?;
+            out.push_sql(" VALUES (");
+            self.records.values.walk_ast(out.reborrow())?;
+            out.push_sql(")");
+        }
+        Ok(())
+    }
+}
+
+#[cfg(feature = "mssql")]
+impl<T, U, Op> QueryFragment<Mssql> for InsertStatement<T, U, Op, NoReturningClause>
+where
+    T: Table,
+    T::FromClause: QueryFragment<Mssql>,
+    U: QueryFragment<Mssql> + CanInsertInSingleQuery<Mssql>,
+    Op: QueryFragment<Mssql>,
+{
+    fn walk_ast<'b>(
+        &'b self,
+        mut out: crate::query_builder::AstPass<'_, 'b, Mssql>,
+    ) -> QueryResult<()> {
+        if self.records.rows_to_insert() == Some(0) {
+            out.push_sql("SELECT 1 FROM ");
+            self.into_clause.walk_ast(out.reborrow())?;
+            out.push_sql(" WHERE 1=0");
+            return Ok(());
+        }
+
+        self.operator.walk_ast(out.reborrow())?;
+        out.push_sql(" INTO ");
+        self.into_clause.walk_ast(out.reborrow())?;
+        out.push_sql(" ");
+        self.records.walk_ast(out.reborrow())?;
         Ok(())
     }
 }
@@ -478,6 +550,8 @@ where
 
 mod private {
     use crate::backend::{Backend, DieselReserveSpecialization};
+    #[cfg(feature = "mssql")]
+    use crate::mssql::Mssql;
     use crate::query_builder::{AstPass, QueryFragment, QueryId};
     use crate::QueryResult;
 
@@ -489,6 +563,14 @@ mod private {
         DB: Backend + DieselReserveSpecialization,
     {
         fn walk_ast<'b>(&'b self, mut out: AstPass<'_, 'b, DB>) -> QueryResult<()> {
+            out.push_sql("INSERT");
+            Ok(())
+        }
+    }
+
+    #[cfg(feature = "mssql")]
+    impl QueryFragment<Mssql> for Insert {
+        fn walk_ast<'b>(&'b self, mut out: AstPass<'_, 'b, Mssql>) -> QueryResult<()> {
             out.push_sql("INSERT");
             Ok(())
         }

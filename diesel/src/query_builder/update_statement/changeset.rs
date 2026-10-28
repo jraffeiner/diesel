@@ -2,6 +2,8 @@ use crate::backend::DieselReserveSpecialization;
 use crate::expression::grouped::Grouped;
 use crate::expression::operators::Eq;
 use crate::expression::AppearsOnTable;
+#[cfg(feature = "mssql")]
+use crate::mssql::Mssql;
 use crate::query_builder::*;
 use crate::query_source::{Column, QuerySource};
 use crate::Table;
@@ -124,6 +126,16 @@ where
     C: Column,
 {
     fn walk_ast<'b>(&'b self, mut out: AstPass<'_, 'b, DB>) -> QueryResult<()> {
+        out.push_identifier(C::NAME)
+    }
+}
+
+#[cfg(feature = "mssql")]
+impl<C> QueryFragment<Mssql> for ColumnWrapperForUpdate<C>
+where
+    C: Column,
+{
+    fn walk_ast<'b>(&'b self, mut out: AstPass<'_, 'b, Mssql>) -> QueryResult<()> {
         out.push_identifier(C::NAME)
     }
 }

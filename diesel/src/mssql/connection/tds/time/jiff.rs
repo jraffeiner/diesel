@@ -5,9 +5,9 @@
 //! security vulnerabilities. The code here is for legacy purposes, please use
 //! `time` crate for greenfield projects.
 
+use jiff::civil::{Date as CivilDate, DateTime as CivilDateTime, Time as CivilTime};
 use jiff::tz::{Offset, TimeZone};
 use jiff::{Span, Timestamp, Zoned};
-use jiff::civil::{Date as CivilDate, DateTime as CivilDateTime, Time as CivilTime};
 
 use super::{Date, DateTime2, DateTimeOffset, Time};
 use crate::mssql::connection::tds::codec::ColumnData;
@@ -28,7 +28,8 @@ fn from_date(date: Date) -> CivilDate {
 
 #[inline]
 fn from_time(time: Time) -> CivilTime {
-    CivilTime::midnight() + Span::new().nanoseconds(time.increments as i64 * 10i64.pow(9 - time.scale as u32))
+    CivilTime::midnight()
+        + Span::new().nanoseconds(time.increments as i64 * 10i64.pow(9 - time.scale as u32))
 }
 
 #[inline]
@@ -39,31 +40,30 @@ fn to_date(date: CivilDate) -> Date {
 #[inline]
 fn to_time(time: CivilTime) -> Time {
     let increments = (time.duration_since(CivilTime::midnight()).as_nanos() / 100) as u64;
-    Time { increments, scale: 7 }
+    Time {
+        increments,
+        scale: 7,
+    }
 }
 
 #[inline]
 #[expect(unused)]
 fn to_sec_fragments(time: CivilTime) -> i64 {
-    (time.duration_since(CivilTime::midnight())
-        .as_nanos()
-        * 300
-        / (1e9 as i128)) as i64
+    (time.duration_since(CivilTime::midnight()).as_nanos() * 300 / (1e9 as i128)) as i64
 }
-
 
 from_sql!(
     CivilDateTime:
         ColumnData::SmallDateTime(ref dt) => dt.map(|dt| CivilDateTime::from_parts(
-            from_days(dt.days as i64, 1900), 
+            from_days(dt.days as i64, 1900),
             from_sec_fragments(dt.seconds_fragments as i64)
         )),
         ColumnData::DateTime2(ref dt) => dt.map(|dt| CivilDateTime::from_parts(
-            from_date(dt.date), 
+            from_date(dt.date),
             from_time(dt.time),
         )),
         ColumnData::DateTime(ref dt) => dt.map(|dt| CivilDateTime::from_parts(
-            from_days(dt.days as i64, 1900), 
+            from_days(dt.days as i64, 1900),
             from_sec_fragments(dt.seconds_fragments as i64)
         ));
     CivilTime:
@@ -74,26 +74,26 @@ from_sql!(
         ColumnData::DateTimeOffset(ref dto) => dto.and_then(|dto| {
             let tz = TimeZone::fixed(Offset::from_seconds((dto.offset()*60).into()).unwrap());
             CivilDateTime::from_parts(
-                from_date(dto.datetime2.date), 
+                from_date(dto.datetime2.date),
                 from_time(dto.datetime2.time),
             ).to_zoned(TimeZone::UTC).map(|zoned| zoned.with_time_zone(tz)).ok()
         }),
         ColumnData::DateTime2(ref dt2) => dt2.and_then(|dt2| {
             CivilDateTime::from_parts(
-                from_date(dt2.date), 
+                from_date(dt2.date),
                 from_time(dt2.time),
             ).to_zoned(TimeZone::UTC).ok()
         });
     Timestamp:
         ColumnData::DateTimeOffset(ref dto) => dto.and_then(|dto| {
             CivilDateTime::from_parts(
-                from_date(dto.datetime2.date), 
+                from_date(dto.datetime2.date),
                 from_time(dto.datetime2.time),
             ).to_zoned(TimeZone::UTC).map(|zoned| zoned.timestamp()).ok()
         }),
         ColumnData::DateTime2(ref dt2) => dt2.and_then(|dt2| {
             CivilDateTime::from_parts(
-                from_date(dt2.date), 
+                from_date(dt2.date),
                 from_time(dt2.time),
             ).to_zoned(TimeZone::UTC).map(|zoned| zoned.timestamp()).ok()
         })

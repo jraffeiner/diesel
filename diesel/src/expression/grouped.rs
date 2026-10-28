@@ -1,5 +1,7 @@
 use crate::backend::{Backend, DieselReserveSpecialization};
 use crate::expression::{Expression, ValidGrouping};
+#[cfg(feature = "mssql")]
+use crate::mssql::Mssql;
 use crate::query_builder::*;
 use crate::result::QueryResult;
 use crate::sql_types::DieselNumericOps;
@@ -18,6 +20,19 @@ where
     DB: Backend + DieselReserveSpecialization,
 {
     fn walk_ast<'b>(&'b self, mut out: AstPass<'_, 'b, DB>) -> QueryResult<()> {
+        out.push_sql("(");
+        self.0.walk_ast(out.reborrow())?;
+        out.push_sql(")");
+        Ok(())
+    }
+}
+
+#[cfg(feature = "mssql")]
+impl<T> QueryFragment<Mssql> for Grouped<T>
+where
+    T: QueryFragment<Mssql>,
+{
+    fn walk_ast<'b>(&'b self, mut out: AstPass<'_, 'b, Mssql>) -> QueryResult<()> {
         out.push_sql("(");
         self.0.walk_ast(out.reborrow())?;
         out.push_sql(")");

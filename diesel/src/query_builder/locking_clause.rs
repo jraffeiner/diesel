@@ -1,4 +1,6 @@
 use crate::backend::{Backend, DieselReserveSpecialization};
+#[cfg(feature = "mssql")]
+use crate::mssql::Mssql;
 use crate::query_builder::{AstPass, QueryFragment, QueryId};
 use crate::result::QueryResult;
 
@@ -10,6 +12,13 @@ where
     DB: Backend + DieselReserveSpecialization,
 {
     fn walk_ast<'b>(&'b self, _: AstPass<'_, 'b, DB>) -> QueryResult<()> {
+        Ok(())
+    }
+}
+
+#[cfg(feature = "mssql")]
+impl QueryFragment<Mssql> for NoLockingClause {
+    fn walk_ast<'b>(&'b self, _: AstPass<'_, 'b, Mssql>) -> QueryResult<()> {
         Ok(())
     }
 }
@@ -36,6 +45,18 @@ where
     M: QueryFragment<DB>,
 {
     fn walk_ast<'b>(&'b self, mut out: AstPass<'_, 'b, DB>) -> QueryResult<()> {
+        self.lock_mode.walk_ast(out.reborrow())?;
+        self.modifier.walk_ast(out.reborrow())
+    }
+}
+
+#[cfg(feature = "mssql")]
+impl<L, M> QueryFragment<Mssql> for LockingClause<L, M>
+where
+    L: QueryFragment<Mssql>,
+    M: QueryFragment<Mssql>,
+{
+    fn walk_ast<'b>(&'b self, mut out: AstPass<'_, 'b, Mssql>) -> QueryResult<()> {
         self.lock_mode.walk_ast(out.reborrow())?;
         self.modifier.walk_ast(out.reborrow())
     }

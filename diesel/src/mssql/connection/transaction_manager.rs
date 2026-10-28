@@ -56,7 +56,7 @@ where
         let transaction_state = Self::get_transaction_state(conn)?;
         let transaction_depth = transaction_state.transaction_depth();
         let start_transaction_sql = match transaction_depth {
-            None => Cow::from("BEGIN TRANSACTION\n"),
+            None => Cow::from("SET XACT_ABORT OFF;\nBEGIN TRANSACTION;\n"),
             Some(transaction_depth) => Cow::from(format!(
                 "SAVE TRANSACTION diesel_savepoint_{transaction_depth}\n
                 BEGIN TRANSACTION\n"

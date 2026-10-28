@@ -1,5 +1,7 @@
 use crate::backend::DieselReserveSpecialization;
 use crate::expression::*;
+#[cfg(feature = "mssql")]
+use crate::mssql::Mssql;
 use crate::query_builder::*;
 use crate::query_source::joins::ToInnerJoin;
 use crate::result::QueryResult;
@@ -30,6 +32,16 @@ where
     T: QueryFragment<DB>,
 {
     fn walk_ast<'b>(&'b self, pass: AstPass<'_, 'b, DB>) -> QueryResult<()> {
+        self.0.walk_ast(pass)
+    }
+}
+
+#[cfg(feature = "mssql")]
+impl<T> QueryFragment<Mssql> for Nullable<T>
+where
+    T: QueryFragment<Mssql>,
+{
+    fn walk_ast<'b>(&'b self, pass: AstPass<'_, 'b, Mssql>) -> QueryResult<()> {
         self.0.walk_ast(pass)
     }
 }

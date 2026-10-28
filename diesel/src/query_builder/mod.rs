@@ -19,7 +19,7 @@ mod distinct_clause;
 pub(crate) mod from_clause;
 pub(crate) mod functions;
 pub(crate) mod group_by_clause;
-mod having_clause;
+pub(crate) mod having_clause;
 pub(crate) mod insert_statement;
 pub(crate) mod limit_clause;
 pub(crate) mod limit_offset_clause;

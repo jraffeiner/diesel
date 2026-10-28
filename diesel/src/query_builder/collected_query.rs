@@ -1,5 +1,7 @@
 use super::{AstPass, MoveableBindCollector, Query, QueryFragment, QueryId};
 use crate::backend::{Backend, DieselReserveSpecialization};
+#[cfg(feature = "mssql")]
+use crate::mssql::Mssql;
 use crate::result::QueryResult;
 use crate::sql_types::Untyped;
 
@@ -32,6 +34,20 @@ where
     for<'a> <DB as Backend>::BindCollector<'a>: MoveableBindCollector<DB, BindData = T>,
 {
     fn walk_ast<'b>(&'b self, mut pass: AstPass<'_, 'b, DB>) -> QueryResult<()> {
+        if !self.safe_to_cache_prepared {
+            pass.unsafe_to_cache_prepared();
+        }
+        pass.push_sql(&self.sql);
+        pass.push_bind_collector_data::<T>(&self.bind_data)
+    }
+}
+
+#[cfg(feature = "mssql")]
+impl<T> QueryFragment<Mssql> for CollectedQuery<T>
+where
+    for<'a> <Mssql as Backend>::BindCollector<'a>: MoveableBindCollector<Mssql, BindData = T>,
+{
+    fn walk_ast<'b>(&'b self, mut pass: AstPass<'_, 'b, Mssql>) -> QueryResult<()> {
         if !self.safe_to_cache_prepared {
             pass.unsafe_to_cache_prepared();
         }

@@ -1,4 +1,6 @@
 use crate::backend::DieselReserveSpecialization;
+#[cfg(feature = "mssql")]
+use crate::mssql::Mssql;
 use crate::query_builder::*;
 use crate::query_dsl::group_by_dsl::ValidDistinctForGroupBy;
 use crate::query_dsl::order_dsl::ValidOrderingForDistinct;
@@ -17,11 +19,26 @@ where
     }
 }
 
+#[cfg(feature = "mssql")]
+impl QueryFragment<Mssql> for NoDistinctClause {
+    fn walk_ast<'b>(&'b self, _: AstPass<'_, 'b, Mssql>) -> QueryResult<()> {
+        Ok(())
+    }
+}
+
 impl<DB> QueryFragment<DB> for DistinctClause
 where
     DB: Backend + DieselReserveSpecialization,
 {
     fn walk_ast<'b>(&'b self, mut out: AstPass<'_, 'b, DB>) -> QueryResult<()> {
+        out.push_sql("DISTINCT ");
+        Ok(())
+    }
+}
+
+#[cfg(feature = "mssql")]
+impl QueryFragment<Mssql> for DistinctClause {
+    fn walk_ast<'b>(&'b self, mut out: AstPass<'_, 'b, Mssql>) -> QueryResult<()> {
         out.push_sql("DISTINCT ");
         Ok(())
     }

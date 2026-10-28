@@ -3,6 +3,8 @@ use std::marker::PhantomData;
 use crate::backend::{sql_dialect, Backend, DieselReserveSpecialization, SqlDialect};
 use crate::expression::grouped::Grouped;
 use crate::expression::{AppearsOnTable, Expression};
+#[cfg(feature = "mssql")]
+use crate::mssql::Mssql;
 use crate::query_builder::{
     AstPass, BatchInsert, InsertStatement, NoFromClause, QueryFragment, QueryId,
     UndecoratedInsertRecord, ValuesClause,
@@ -202,6 +204,16 @@ where
     Expr: QueryFragment<DB>,
 {
     fn walk_ast<'b>(&'b self, pass: AstPass<'_, 'b, DB>) -> QueryResult<()> {
+        self.expr.walk_ast(pass)
+    }
+}
+
+#[cfg(feature = "mssql")]
+impl<Col, Expr> QueryFragment<Mssql> for ColumnInsertValue<Col, Expr>
+where
+    Expr: QueryFragment<Mssql>,
+{
+    fn walk_ast<'b>(&'b self, pass: AstPass<'_, 'b, Mssql>) -> QueryResult<()> {
         self.expr.walk_ast(pass)
     }
 }

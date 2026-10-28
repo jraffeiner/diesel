@@ -6,6 +6,8 @@ use crate::dsl::{Filter, IntoBoxed};
 use crate::expression::{
     is_aggregate, AppearsOnTable, Expression, MixedAggregates, SelectableExpression, ValidGrouping,
 };
+#[cfg(feature = "mssql")]
+use crate::mssql::Mssql;
 use crate::query_builder::returning_clause::*;
 use crate::query_builder::where_clause::*;
 use crate::query_dsl::methods::{BoxedDsl, FilterDsl};
@@ -207,6 +209,34 @@ where
         self.values.walk_ast(out.reborrow())?;
         self.where_clause.walk_ast(out.reborrow())?;
         self.returning.walk_ast(out.reborrow())?;
+        Ok(())
+    }
+}
+
+#[cfg(feature = "mssql")]
+impl<T, U, V, Ret> QueryFragment<Mssql> for UpdateStatement<T, U, V, Ret>
+where
+    T: Table,
+    T::FromClause: QueryFragment<Mssql>,
+    U: QueryFragment<Mssql>,
+    V: QueryFragment<Mssql>,
+    Ret: QueryFragment<Mssql>,
+{
+    fn walk_ast<'b>(
+        &'b self,
+        mut out: crate::query_builder::AstPass<'_, 'b, Mssql>,
+    ) -> QueryResult<()> {
+        if self.values.is_noop(out.backend())? {
+            return Err(QueryBuilderError(Box::new(EmptyChangeset)));
+        }
+
+        out.unsafe_to_cache_prepared();
+        out.push_sql("UPDATE ");
+        self.from_clause.walk_ast(out.reborrow())?;
+        out.push_sql(" SET ");
+        self.values.walk_ast(out.reborrow())?;
+        self.returning.walk_ast(out.reborrow())?;
+        self.where_clause.walk_ast(out.reborrow())?;
         Ok(())
     }
 }

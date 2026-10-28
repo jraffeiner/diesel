@@ -3,6 +3,8 @@ use super::InsertStatement;
 use super::UpdateStatement;
 use super::{AstPass, QueryFragment};
 use crate::backend::{Backend, DieselReserveSpecialization};
+#[cfg(feature = "mssql")]
+use crate::mssql::Mssql;
 use crate::query_builder::QueryId;
 use crate::result::QueryResult;
 use crate::QuerySource;
@@ -15,6 +17,13 @@ where
     DB: Backend + DieselReserveSpecialization,
 {
     fn walk_ast<'b>(&'b self, _: AstPass<'_, 'b, DB>) -> QueryResult<()> {
+        Ok(())
+    }
+}
+
+#[cfg(feature = "mssql")]
+impl QueryFragment<Mssql> for NoReturningClause {
+    fn walk_ast<'b>(&'b self, _: AstPass<'_, 'b, Mssql>) -> QueryResult<()> {
         Ok(())
     }
 }

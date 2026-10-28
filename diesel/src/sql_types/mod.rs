@@ -383,10 +383,7 @@ pub struct Time;
     not(feature = "time"),
     doc = " [`time::OffsetDateTime`]: https://docs.rs/time/0.3.9/time/struct.OffsetDateTime.html"
 )]
-#[cfg_attr(
-    feature = "jiff",
-    doc = " [Timestamp]: jiff::Timestamp"
-)]
+#[cfg_attr(feature = "jiff", doc = " [Timestamp]: jiff::Timestamp")]
 /// [Timespec]: /time/struct.Timespec.html
 #[derive(Debug, Clone, Copy, Default, QueryId, SqlType)]
 #[diesel(postgres_type(oid = 1114, array_oid = 1115))]

@@ -1,6 +1,8 @@
 use crate::backend::DieselReserveSpecialization;
 use crate::dsl::{Filter, IntoBoxed, OrFilter};
 use crate::expression::{AppearsOnTable, SelectableExpression};
+#[cfg(feature = "mssql")]
+use crate::mssql::Mssql;
 use crate::query_builder::returning_clause::*;
 use crate::query_builder::where_clause::*;
 use crate::query_builder::*;
@@ -258,6 +260,23 @@ where
     Ret: QueryFragment<DB>,
 {
     fn walk_ast<'b>(&'b self, mut out: AstPass<'_, 'b, DB>) -> QueryResult<()> {
+        out.push_sql("DELETE");
+        self.from_clause.walk_ast(out.reborrow())?;
+        self.where_clause.walk_ast(out.reborrow())?;
+        self.returning.walk_ast(out.reborrow())?;
+        Ok(())
+    }
+}
+
+#[cfg(feature = "mssql")]
+impl<T, U, Ret> QueryFragment<Mssql> for DeleteStatement<T, U, Ret>
+where
+    T: Table,
+    FromClause<T>: QueryFragment<Mssql>,
+    U: QueryFragment<Mssql>,
+    Ret: QueryFragment<Mssql>,
+{
+    fn walk_ast<'b>(&'b self, mut out: AstPass<'_, 'b, Mssql>) -> QueryResult<()> {
         out.push_sql("DELETE");
         self.from_clause.walk_ast(out.reborrow())?;
         self.where_clause.walk_ast(out.reborrow())?;

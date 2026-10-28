@@ -55,9 +55,12 @@ macro_rules! owned_from_diesel_sql {
 owned_from_diesel_sql!(Text, String);
 owned_from_diesel_sql!(Binary, Vec<u8>);
 from_diesel_sql!(BigInt, i64);
+from_diesel_sql!(BigInt, u64);
 from_diesel_sql!(Bool, bool);
 from_diesel_sql!(SmallInt, i16);
+from_diesel_sql!(SmallInt, u16);
 from_diesel_sql!(Integer, i32);
+from_diesel_sql!(Integer, u32);
 from_diesel_sql!(Integer, u64);
 from_diesel_sql!(Double, f64);
 from_diesel_sql!(Float, f32);
@@ -120,18 +123,12 @@ mod time_impl {
 #[cfg(feature = "jiff")]
 mod jiff_impl {
     use diesel::sql_types;
-    use jiff::{Timestamp, Zoned};
     use jiff::civil::{Date, Time};
+    use jiff::{Timestamp, Zoned};
 
     from_diesel_sql!(sql_types::Date, Date);
     from_diesel_sql!(sql_types::Time, Time);
     from_diesel_sql!(sql_types::Timestamp, Timestamp);
-    from_diesel_sql!(
-        crate::mssql::sql_types::DateTimeOffset,
-        Zoned
-    );
-    from_diesel_sql!(
-        crate::mssql::sql_types::DateTimeOffset,
-        Timestamp
-    );
+    from_diesel_sql!(crate::mssql::sql_types::DateTimeOffset, Zoned);
+    from_diesel_sql!(crate::mssql::sql_types::DateTimeOffset, Timestamp);
 }

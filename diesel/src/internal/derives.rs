@@ -82,7 +82,6 @@ pub mod multiconnection {
     #[cfg(feature = "jiff")]
     pub use jiff;
 
-
     #[doc(hidden)]
     #[cfg(feature = "numeric")]
     pub use bigdecimal;

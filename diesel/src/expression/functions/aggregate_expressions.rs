@@ -1,5 +1,7 @@
 use crate::backend::Backend;
 use crate::expression::{AsExpression, ValidGrouping};
+#[cfg(feature = "mssql")]
+use crate::mssql::Mssql;
 use crate::query_builder::{AstPass, NotSpecialized, QueryFragment, QueryId};
 use crate::sql_types::Bool;
 use crate::{AppearsOnTable, Expression, QueryResult, SelectableExpression};
@@ -16,6 +18,16 @@ macro_rules! empty_clause {
             fn walk_ast<'b>(
                 &'b self,
                 _pass: crate::query_builder::AstPass<'_, 'b, DB>,
+            ) -> crate::QueryResult<()> {
+                Ok(())
+            }
+        }
+
+        #[cfg(feature = "mssql")]
+        impl crate::query_builder::QueryFragment<crate::mssql::Mssql> for $name {
+            fn walk_ast<'b>(
+                &'b self,
+                _pass: crate::query_builder::AstPass<'_, 'b, crate::mssql::Mssql>,
             ) -> crate::QueryResult<()> {
                 Ok(())
             }
@@ -65,6 +77,29 @@ where
     Window: QueryFragment<DB> + WindowFunctionFragment<Fn, DB>,
 {
     fn walk_ast<'b>(&'b self, mut pass: AstPass<'_, 'b, DB>) -> QueryResult<()> {
+        pass.push_sql(Fn::FUNCTION_NAME);
+        pass.push_sql("(");
+        self.prefix.walk_ast(pass.reborrow())?;
+        self.function.walk_arguments(pass.reborrow())?;
+        self.order.walk_ast(pass.reborrow())?;
+        pass.push_sql(")");
+        self.filter.walk_ast(pass.reborrow())?;
+        self.window.walk_ast(pass.reborrow())?;
+        Ok(())
+    }
+}
+
+#[cfg(feature = "mssql")]
+impl<Fn, Prefix, Order, Filter, Window> QueryFragment<Mssql>
+    for AggregateExpression<Fn, Prefix, Order, Filter, Window>
+where
+    Fn: FunctionFragment<Mssql>,
+    Prefix: QueryFragment<Mssql>,
+    Order: QueryFragment<Mssql>,
+    Filter: QueryFragment<Mssql>,
+    Window: QueryFragment<Mssql> + WindowFunctionFragment<Fn, Mssql>,
+{
+    fn walk_ast<'b>(&'b self, mut pass: AstPass<'_, 'b, Mssql>) -> QueryResult<()> {
         pass.push_sql(Fn::FUNCTION_NAME);
         pass.push_sql("(");
         self.prefix.walk_ast(pass.reborrow())?;

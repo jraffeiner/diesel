@@ -128,7 +128,7 @@ impl SqlDialect for Mssql {
         sql_dialect::built_in_window_function_require_order::NoOrderRequired;
 }
 
-impl DieselReserveSpecialization for Mssql {}
+//impl DieselReserveSpecialization for Mssql {}
 impl TrustedBackend for Mssql {}
 
 #[derive(Debug, Clone, Copy)]

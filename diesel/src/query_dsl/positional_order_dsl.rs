@@ -1,6 +1,8 @@
 use crate::backend::{Backend, DieselReserveSpecialization};
 use crate::expression::helper_types::{Asc, Desc};
 use crate::expression::Expression;
+#[cfg(feature = "mssql")]
+use crate::mssql::Mssql;
 use crate::query_builder::{AstPass, QueryFragment, QueryId};
 use crate::QueryResult;
 
@@ -67,6 +69,14 @@ where
     DB: Backend + DieselReserveSpecialization,
 {
     fn walk_ast<'b>(&'b self, mut pass: AstPass<'_, 'b, DB>) -> QueryResult<()> {
+        pass.push_sql(&self.0.to_string());
+        Ok(())
+    }
+}
+
+#[cfg(feature = "mssql")]
+impl QueryFragment<Mssql> for OrderColumn {
+    fn walk_ast<'b>(&'b self, mut pass: AstPass<'_, 'b, Mssql>) -> QueryResult<()> {
         pass.push_sql(&self.0.to_string());
         Ok(())
     }

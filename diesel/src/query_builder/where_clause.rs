@@ -4,6 +4,8 @@ use crate::backend::DieselReserveSpecialization;
 use crate::expression::grouped::Grouped;
 use crate::expression::operators::{And, Or};
 use crate::expression::*;
+#[cfg(feature = "mssql")]
+use crate::mssql::Mssql;
 use crate::sql_types::BoolOrNullableBool;
 
 /// Add `Predicate` to the current `WHERE` clause, joining with `AND` if
@@ -35,6 +37,13 @@ where
     DB: Backend + DieselReserveSpecialization,
 {
     fn walk_ast<'b>(&'b self, _: AstPass<'_, 'b, DB>) -> QueryResult<()> {
+        Ok(())
+    }
+}
+
+#[cfg(feature = "mssql")]
+impl QueryFragment<Mssql> for NoWhereClause {
+    fn walk_ast<'b>(&'b self, _: AstPass<'_, 'b, Mssql>) -> QueryResult<()> {
         Ok(())
     }
 }
@@ -92,6 +101,18 @@ where
     Expr: QueryFragment<DB>,
 {
     fn walk_ast<'b>(&'b self, mut out: AstPass<'_, 'b, DB>) -> QueryResult<()> {
+        out.push_sql(" WHERE ");
+        self.0.walk_ast(out.reborrow())?;
+        Ok(())
+    }
+}
+
+#[cfg(feature = "mssql")]
+impl<Expr> QueryFragment<Mssql> for WhereClause<Expr>
+where
+    Expr: QueryFragment<Mssql>,
+{
+    fn walk_ast<'b>(&'b self, mut out: AstPass<'_, 'b, Mssql>) -> QueryResult<()> {
         out.push_sql(" WHERE ");
         self.0.walk_ast(out.reborrow())?;
         Ok(())
@@ -165,6 +186,19 @@ where
     DB: Backend + DieselReserveSpecialization,
 {
     fn walk_ast<'b>(&'b self, mut out: AstPass<'_, 'b, DB>) -> QueryResult<()> {
+        match *self {
+            BoxedWhereClause::Where(ref where_clause) => {
+                out.push_sql(" WHERE ");
+                where_clause.walk_ast(out)
+            }
+            BoxedWhereClause::None => Ok(()),
+        }
+    }
+}
+
+#[cfg(feature = "mssql")]
+impl QueryFragment<Mssql> for BoxedWhereClause<'_, Mssql> {
+    fn walk_ast<'b>(&'b self, mut out: AstPass<'_, 'b, Mssql>) -> QueryResult<()> {
         match *self {
             BoxedWhereClause::Where(ref where_clause) => {
                 out.push_sql(" WHERE ");

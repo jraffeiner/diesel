@@ -2,6 +2,8 @@ use diesel::backend::Backend;
 use diesel::migration::{
     Migration, MigrationConnection, MigrationSource, MigrationVersion, Result,
 };
+#[cfg(feature = "mssql")]
+use diesel::mssql::Mssql;
 use diesel::prelude::*;
 use diesel::query_builder::QueryFragment;
 use diesel::query_dsl::methods;
@@ -150,6 +152,7 @@ pub trait MigrationHarness<DB: Backend> {
     fn applied_migrations(&mut self) -> Result<Vec<MigrationVersion<'static>>>;
 }
 
+#[cfg(not(feature = "mssql"))]
 impl<C, DB> MigrationHarness<DB> for C
 where
     DB: Backend + diesel::internal::migrations::DieselReserveSpecialization,
@@ -189,6 +192,73 @@ where
     fn revert_migration(
         &mut self,
         migration: &dyn Migration<DB>,
+    ) -> Result<MigrationVersion<'static>> {
+        let revert_migration = |conn: &mut C| -> Result<()> {
+            migration.revert(conn)?;
+            diesel::delete(
+                __diesel_schema_migrations::table.find(migration.name().version().as_owned()),
+            )
+            .execute(conn)?;
+            Ok(())
+        };
+
+        if migration.metadata().run_in_transaction() {
+            self.transaction(revert_migration)?;
+        } else {
+            revert_migration(self)?;
+        }
+        Ok(migration.name().version().as_owned())
+    }
+
+    fn applied_migrations(&mut self) -> Result<Vec<MigrationVersion<'static>>> {
+        setup_database(self)?;
+        Ok(__diesel_schema_migrations::table
+            .into_boxed()
+            .select(__diesel_schema_migrations::version)
+            .order(__diesel_schema_migrations::version.desc())
+            .load(self)?)
+    }
+}
+
+#[cfg(feature = "mssql")]
+impl<C> MigrationHarness<Mssql> for C
+where
+    C: Connection<Backend = Mssql> + MigrationConnection + 'static,
+    __diesel_schema_migrations::table: methods::BoxedDsl<
+        'static,
+        Mssql,
+        Output = __diesel_schema_migrations::BoxedQuery<'static, Mssql>,
+    >,
+    __diesel_schema_migrations::BoxedQuery<'static, Mssql, VarChar>:
+        methods::LoadQuery<'static, C, MigrationVersion<'static>>,
+    diesel::internal::migrations::DefaultValues: QueryFragment<Mssql>,
+    str: ToSql<Text, Mssql>,
+{
+    fn run_migration(
+        &mut self,
+        migration: &dyn Migration<Mssql>,
+    ) -> Result<MigrationVersion<'static>> {
+        let apply_migration = |conn: &mut C| -> Result<()> {
+            migration.run(conn)?;
+            diesel::insert_into(__diesel_schema_migrations::table)
+                .values(
+                    __diesel_schema_migrations::version.eq(migration.name().version().as_owned()),
+                )
+                .execute(conn)?;
+            Ok(())
+        };
+
+        if migration.metadata().run_in_transaction() {
+            self.transaction(apply_migration)?;
+        } else {
+            apply_migration(self)?;
+        }
+        Ok(migration.name().version().as_owned())
+    }
+
+    fn revert_migration(
+        &mut self,
+        migration: &dyn Migration<Mssql>,
     ) -> Result<MigrationVersion<'static>> {
         let revert_migration = |conn: &mut C| -> Result<()> {
             migration.revert(conn)?;

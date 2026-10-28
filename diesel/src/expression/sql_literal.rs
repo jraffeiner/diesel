@@ -370,6 +370,8 @@ impl<Query, Value, Conn> RunQueryDsl<Conn> for UncheckedBind<Query, Value> {}
 
 mod private {
     use crate::backend::{Backend, DieselReserveSpecialization};
+    #[cfg(feature = "mssql")]
+    use crate::mssql::Mssql;
     use crate::query_builder::{QueryFragment, QueryId};
 
     #[derive(Debug, Clone, Copy, QueryId)]
@@ -382,6 +384,16 @@ mod private {
         fn walk_ast<'b>(
             &'b self,
             _pass: crate::query_builder::AstPass<'_, 'b, DB>,
+        ) -> crate::QueryResult<()> {
+            Ok(())
+        }
+    }
+
+    #[cfg(feature = "mssql")]
+    impl QueryFragment<Mssql> for Empty {
+        fn walk_ast<'b>(
+            &'b self,
+            _pass: crate::query_builder::AstPass<'_, 'b, Mssql>,
         ) -> crate::QueryResult<()> {
             Ok(())
         }

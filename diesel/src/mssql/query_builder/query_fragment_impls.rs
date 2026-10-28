@@ -1,7 +1,18 @@
 use crate::{
-    AppearsOnTable, Expression, QuerySource, SelectableExpression, Table, backend::Backend, expression::{ValidGrouping, operators::Concat}, mssql::Mssql, query_builder::{
-        AsQuery, FromClause, IntoBoxedClause, QueryFragment, QueryId, SelectStatement, limit_clause::{LimitClause, NoLimitClause}, limit_offset_clause::{BoxedLimitOffsetClause, LimitOffsetClause}, offset_clause::{NoOffsetClause, OffsetClause}, returning_clause::ReturningClause
-    }
+    backend::Backend,
+    expression::{operators::Concat, ValidGrouping},
+    mssql::Mssql,
+    query_builder::{
+        group_by_clause::{GroupByClause, NoGroupByClause},
+        having_clause::{HavingClause, NoHavingClause},
+        limit_clause::{LimitClause, NoLimitClause},
+        limit_offset_clause::{BoxedLimitOffsetClause, LimitOffsetClause},
+        offset_clause::{NoOffsetClause, OffsetClause},
+        order_clause::{NoOrderClause, OrderClause},
+        returning_clause::ReturningClause,
+        AsQuery, FromClause, IntoBoxedClause, QueryFragment, QueryId, SelectStatement,
+    },
+    AppearsOnTable, Expression, QuerySource, SelectableExpression, Table,
 };
 
 impl QueryFragment<Mssql> for LimitOffsetClause<NoLimitClause, NoOffsetClause> {
@@ -21,9 +32,70 @@ where
         &'b self,
         mut pass: diesel::query_builder::AstPass<'_, 'b, Mssql>,
     ) -> diesel::QueryResult<()> {
-        pass.push_sql(" OFFSET 0 ROWS FETCH NEXT ");
-        self.limit_clause.0.walk_ast(pass.reborrow())?;
-        pass.push_sql(" ROWS ONLY ");
+        pass.push_sql(" OFFSET 0 ROWS");
+        self.limit_clause.walk_ast(pass.reborrow())?;
+        Ok(())
+    }
+}
+
+impl<E> QueryFragment<Mssql> for ReturningClause<E>
+where
+    E: QueryFragment<Mssql>,
+{
+    fn walk_ast<'b>(
+        &'b self,
+        mut pass: crate::query_builder::AstPass<'_, 'b, Mssql>,
+    ) -> crate::prelude::QueryResult<()> {
+        pass.push_sql(" OUTPUT ");
+        self.0.walk_ast(pass.reborrow())?;
+        Ok(())
+    }
+}
+
+impl<E> QueryFragment<Mssql> for LimitClause<E>
+where
+    E: QueryFragment<Mssql>,
+{
+    fn walk_ast<'b>(
+        &'b self,
+        mut pass: crate::query_builder::AstPass<'_, 'b, Mssql>,
+    ) -> crate::prelude::QueryResult<()> {
+        pass.push_sql(" FETCH NEXT ");
+        self.0.walk_ast(pass.reborrow())?;
+        pass.push_sql(" ROWS ONLY");
+        Ok(())
+    }
+}
+
+impl QueryFragment<Mssql> for NoLimitClause {
+    fn walk_ast<'b>(
+        &'b self,
+        _: crate::query_builder::AstPass<'_, 'b, Mssql>,
+    ) -> crate::prelude::QueryResult<()> {
+        Ok(())
+    }
+}
+
+impl<E> QueryFragment<Mssql> for OffsetClause<E>
+where
+    E: QueryFragment<Mssql>,
+{
+    fn walk_ast<'b>(
+        &'b self,
+        mut pass: crate::query_builder::AstPass<'_, 'b, Mssql>,
+    ) -> crate::prelude::QueryResult<()> {
+        pass.push_sql(" OFFSET ");
+        self.0.walk_ast(pass.reborrow())?;
+        pass.push_sql(" ROWS");
+        Ok(())
+    }
+}
+
+impl QueryFragment<Mssql> for NoOffsetClause {
+    fn walk_ast<'b>(
+        &'b self,
+        mut pass: crate::query_builder::AstPass<'_, 'b, Mssql>,
+    ) -> crate::prelude::QueryResult<()> {
         Ok(())
     }
 }
@@ -37,11 +109,8 @@ where
         &'b self,
         mut pass: diesel::query_builder::AstPass<'_, 'b, Mssql>,
     ) -> diesel::QueryResult<()> {
-        pass.push_sql(" OFFSET ");
-        self.offset_clause.0.walk_ast(pass.reborrow())?;
-        pass.push_sql(" ROWS FETCH NEXT ");
-        self.limit_clause.0.walk_ast(pass.reborrow())?;
-        pass.push_sql(" ROWS ONLY ");
+        self.offset_clause.walk_ast(pass.reborrow())?;
+        self.limit_clause.walk_ast(pass.reborrow())?;
         Ok(())
     }
 }
@@ -53,19 +122,14 @@ impl QueryFragment<Mssql> for BoxedLimitOffsetClause<'_, Mssql> {
     ) -> diesel::QueryResult<()> {
         match (self.limit.as_ref(), self.offset.as_ref()) {
             (Some(limit), Some(offset)) => {
-                pass.push_sql(" OFFSET ");
                 offset.walk_ast(pass.reborrow())?;
-                pass.push_sql(" ROWS FETCH NEXT ");
                 limit.walk_ast(pass.reborrow())?;
-                pass.push_sql(" ROWS ONLY ");
             }
             (Some(limit), None) => {
-                pass.push_sql(" OFFSET 0 ROWS FETCH NEXT ");
+                pass.push_sql(" OFFSET 0 ROWS");
                 limit.walk_ast(pass.reborrow())?;
-                pass.push_sql(" ROWS ONLY ");
             }
             (None, Some(offset)) => {
-                pass.push_sql(" OFFSET ");
                 offset.walk_ast(pass.reborrow())?;
             }
             (None, None) => {}
@@ -132,12 +196,72 @@ where
     }
 }
 
-impl<E> QueryFragment<Mssql, crate::mssql::backend::MssqlOutputClause> for ReturningClause<E>
-where E: QueryFragment<Mssql>,
+impl QueryFragment<Mssql> for NoOrderClause {
+    fn walk_ast<'b>(
+        &'b self,
+        _pass: crate::query_builder::AstPass<'_, 'b, Mssql>,
+    ) -> crate::prelude::QueryResult<()> {
+        Ok(())
+    }
+}
+
+impl<E> QueryFragment<Mssql> for OrderClause<E>
+where
+    E: QueryFragment<Mssql>,
 {
-    fn walk_ast<'b>(&'b self, mut pass: crate::query_builder::AstPass<'_, 'b, Mssql>) -> crate::prelude::QueryResult<()> {
-        pass.push_sql(" OUTPUT ");
-        self.0.walk_ast(pass.reborrow())
+    fn walk_ast<'b>(
+        &'b self,
+        mut pass: crate::query_builder::AstPass<'_, 'b, Mssql>,
+    ) -> crate::prelude::QueryResult<()> {
+        pass.push_sql(" ORDER BY ");
+        self.0.walk_ast(pass.reborrow())?;
+        Ok(())
+    }
+}
+
+impl QueryFragment<Mssql> for NoGroupByClause {
+    fn walk_ast<'b>(
+        &'b self,
+        _pass: crate::query_builder::AstPass<'_, 'b, Mssql>,
+    ) -> crate::prelude::QueryResult<()> {
+        Ok(())
+    }
+}
+
+impl<E> QueryFragment<Mssql> for GroupByClause<E>
+where
+    E: QueryFragment<Mssql>,
+{
+    fn walk_ast<'b>(
+        &'b self,
+        mut pass: crate::query_builder::AstPass<'_, 'b, Mssql>,
+    ) -> crate::prelude::QueryResult<()> {
+        pass.push_sql(" GROUP BY ");
+        self.0.walk_ast(pass.reborrow())?;
+        Ok(())
+    }
+}
+
+impl QueryFragment<Mssql> for NoHavingClause {
+    fn walk_ast<'b>(
+        &'b self,
+        _pass: crate::query_builder::AstPass<'_, 'b, Mssql>,
+    ) -> crate::prelude::QueryResult<()> {
+        Ok(())
+    }
+}
+
+impl<E> QueryFragment<Mssql> for HavingClause<E>
+where
+    E: QueryFragment<Mssql>,
+{
+    fn walk_ast<'b>(
+        &'b self,
+        mut pass: crate::query_builder::AstPass<'_, 'b, Mssql>,
+    ) -> crate::prelude::QueryResult<()> {
+        pass.push_sql(" HAVING ");
+        self.0.walk_ast(pass.reborrow())?;
+        Ok(())
     }
 }
 

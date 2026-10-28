@@ -106,14 +106,13 @@ mod time {
     struct DateTimeProxy(OffsetDateTime);
 }
 
-
 #[cfg(feature = "jiff")]
 mod jiff {
-    use jiff::civil::{Date as NaiveDate, Time as NaiveTime};
-    use jiff::{Timestamp as NaiveDateTime, Zoned as DateTime, Span as Duration};
     use crate::deserialize::FromSqlRow;
     use crate::expression::AsExpression;
     use crate::sql_types::{Date, Interval, Time, Timestamp};
+    use jiff::civil::{Date as NaiveDate, Time as NaiveTime};
+    use jiff::{Span as Duration, Timestamp as NaiveDateTime, Zoned as DateTime};
 
     #[derive(AsExpression, FromSqlRow)]
     #[diesel(foreign_derive)]

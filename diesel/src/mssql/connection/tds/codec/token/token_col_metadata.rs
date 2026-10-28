@@ -313,7 +313,7 @@ impl BaseMetaDataColumn {
     where
         R: SqlReadBytes,
     {
-        use VarLenType::{Text, NText, Image};
+        use VarLenType::{Image, NText, Text};
 
         let _user_ty = src.read_u32_le()?;
 

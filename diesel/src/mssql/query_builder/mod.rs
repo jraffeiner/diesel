@@ -181,14 +181,13 @@ mod time_impl {
 mod jiff_impl {
     use super::Mssql;
     use super::Output;
-use jiff::{Timestamp, Zoned};
-    use jiff::civil::{Date, Time};
     use diesel::sql_types;
+    use jiff::civil::{Date, Time};
+    use jiff::{Timestamp, Zoned};
 
     to_diesel_sql!(sql_types::Timestamp, Timestamp);
     to_diesel_sql!(super::sql_types::DateTimeOffset, Timestamp);
     to_diesel_sql!(sql_types::Time, Time);
     to_diesel_sql!(sql_types::Date, Date);
     to_diesel_sql!(super::sql_types::DateTimeOffset, Zoned);
-
 }

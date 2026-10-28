@@ -3,12 +3,13 @@ use std::marker::PhantomData;
 use super::Query;
 use crate::backend::{Backend, DieselReserveSpecialization};
 use crate::connection::Connection;
+#[cfg(feature = "mssql")]
+use crate::mssql::Mssql;
 use crate::query_builder::{AstPass, QueryFragment, QueryId};
 use crate::query_dsl::RunQueryDsl;
 use crate::result::QueryResult;
 use crate::serialize::ToSql;
 use crate::sql_types::{HasSqlType, Untyped};
-
 #[derive(Debug, Clone)]
 #[must_use = "Queries are only executed when calling `load`, `get_result` or similar."]
 /// The return value of `sql_query`.
@@ -170,6 +171,19 @@ where
     }
 }
 
+#[cfg(feature = "mssql")]
+impl<Inner> QueryFragment<Mssql> for SqlQuery<Inner>
+where
+    Inner: QueryFragment<Mssql>,
+{
+    fn walk_ast<'b>(&'b self, mut out: AstPass<'_, 'b, Mssql>) -> QueryResult<()> {
+        out.unsafe_to_cache_prepared();
+        self.inner.walk_ast(out.reborrow())?;
+        out.push_sql(&self.query);
+        Ok(())
+    }
+}
+
 impl<Inner> QueryId for SqlQuery<Inner> {
     type QueryId = ();
 
@@ -296,6 +310,20 @@ where
     }
 }
 
+#[cfg(feature = "mssql")]
+impl<Query, Value, ST> QueryFragment<Mssql> for UncheckedBind<Query, Value, ST>
+where
+    Mssql: HasSqlType<ST>,
+    Query: QueryFragment<Mssql>,
+    Value: ToSql<ST, Mssql>,
+{
+    fn walk_ast<'b>(&'b self, mut out: AstPass<'_, 'b, Mssql>) -> QueryResult<()> {
+        self.query.walk_ast(out.reborrow())?;
+        out.push_bind_param_value_only(&self.value)?;
+        Ok(())
+    }
+}
+
 impl<Q, Value, ST> Query for UncheckedBind<Q, Value, ST> {
     type SqlType = Untyped;
 }
@@ -379,6 +407,23 @@ where
     }
 }
 
+#[cfg(feature = "mssql")]
+impl<Query> QueryFragment<Mssql> for BoxedSqlQuery<'_, Mssql, Query>
+where
+    Query: QueryFragment<Mssql>,
+{
+    fn walk_ast<'b>(&'b self, mut out: AstPass<'_, 'b, Mssql>) -> QueryResult<()> {
+        out.unsafe_to_cache_prepared();
+        self.query.walk_ast(out.reborrow())?;
+        out.push_sql(&self.sql);
+
+        for b in &self.binds {
+            b.walk_ast(out.reborrow())?;
+        }
+        Ok(())
+    }
+}
+
 impl<DB: Backend, Query> QueryId for BoxedSqlQuery<'_, DB, Query> {
     type QueryId = ();
 
@@ -396,6 +441,8 @@ impl<Conn: Connection, Query> RunQueryDsl<Conn> for BoxedSqlQuery<'_, Conn::Back
 
 mod private {
     use crate::backend::{Backend, DieselReserveSpecialization};
+    #[cfg(feature = "mssql")]
+    use crate::mssql::Mssql;
     use crate::query_builder::{QueryFragment, QueryId};
 
     #[derive(Debug, Clone, Copy, QueryId)]
@@ -408,6 +455,16 @@ mod private {
         fn walk_ast<'b>(
             &'b self,
             _pass: crate::query_builder::AstPass<'_, 'b, DB>,
+        ) -> crate::QueryResult<()> {
+            Ok(())
+        }
+    }
+
+    #[cfg(feature = "mssql")]
+    impl QueryFragment<Mssql> for Empty {
+        fn walk_ast<'b>(
+            &'b self,
+            _pass: crate::query_builder::AstPass<'_, 'b, Mssql>,
         ) -> crate::QueryResult<()> {
             Ok(())
         }

@@ -13,6 +13,8 @@ use crate::dsl::AsExprOf;
 use crate::expression::subselect::ValidSubselect;
 use crate::expression::IntoSql;
 use crate::expression::NonAggregate;
+#[cfg(feature = "mssql")]
+use crate::mssql::Mssql;
 use crate::query_builder::insert_statement::InsertFromSelect;
 use crate::query_builder::limit_clause::{LimitClause, NoLimitClause};
 use crate::query_builder::limit_offset_clause::LimitOffsetClause;
@@ -189,6 +191,28 @@ where
     }
 }
 
+#[cfg(feature = "mssql")]
+impl<Combinator, Rule, Source, Rhs, O, LOf> QueryFragment<Mssql>
+    for CombinationClause<Combinator, Rule, Source, Rhs, O, LOf>
+where
+    Combinator: QueryFragment<Mssql>,
+    Rule: QueryFragment<Mssql>,
+    ParenthesisWrapper<Source>: QueryFragment<Mssql>,
+    ParenthesisWrapper<Rhs>: QueryFragment<Mssql>,
+    O: QueryFragment<Mssql>,
+    LOf: QueryFragment<Mssql>,
+    Mssql: Backend + SupportsCombinationClause<Combinator, Rule>,
+{
+    fn walk_ast<'b>(&'b self, mut out: AstPass<'_, 'b, Mssql>) -> QueryResult<()> {
+        self.source.walk_ast(out.reborrow())?;
+        self.combinator.walk_ast(out.reborrow())?;
+        self.duplicate_rule.walk_ast(out.reborrow())?;
+        self.rhs.walk_ast(out.reborrow())?;
+        self.order.walk_ast(out.reborrow())?;
+        self.limit_offset.walk_ast(out)
+    }
+}
+
 impl<ST, Combinator, Rule, Source, Rhs, O, LOf, RawExpr, Expr> PositionalOrderDsl<RawExpr>
     for CombinationClause<Combinator, Rule, Source, Rhs, O, LOf>
 where
@@ -297,6 +321,14 @@ where
     }
 }
 
+#[cfg(feature = "mssql")]
+impl QueryFragment<Mssql> for Union {
+    fn walk_ast<'b>(&'b self, mut out: AstPass<'_, 'b, Mssql>) -> QueryResult<()> {
+        out.push_sql(" UNION ");
+        Ok(())
+    }
+}
+
 #[derive(Debug, Copy, Clone, QueryId)]
 /// Computes the set intersection of the rows returned by the involved `SELECT` statements using SQL `INTERSECT`
 pub struct Intersect;
@@ -306,6 +338,13 @@ where
     DB: Backend + DieselReserveSpecialization,
 {
     fn walk_ast<'b>(&'b self, mut out: AstPass<'_, 'b, DB>) -> QueryResult<()> {
+        out.push_sql(" INTERSECT ");
+        Ok(())
+    }
+}
+#[cfg(feature = "mssql")]
+impl QueryFragment<Mssql> for Intersect {
+    fn walk_ast<'b>(&'b self, mut out: AstPass<'_, 'b, Mssql>) -> QueryResult<()> {
         out.push_sql(" INTERSECT ");
         Ok(())
     }
@@ -325,6 +364,14 @@ where
     }
 }
 
+#[cfg(feature = "mssql")]
+impl QueryFragment<Mssql> for Except {
+    fn walk_ast<'b>(&'b self, mut out: AstPass<'_, 'b, Mssql>) -> QueryResult<()> {
+        out.push_sql(" EXCEPT ");
+        Ok(())
+    }
+}
+
 #[derive(Debug, Copy, Clone, QueryId)]
 /// Remove duplicate rows in the result, this is the default behavior of `UNION`, `INTERSECT` and `EXCEPT`
 pub struct Distinct;
@@ -338,6 +385,13 @@ where
     }
 }
 
+#[cfg(feature = "mssql")]
+impl QueryFragment<Mssql> for Distinct {
+    fn walk_ast<'b>(&'b self, _: AstPass<'_, 'b, Mssql>) -> QueryResult<()> {
+        Ok(())
+    }
+}
+
 #[derive(Debug, Copy, Clone, QueryId)]
 /// Keep duplicate rows in the result
 pub struct All;
@@ -347,6 +401,14 @@ where
     DB: Backend + DieselReserveSpecialization,
 {
     fn walk_ast<'b>(&'b self, mut out: AstPass<'_, 'b, DB>) -> QueryResult<()> {
+        out.push_sql("ALL ");
+        Ok(())
+    }
+}
+
+#[cfg(feature = "mssql")]
+impl QueryFragment<Mssql> for All {
+    fn walk_ast<'b>(&'b self, mut out: AstPass<'_, 'b, Mssql>) -> QueryResult<()> {
         out.push_sql("ALL ");
         Ok(())
     }
