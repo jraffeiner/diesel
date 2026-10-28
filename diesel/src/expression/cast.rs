@@ -145,7 +145,7 @@ type_name! {
         Int4 => "int",
         Int8 => "bigint",
         Text => "text",
-        TinyInt => "tinyint"
+        TinyInt => "tinyint",
         Double => "float",
     }
 }
