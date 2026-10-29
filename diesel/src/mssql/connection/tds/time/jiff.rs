@@ -85,6 +85,12 @@ from_sql!(
             ).to_zoned(TimeZone::UTC).ok()
         });
     Timestamp:
+        ColumnData::DateTime(ref dt) => dt.and_then(|dt| {
+            CivilDateTime::from_parts(
+                from_date(dt.date),
+                from_time(dt.time),
+            ).to_zoned(TimeZone::UTC).map(|zoned| zoned.timestamp()).ok()
+        }),
         ColumnData::DateTimeOffset(ref dto) => dto.and_then(|dto| {
             CivilDateTime::from_parts(
                 from_date(dto.datetime2.date),
