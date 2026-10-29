@@ -87,8 +87,8 @@ from_sql!(
     Timestamp:
         ColumnData::DateTime(ref dt) => dt.and_then(|dt| {
             CivilDateTime::from_parts(
-                from_date(dt.date),
-                from_time(dt.time),
+                from_days(dt.days as i64, 1900),
+                from_sec_fragments(dt.seconds_fragments as i64)
             ).to_zoned(TimeZone::UTC).map(|zoned| zoned.timestamp()).ok()
         }),
         ColumnData::DateTimeOffset(ref dto) => dto.and_then(|dto| {
