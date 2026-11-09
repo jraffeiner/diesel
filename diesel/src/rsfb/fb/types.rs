@@ -195,14 +195,14 @@ impl FromSql<sql_types::Date, Fb> for NaiveDate {
 }
 
 #[cfg(feature = "time")]
-impl FromSql<sql_types::Date, Fb> for Date {
+impl FromSql<sql_types::Date, Fb> for time::Date {
     fn from_sql(bytes: <Fb as crate::backend::Backend>::RawValue<'_>) -> deserialize::Result<Self> {
         let rs: NaiveDate = bytes
             .raw
             .clone()
             .to_val()
             .map_err(|e| DatabaseError(DatabaseErrorKind::Unknown, Box::new(e.to_string())))?;
-        let td = Date::from_ordinal_date(rs.year(), rs.ordinal() as u16).expect("valid date");
+        let td = time::Date::from_ordinal_date(rs.year(), rs.ordinal() as u16).expect("valid date");
         Ok(td)
     }
 }
@@ -218,7 +218,7 @@ impl ToSql<sql_types::Date, Fb> for NaiveDate {
 }
 
 #[cfg(feature = "time")]
-impl ToSql<sql_types::Date, Fb> for Date {
+impl ToSql<sql_types::Date, Fb> for time::Date {
     fn to_sql<'b>(&'b self, out: &mut serialize::Output<'b, '_, Fb>) -> serialize::Result {
         let naive = NaiveDate::from_yo_opt(self.year(), self.ordinal() as u32).expect("valid date");
         let days = naive.num_days_from_ce().to_be_bytes();
@@ -242,16 +242,16 @@ impl FromSql<sql_types::Timestamp, Fb> for NaiveDateTime {
 }
 
 #[cfg(feature = "time")]
-impl FromSql<sql_types::Timestamp, Fb> for PrimitiveDateTime {
+impl FromSql<sql_types::Timestamp, Fb> for time::PrimitiveDateTime {
     fn from_sql(bytes: <Fb as crate::backend::Backend>::RawValue<'_>) -> deserialize::Result<Self> {
         let rs: NaiveDateTime = bytes
             .raw
             .clone()
             .to_val()
             .map_err(|e| DatabaseError(DatabaseErrorKind::Unknown, Box::new(e.to_string())))?;
-        let pdt = PrimitiveDateTime::new(
-            Date::from_ordinal_date(rs.year(), rs.ordinal() as u16).expect("valid date"),
-            Time::from_hms_nano(
+        let pdt = time::PrimitiveDateTime::new(
+            time::Date::from_ordinal_date(rs.year(), rs.ordinal() as u16).expect("valid date"),
+            time::Time::from_hms_nano(
                 rs.hour() as u8,
                 rs.minute() as u8,
                 rs.second() as u8,
@@ -274,7 +274,7 @@ impl ToSql<sql_types::Timestamp, Fb> for NaiveDateTime {
 }
 
 #[cfg(feature = "time")]
-impl ToSql<sql_types::Timestamp, Fb> for PrimitiveDateTime {
+impl ToSql<sql_types::Timestamp, Fb> for time::PrimitiveDateTime {
     fn to_sql<'b>(&'b self, out: &mut serialize::Output<'b, '_, Fb>) -> serialize::Result {
         let tms = self.assume_utc().unix_timestamp().to_be_bytes();
         out.write_all(&tms)
@@ -297,14 +297,14 @@ impl FromSql<sql_types::Time, Fb> for NaiveTime {
 }
 
 #[cfg(feature = "time")]
-impl FromSql<sql_types::Time, Fb> for Time {
+impl FromSql<sql_types::Time, Fb> for time::Time {
     fn from_sql(bytes: <Fb as crate::backend::Backend>::RawValue<'_>) -> deserialize::Result<Self> {
         let rs: NaiveTime = bytes
             .raw
             .clone()
             .to_val()
             .map_err(|e| DatabaseError(DatabaseErrorKind::Unknown, Box::new(e.to_string())))?;
-        let time = Time::from_hms(rs.hour() as u8, rs.minute() as u8, rs.second() as u8)
+        let time = time::Time::from_hms(rs.hour() as u8, rs.minute() as u8, rs.second() as u8)
             .expect("valid time");
         Ok(time)
     }
@@ -321,7 +321,7 @@ impl ToSql<sql_types::Time, Fb> for NaiveTime {
 }
 
 #[cfg(feature = "time")]
-impl ToSql<sql_types::Time, Fb> for Time {
+impl ToSql<sql_types::Time, Fb> for time::Time {
     fn to_sql<'b>(&'b self, out: &mut serialize::Output<'b, '_, Fb>) -> serialize::Result {
         let secs = NaiveTime::from_hms_opt(
             self.hour() as u32,
